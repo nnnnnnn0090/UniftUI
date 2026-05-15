@@ -1,0 +1,22 @@
+using UnityEditor;
+using UnityEngine.UI;
+using Nobi.UiRoundedCorners;
+
+namespace Nobi.UiRoundedCorners.Editor {
+    [CustomEditor(typeof(ImageWithRoundedCorners)), CanEditMultipleObjects]
+    public class ImageWithRoundedCornersInspector : UnityEditor.Editor {
+        private ImageWithRoundedCorners script;
+
+        private void OnEnable() {
+            script = (ImageWithRoundedCorners)target;
+        }
+
+        public override void OnInspectorGUI() {
+            DrawDefaultInspector();
+
+            if (script != null && !script.TryGetComponent<MaskableGraphic>(out var _)) {
+                EditorGUILayout.HelpBox("This script requires a MaskableGraphic (Image or RawImage) on the same GameObject.", MessageType.Warning);
+            }
+        }
+    }
+}

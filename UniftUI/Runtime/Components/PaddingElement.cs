@@ -1,0 +1,192 @@
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections.Generic;
+
+namespace UniftUI
+{
+    public class PaddingElement : UIElement, ILayoutContainer
+    {
+        private UIElement content;
+        private RectOffset paddingValue;
+        // 構築したVerticalLayoutGroupへの参照を保持
+        private VerticalLayoutGroup layoutGroup;
+
+        public PaddingElement(UIElement content, RectOffset padding)
+        {
+            this.content = content;
+            this.paddingValue = padding;
+            // 基底クラスのpaddingも同期する
+            this.padding = padding;
+            
+            if (content != null)
+            {
+                this.useCustomPosition = content.useCustomPosition;
+                this.customPosition = content.customPosition;
+                this.rotationEffectEuler = content.rotationEffectEuler;
+                this.scaleEffect = content.scaleEffect;
+            }
+        }
+
+        // パディング値を動的に更新するメソッド
+        public void UpdatePadding(int padding)
+        {
+            UpdatePadding(new RectOffset(padding, padding, padding, padding));
+        }
+
+        // パディング値を動的に更新するメソッド
+        public void UpdatePadding(RectOffset newPadding)
+        {
+            // 内部のpaddingValue値を更新
+            this.paddingValue = newPadding;
+            // 基底クラスのpadding値も更新
+            this.padding = newPadding;
+            
+            // レイアウトグループがすでに構築されていれば直接更新
+            if (layoutGroup != null && layoutGroup.gameObject != null)
+            {
+                layoutGroup.padding = newPadding;
+                LayoutRebuilder.ForceRebuildLayoutImmediate(layoutGroup.GetComponent<RectTransform>());
+            }
+        }
+
+        // 基底クラスのWithPaddingメソッドをオーバーライド
+        public override UIElement WithPadding(int padding)
+        {
+            base.WithPadding(padding);
+            // 独自のパディング値も更新
+            UpdatePadding(padding);
+            return this;
+        }
+
+        public override UIElement WithPadding(RectOffset padding)
+        {
+            base.WithPadding(padding);
+            // 独自のパディング値も更新
+            UpdatePadding(padding);
+            return this;
+        }
+
+        public void AddChild(UIElement child) 
+        {
+            if (this.content == null) this.content = child;
+            else Debug.LogWarning("PaddingElement can only contain one child.");
+        }
+
+        public void RemoveChild(UIElement child) 
+        {
+            if (this.content == child) this.content = null;
+        }
+
+        public void ReplaceChild(UIElement oldChild, UIElement newChild) 
+        {
+            if (this.content == oldChild) this.content = newChild;
+        }
+
+        public IEnumerable<UIElement> GetChildren()
+        {
+            if (content != null)
+            {
+                return new List<UIElement> { content };
+            }
+            return new List<UIElement>();
+        }
+
+        public override GameObject Build(Transform parent)
+        {
+            GameObject paddingContainer = new GameObject("PaddingContainer");
+            paddingContainer.transform.SetParent(parent, false);
+
+            Image bgImage = null;
+            if (base.backgroundColor != Color.clear) 
+            {
+                bgImage = paddingContainer.AddComponent<Image>();
+                bgImage.color = base.backgroundColor;
+            }
+
+            // レイアウトグループへの参照を保持
+            layoutGroup = paddingContainer.AddComponent<VerticalLayoutGroup>();
+            layoutGroup.padding = paddingValue;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = true;
+            layoutGroup.childForceExpandWidth = false;
+            layoutGroup.childForceExpandHeight = false;
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+
+            LayoutElement le = paddingContainer.AddComponent<LayoutElement>();
+            ContentSizeFitter fitter = paddingContainer.AddComponent<ContentSizeFitter>();
+
+            if (infiniteWidth)
+            {
+                le.flexibleWidth = 1;
+                fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            }
+            else if (preferredWidth >= 0)
+            {
+                le.preferredWidth = preferredWidth;
+                le.minWidth = preferredWidth;
+                le.flexibleWidth = 0;
+                fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            }
+            else
+            {
+                le.flexibleWidth = 0;
+                fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            }
+
+            if (infiniteHeight)
+            {
+                le.flexibleHeight = 1;
+                fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+            }
+            else if (preferredHeight >= 0)
+            {
+                le.preferredHeight = preferredHeight;
+                le.minHeight = preferredHeight;
+                le.flexibleHeight = 0;
+                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            }
+            else
+            {
+                le.flexibleHeight = 0;
+                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            }
+
+            if (this.preferredWidth >= 0 && !this.infiniteWidth)
+            {
+                content?.WithInfiniteWidth();
+            }
+            if (this.preferredHeight >= 0 && !this.infiniteHeight)
+            {
+                content?.WithInfiniteHeight();
+            }
+
+            if (this.infiniteWidth)
+            {
+                PropagateInfiniteWidthToContent();
+            }
+            if (this.infiniteHeight)
+            {
+                PropagateInfiniteHeightToContent();
+            }
+            
+            ApplyAllEffects(paddingContainer, bgImage);
+            
+            // builtGameObject参照を設定
+            builtGameObject = paddingContainer;
+
+            content?.Build(paddingContainer.transform);
+
+            return paddingContainer;
+        }
+
+        protected override void PropagateInfiniteWidthToContent()
+        {
+            content?.WithInfiniteWidth();
+        }
+
+        protected override void PropagateInfiniteHeightToContent()
+        {
+            content?.WithInfiniteHeight();
+        }
+    }
+}
