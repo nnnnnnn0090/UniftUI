@@ -5,8 +5,8 @@ using UnityEngine;
 namespace UniftUI
 {
     /// <summary>
-    /// UIElement ごとのプロパティバインディングを管理する。
-    /// リビルド時は Dispose() して新しいインスタンスに差し替えることで古いバインディングを完全に消去する。
+    /// Per-<see cref="UIElement"/> registry of state-driven property updates.
+    /// Call <see cref="Dispose"/> on rebuild to drop stale bindings.
     /// </summary>
     internal sealed class BindingRegistry
     {
@@ -22,9 +22,6 @@ namespace UniftUI
 
         public ICollection<State> ObservedStates => stateToProps.Keys;
 
-        /// <summary>
-        /// プロパティバインディングを登録する。同じ propertyName は上書き。
-        /// </summary>
         public void Register(string propertyName, State state, Action updateAction)
         {
             if (state == null || updateAction == null || string.IsNullOrEmpty(propertyName)) return;
@@ -40,9 +37,6 @@ namespace UniftUI
                 list.Add(propertyName);
         }
 
-        /// <summary>
-        /// .animation(_:value:) で登録された State → Animation マッピング
-        /// </summary>
         public void SetStateAnimation(State state, Animation anim)
         {
             if (state == null) return;
@@ -58,9 +52,6 @@ namespace UniftUI
             return null;
         }
 
-        /// <summary>
-        /// 全バインディングの更新アクションを呼び出す。
-        /// </summary>
         public void ApplyAll()
         {
             foreach (var kvp in bindings)

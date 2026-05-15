@@ -1,8 +1,6 @@
 namespace UniftUI
 {
-    /// <summary>
-    /// SwiftUI の <c>ScrollIndicators</c>（<c>.hidden</c> / <c>.visible</c> / <c>.automatic</c>）に相当します。
-    /// </summary>
+    /// <summary>Scroll bar visibility for scroll views.</summary>
     public enum ScrollIndicatorVisibility
     {
         Hidden,
@@ -10,10 +8,7 @@ namespace UniftUI
         Automatic
     }
 
-    /// <summary>
-    /// SwiftUI の軸指定（<c>axes: .vertical</c> など）に相当します。
-    /// <c>Vertical | Horizontal</c> で両軸です。
-    /// </summary>
+    /// <summary>Scroll axis flags for indicator and position APIs.</summary>
     [System.Flags]
     public enum UniftUIScrollAxis
     {

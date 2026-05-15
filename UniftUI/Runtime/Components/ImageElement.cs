@@ -3,14 +3,12 @@ using UnityEngine.UI;
 
 namespace UniftUI
 {
-    /// <summary>
-    /// SwiftUI の <c>Image.ResizingMode</c>（<c>Image.resizable(resizingMode:)</c>）に相当します。
-    /// </summary>
+    /// <summary>Resizing mode for <see cref="ImageElement.Resizable"/>.</summary>
     public enum ImageResizingMode
     {
-        /// <summary>SwiftUI の <c>.stretch</c> — 画像を領域に引き伸ばします。</summary>
+        /// <summary>Stretch to fill the frame.</summary>
         Stretch,
-        /// <summary>SwiftUI の <c>.tile</c> — 画像を繰り返してタイル状に敷き詰めます。</summary>
+        /// <summary>Tile the image within the frame.</summary>
         Tile,
     }
 
@@ -21,13 +19,14 @@ namespace UniftUI
         AspectFill
     }
 
+    /// <summary>Displays a sprite with optional tint, scale mode, and resizing behavior.</summary>
     public class ImageElement : UIElement
     {
         private Sprite sprite;
         private Color tintColor = Color.white;
         private ImageScaleMode scaleMode = ImageScaleMode.AspectFit;
         private Image.Type unityImageType = Image.Type.Simple;
-        
+
         public ImageElement(Sprite sprite)
         {
             this.sprite = sprite;
@@ -46,10 +45,7 @@ namespace UniftUI
             return this;
         }
 
-        /// <summary>
-        /// SwiftUI の <c>Image.resizable(capInsets:resizingMode:)</c> のうち、resizingMode に相当する部分。
-        /// capInsets（9スライス）は未対応です。
-        /// </summary>
+        /// <summary>Makes the image resizable with the given mode. Nine-slice cap insets are not supported.</summary>
         public ImageElement Resizable(ImageResizingMode resizingMode = ImageResizingMode.Stretch)
         {
             unityImageType = resizingMode == ImageResizingMode.Tile
@@ -58,7 +54,7 @@ namespace UniftUI
             return this;
         }
 
-        /// <summary>uGUI の Image.type を直接指定する（通常は <see cref="Resizable"/> を使用）。</summary>
+        /// <summary>Sets uGUI <see cref="Image.type"/> directly (prefer <see cref="Resizable"/>).</summary>
         public ImageElement WithImageType(Image.Type type)
         {
             this.unityImageType = type;

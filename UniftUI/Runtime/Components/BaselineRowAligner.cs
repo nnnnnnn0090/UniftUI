@@ -4,10 +4,6 @@ using UnityEngine.UI;
 
 namespace UniftUI
 {
-    /// <summary>
-    /// SwiftUI の <c>HStack(alignment: .firstTextBaseline)</c> / <c>.lastTextBaseline</c> に近い、
-    /// 行内テキストのベースラインを揃える後処理（TMP のメッシュ情報を使用）。
-    /// </summary>
     internal static class BaselineRowAligner
     {
         internal static void AlignIfNeeded(GameObject rowRoot, HStackAlignment alignment)
@@ -66,7 +62,6 @@ namespace UniftUI
             int idx = lastLine ? tmp.textInfo.lineCount - 1 : 0;
             var line = tmp.textInfo.lineInfo[idx];
 
-            // TMP のバージョンにより LineInfo に origin が無い。行の水平中心は lineExtents から取得する。
             Extents ext = line.lineExtents;
             float cx = (ext.min.x + ext.max.x) * 0.5f;
             if (float.IsNaN(cx) || Mathf.Abs(ext.min.x) > 30000f)

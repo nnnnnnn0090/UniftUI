@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace UniftUI
 {
+    /// <summary>Defines one tab's title and body content for <see cref="TabView"/>.</summary>
     public class TabItem : UIElement
     {
         public string Title { get; private set; }
@@ -24,6 +25,7 @@ namespace UniftUI
             UIContext.Add(this);
         }
 
+        /// <summary>Builds this tab's body inside the given parent transform.</summary>
         public void BuildContent(Transform parent)
         {
             if (Content != null)
@@ -48,20 +50,16 @@ namespace UniftUI
                 {
                     UIContext.Current = parentContext;
                 }
-                tabContentContainer.BuildChildren(); // Build collected children
+                tabContentContainer.BuildChildren();
             }
         }
 
         public override GameObject Build(Transform parent)
         {
-            // TabItemは直接UIを構築しない
-            // ここでOnAppearとUpdateコールバックを処理する必要はない
-            // これらは実際のコンテンツが構築されるときに処理される
             return null;
         }
     }
 
-    // タブコンテンツ用のコンテナクラス
     internal class TabContentContainer : ILayoutContainer
     {
         private Transform parentTransform;
@@ -73,7 +71,6 @@ namespace UniftUI
             this.parentTransform = parentTransform;
         }
 
-        // フォント設定用のメソッドを追加
         public void SetFont(TMPro.TMP_FontAsset font)
         {
             this.fontAsset = font;
@@ -105,7 +102,7 @@ namespace UniftUI
             }
             else
             {
-                Debug.LogWarning($"ReplaceChild: oldChild not found in TabContentContainer. Old: {oldChild}, New: {newChild}. Children count: {children.Count}");
+                Debug.LogWarning($"[UniftUI] TabContentContainer ReplaceChild: oldChild not found. Children count: {children.Count}");
             }
         }
 
@@ -120,14 +117,11 @@ namespace UniftUI
             {
                 if (child != null)
                 {
-                    // 子要素をビルドする前にフォント設定を適用
                     if (fontAsset != null)
                     {
                         child.Font(fontAsset);
                     }
-                    
-                    // 子要素をビルドし、OnAppearとUpdateコールバックは
-                    // 各子要素自身のBuildメソッドで処理される
+
                     child.Build(parentTransform);
                 }
             }

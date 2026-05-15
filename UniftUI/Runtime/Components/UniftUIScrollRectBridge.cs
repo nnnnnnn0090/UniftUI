@@ -5,9 +5,8 @@ using UnityEngine.UI;
 namespace UniftUI
 {
     /// <summary>
-    /// <see cref="ScrollRect"/> と <see cref="State{T}"/> を同期します。
-    /// 垂直: <see cref="ScrollRect.verticalNormalizedPosition"/> に合わせ <b>1 = 先頭、0 = 末尾</b>。
-    /// 水平: <see cref="ScrollRect.horizontalNormalizedPosition"/> は <b>0 = 左、1 = 右</b>。
+    /// Syncs <see cref="ScrollRect"/> normalized position with <see cref="State{T}"/>.
+    /// Vertical: 1 = top, 0 = bottom. Horizontal: 0 = left, 1 = right.
     /// </summary>
     [RequireComponent(typeof(ScrollRect))]
     public class UniftUIScrollRectBridge : MonoBehaviour
@@ -23,8 +22,8 @@ namespace UniftUI
 
         public ScrollRect ScrollRect => scrollRect;
 
-        /// <param name="twoWayVertical">縦をドラッグで <see cref="State{T}"/> に書き戻す。</param>
-        /// <param name="twoWayHorizontal">横をドラッグで State に書き戻す。</param>
+        /// <param name="twoWayVertical">Write scroll position back to state when the user drags vertically.</param>
+        /// <param name="twoWayHorizontal">Write scroll position back to state when the user drags horizontally.</param>
         public void Initialize(ScrollRect sr, State<float> vertical, State<float> horizontal, bool twoWayVertical, bool twoWayHorizontal)
         {
             scrollRect = sr != null ? sr : GetComponent<ScrollRect>();
@@ -111,7 +110,7 @@ namespace UniftUI
             }
         }
 
-        /// <summary>垂直時: 先頭へ（normalized 1）。</summary>
+        /// <summary>Scrolls to the top when vertical scrolling is enabled (normalized position 1).</summary>
         public void ScrollToTop()
         {
             if (scrollRect == null || !scrollRect.vertical) return;
@@ -120,7 +119,7 @@ namespace UniftUI
                 verticalState.Value = 1f;
         }
 
-        /// <summary>垂直時: 末尾へ（normalized 0）。</summary>
+        /// <summary>Scrolls to the bottom when vertical scrolling is enabled (normalized position 0).</summary>
         public void ScrollToBottom()
         {
             if (scrollRect == null || !scrollRect.vertical) return;

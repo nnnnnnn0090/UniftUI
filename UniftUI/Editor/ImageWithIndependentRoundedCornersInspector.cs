@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using Nobi.UiRoundedCorners;
 
 namespace Nobi.UiRoundedCorners.Editor {
+    /// <summary>Custom inspector for <see cref="ImageWithIndependentRoundedCorners"/> with per-corner radius fields.</summary>
     [CustomEditor(typeof(ImageWithIndependentRoundedCorners)), CanEditMultipleObjects]
     public class ImageWithIndependentRoundedCornersInspector : UnityEditor.Editor {
         private ImageWithIndependentRoundedCorners script;

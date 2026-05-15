@@ -3,9 +3,6 @@ using UnityEngine.UI;
 
 namespace UniftUI
 {
-    /// <summary>
-    /// SwiftUI の <c>Grid</c> と同様、同一列インデックスのセル幅を全行で最大コンテンツ幅に揃えます。
-    /// </summary>
     internal static class GridColumnSynchronizer
     {
         internal static void Apply(RectTransform gridContainerRt)

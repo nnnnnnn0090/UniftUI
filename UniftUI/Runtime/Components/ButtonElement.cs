@@ -6,17 +6,18 @@ using System.Collections.Generic;
 
 namespace UniftUI
 {
+    /// <summary>Button with a text label or custom child content.</summary>
     public class ButtonElement : UIElement, ILayoutContainer
     {
         private string label;
-        private UIElement customContent; // カスタムUIコンテンツ用
+        private UIElement customContent;
         private Action onClick;
         private Color textColor = Color.black;
         private TMP_FontAsset fontAsset = null;
-        private bool hasCustomContent = false; // カスタムコンテンツフラグ
-        private List<UIElement> children = new List<UIElement>(); // ILayoutContainer実装用
+        private bool hasCustomContent = false;
+        private List<UIElement> children = new List<UIElement>();
 
-        // 既存のコンストラクタ (文字列ラベル用)
+        /// <summary>Creates a button that displays the given text label.</summary>
         public ButtonElement(string label, Action onClick)
         {
             this.backgroundColor = new Color(0.8f, 0.8f, 0.8f);
@@ -26,24 +27,22 @@ namespace UniftUI
             UIContext.Add(this);
         }
 
-        // 新しいコンストラクタ (カスタムコンテンツ用)
+        /// <summary>Creates a button whose appearance is defined by the given child element.</summary>
         public ButtonElement(UIElement content, Action onClick)
         {
             this.backgroundColor = new Color(0.8f, 0.8f, 0.8f);
             this.customContent = content;
             this.onClick = onClick;
             this.hasCustomContent = true;
-            
-            // コンテンツを子要素として追加
+
             if (content != null)
             {
                 AddChild(content);
             }
-            
+
             UIContext.Add(this);
         }
-        
-        // ILayoutContainer実装
+
         public void AddChild(UIElement child)
         {
             if (child != null)
@@ -74,13 +73,13 @@ namespace UniftUI
         {
             return children;
         }
-        
+
         public ButtonElement SetBackgroundColor(Color color)
         {
             backgroundColor = color;
             return this;
         }
-        
+
         public ButtonElement SetTextColor(Color color)
         {
             textColor = color;
@@ -100,28 +99,27 @@ namespace UniftUI
 
             Image image = buttonObj.AddComponent<Image>();
             image.color = backgroundColor;
-            
+
             Button button = buttonObj.AddComponent<Button>();
             button.targetGraphic = image;
-            
+
             ColorBlock colors = button.colors;
             colors.pressedColor = new Color(0.7f, 0.7f, 0.7f);
             button.colors = colors;
 
             LayoutElement layoutElement = buttonObj.AddComponent<LayoutElement>();
             ContentSizeFitter buttonFitter = buttonObj.AddComponent<ContentSizeFitter>();
-            // カスタム時も単一子を配置するため VLGroup を付与（ルート CSF とは別コンポーネント）。
             buttonObj.AddComponent<VerticalLayoutGroup>();
-            
-            if (hasCustomContent) 
+
+            if (hasCustomContent)
             {
                 GameObject contentContainer = new GameObject("Content");
                 contentContainer.transform.SetParent(buttonObj.transform, false);
-                
+
                 ContentSizeFitter contentFitter = contentContainer.AddComponent<ContentSizeFitter>();
                 contentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
                 contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-                
+
                 VerticalLayoutGroup layoutGroup = contentContainer.AddComponent<VerticalLayoutGroup>();
                 layoutGroup.childAlignment = TextAnchor.MiddleCenter;
                 layoutGroup.childControlWidth = true;
@@ -129,14 +127,13 @@ namespace UniftUI
                 layoutGroup.childForceExpandWidth = true;
                 layoutGroup.childForceExpandHeight = true;
                 layoutGroup.padding = new RectOffset(5, 5, 5, 5);
-                
+
                 RectTransform contentRect = contentContainer.GetComponent<RectTransform>();
                 contentRect.anchorMin = new Vector2(0, 0);
                 contentRect.anchorMax = new Vector2(1, 1);
                 contentRect.offsetMin = Vector2.zero;
                 contentRect.offsetMax = Vector2.zero;
-                
-                // カスタムコンテンツをビルド
+
                 foreach (var child in children)
                 {
                     child.Build(contentContainer.transform);
@@ -144,7 +141,6 @@ namespace UniftUI
             }
             else
             {
-                // 通常のテキストラベルの作成
                 GameObject textObj = new GameObject("Text");
                 textObj.transform.SetParent(buttonObj.transform, false);
 
@@ -154,20 +150,19 @@ namespace UniftUI
                 textRect.offsetMin = new Vector2(10, 5);
                 textRect.offsetMax = new Vector2(-10, -5);
 
-                // TMPテキストコンポーネントの設定
                 TextMeshProUGUI textComponent = textObj.AddComponent<TextMeshProUGUI>();
                 textComponent.text = label;
                 textComponent.alignment = TextAlignmentOptions.Center;
                 textComponent.fontSize = 18;
                 textComponent.color = textColor;
                 textComponent.margin = new Vector4(5, 5, 5, 5);
-                
+
                 if (fontAsset != null)
                 {
                     textComponent.font = fontAsset;
                 }
             }
-            
+
             if (infiniteWidth)
             {
                 layoutElement.flexibleWidth = 1;
@@ -180,15 +175,15 @@ namespace UniftUI
                 layoutElement.preferredWidth = preferredWidth;
                 layoutElement.minWidth = preferredWidth;
                 layoutElement.flexibleWidth = 0;
-                buttonFitter.horizontalFit = ContentSizeFitter.FitMode.MinSize; 
+                buttonFitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
             }
             else
             {
-                layoutElement.preferredWidth = -1; 
-                layoutElement.flexibleWidth = 0;   
+                layoutElement.preferredWidth = -1;
+                layoutElement.flexibleWidth = 0;
                 buttonFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             }
-            
+
             if (infiniteHeight)
             {
                 layoutElement.flexibleHeight = 1;
@@ -205,22 +200,21 @@ namespace UniftUI
             }
             else
             {
-                layoutElement.preferredHeight = -1; 
-                layoutElement.flexibleHeight = 0;   
+                layoutElement.preferredHeight = -1;
+                layoutElement.flexibleHeight = 0;
                 buttonFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             }
-            
-            // onClick を直接保持。ButtonActionManager / ActionManager 不要。
+
             var capturedClick = onClick;
             button.onClick.AddListener(() => {
                 try { capturedClick?.Invoke(); }
                 catch (Exception e) { Debug.LogError($"[UniftUI] Button onClick error: {e.Message}"); }
             });
-            
+
             ApplyAllEffects(buttonObj, image);
-            
+
             return buttonObj;
         }
-        
+
     }
 }

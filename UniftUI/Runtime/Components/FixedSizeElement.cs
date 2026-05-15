@@ -5,8 +5,8 @@ using System.Collections.Generic;
 namespace UniftUI
 {
     /// <summary>
-    /// SwiftUI の <c>.fixedSize()</c> / <c>fixedSize(horizontal:vertical:)</c> に相当。
-    /// 指定軸で親から渡される余分な提案サイズを受けず、コンテンツの理想サイズを優先します。
+    /// Sizes to content instead of expanding to fill the parent (<c>fixedSize</c>).
+    /// On a fixed axis, prefers the child's intrinsic size over extra space from the parent.
     /// </summary>
     public class FixedSizeElement : UIElement, ILayoutContainer
     {
@@ -38,7 +38,7 @@ namespace UniftUI
             if (content == null)
                 content = child;
             else
-                Debug.LogWarning("FixedSizeElement は単一の子のみサポートします。");
+                Debug.LogWarning("[UniftUI] FixedSizeElement supports only one child.");
         }
 
         public void RemoveChild(UIElement child)

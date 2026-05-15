@@ -5,61 +5,45 @@ using System.Linq;
 
 namespace UniftUI
 {
+    /// <summary>Base MonoBehaviour for declarative UniftUI views.</summary>
     public abstract class UniftView : MonoBehaviour
     {
         protected UIElement VStack(Action content)
-        {
-            return VStack(content, null, 8f, VStackAlignment.Center);
-        }
+            => VStack(content, null, 8f, VStackAlignment.Center);
 
         protected UIElement VStack(Action content, State[] states = null)
-        {
-            return VStack(content, states, 8f, VStackAlignment.Center);
-        }
+            => VStack(content, states, 8f, VStackAlignment.Center);
 
-        protected UIElement VStack(Action content, State[] states = null, float spacing = 8f, 
+        protected UIElement VStack(Action content, State[] states = null, float spacing = 8f,
             VStackAlignment alignment = VStackAlignment.Center)
         {
-            VStackElement stack = new VStackElement(content, states, spacing, alignment);
-            if (UIContext.Current != null)
-            {
-                UIContext.Current.AddChild(stack);
-            }
+            var stack = new VStackElement(content, states, spacing, alignment);
+            UIContext.Current?.AddChild(stack);
             return stack;
         }
 
         protected UIElement HStack(Action content)
-        {
-            return HStack(content, null, 8f, HStackAlignment.Center);
-        }
+            => HStack(content, null, 8f, HStackAlignment.Center);
 
         protected UIElement HStack(Action content, float spacing = 8f)
-        {
-            return HStack(content, null, spacing, HStackAlignment.Center);
-        }
+            => HStack(content, null, spacing, HStackAlignment.Center);
 
         protected UIElement HStack(Action content, State[] states = null)
-        {
-            return HStack(content, states, 8f, HStackAlignment.Center);
-        }
+            => HStack(content, states, 8f, HStackAlignment.Center);
 
-        protected UIElement HStack(Action content, State[] states = null, float spacing = 8f, 
+        protected UIElement HStack(Action content, State[] states = null, float spacing = 8f,
             HStackAlignment alignment = HStackAlignment.Center)
         {
-            HStackElement stack = new HStackElement(content, states, spacing, alignment);
-            if (UIContext.Current != null)
-            {
-                UIContext.Current.AddChild(stack);
-            }
+            var stack = new HStackElement(content, states, spacing, alignment);
+            UIContext.Current?.AddChild(stack);
             return stack;
         }
 
         protected GridElement Grid(Action content, State[] states = null, float horizontalSpacing = 8f,
             float verticalSpacing = 8f, HStackAlignment rowAlignment = HStackAlignment.Center)
         {
-            GridElement grid = new GridElement(content, states, horizontalSpacing, verticalSpacing, rowAlignment);
-            if (UIContext.Current != null)
-                UIContext.Current.AddChild(grid);
+            var grid = new GridElement(content, states, horizontalSpacing, verticalSpacing, rowAlignment);
+            UIContext.Current?.AddChild(grid);
             return grid;
         }
 
@@ -67,134 +51,82 @@ namespace UniftUI
         {
             if (UIContext.Current is GridElement grid)
                 return new GridRowElement(grid, content);
-            Debug.LogWarning("GridRow は Grid のコンテンツ内でのみ使用してください。");
+            Debug.LogWarning("[UniftUI] GridRow must be used inside Grid content.");
             return new GridRowElement(null, content);
         }
 
-        protected UIElement Text(string text)
-        {
-            return new TextElement(text);
-        }
+        protected UIElement Text(string text) => new TextElement(text);
 
         protected UIElement Text(string text, State[] dependencyStates)
-        {
-            return new TextElement(text, dependencyStates);
-        }
+            => new TextElement(text, dependencyStates);
 
         protected UIElement Text(Func<string> content, State[] dependencyStates = null)
-        {
-            return new TextElement(content, dependencyStates);
-        }
+            => new TextElement(content, dependencyStates);
 
         protected UIElement Text(State<string> text, State[] additionalStates = null)
-        {
-            return new TextElement(text, additionalStates);
-        }
+            => new TextElement(text, additionalStates);
 
-        protected UIElement Button(string label, Action onClick)
-        {
-            return new ButtonElement(label, onClick);
-        }
-        
+        protected UIElement Button(string label, Action onClick) => new ButtonElement(label, onClick);
+
         protected UIElement Button(string label, Action onClick, Color backgroundColor, Color textColor)
         {
-            ButtonElement button = new ButtonElement(label, onClick);
+            var button = new ButtonElement(label, onClick);
             button.SetBackgroundColor(backgroundColor);
             button.SetTextColor(textColor);
             return button;
         }
-        
+
         protected UIElement Button(UIElement content, Action onClick)
         {
             UIContext.Current?.RemoveChild(content);
             return new ButtonElement(content, onClick);
         }
 
-        protected ImageElement Image(Sprite sprite)
-        {
-            return new ImageElement(sprite);
-        }
+        protected ImageElement Image(Sprite sprite) => new ImageElement(sprite);
 
-        /// <summary>
-        /// SwiftUI の <c>Spacer(minLength:)</c> に相当する伸縮スペース。引数は主軸方向の<b>最小</b>長さ（HStack では最小幅、VStack では最小高さ）。
-        /// 親スタックに余白があるとレイアウト上<strong>それ以上に広がります</strong>（固定ピクセルの隙間にはなりません）。
-        /// SwiftUI と同様、ピクセル固定の隙間は <c>Spacer().Frame(width: …)</c> / <c>Frame(height: …)</c>（Swift の <c>.frame(width:height:)</c> に相当）で指定してください。
-        /// </summary>
-        /// <param name="minLength">主軸に沿った最小長（Swift の <c>minLength</c>）。</param>
-        protected UIElement Spacer(float minLength = 0)
-        {
-            return new SpacerElement(minLength);
-        }
+        /// <summary>Flexible space along the stack main axis.</summary>
+        protected UIElement Spacer(float minLength = 0) => new SpacerElement(minLength);
 
         protected UIElement TabView(Action content, State<int> selectedIndex = null)
         {
-            TabView tabView = new TabView(content, selectedIndex);
-            if (UIContext.Current != null)
-            {
-                UIContext.Current.AddChild(tabView);
-            }
+            var tabView = new TabView(content, selectedIndex);
+            UIContext.Current?.AddChild(tabView);
             return tabView;
         }
 
-        protected UIElement Tab(Action titleContent, Action content)
-        {
-            return new TabItem(titleContent, content);
-        }
+        protected UIElement Tab(Action titleContent, Action content) => new TabItem(titleContent, content);
 
-        protected UIElement Tab(string title, Action content)
-        {
-            return new TabItem(title, content);
-        }
+        protected UIElement Tab(string title, Action content) => new TabItem(title, content);
 
         protected UIElement Slider(State<int> value, float minValue, float maxValue)
-        {
-            return new SliderElement(value, minValue, maxValue);
-        }
+            => new SliderElement(value, minValue, maxValue);
 
         protected ScrollViewElement ScrollView(Action content, State[] states = null, bool horizontal = false, bool vertical = true)
         {
-            ScrollViewElement scrollView = new ScrollViewElement(content, states, horizontal, vertical);
-            if (UIContext.Current != null)
-            {
-                UIContext.Current.AddChild(scrollView);
-            }
+            var scrollView = new ScrollViewElement(content, states, horizontal, vertical);
+            UIContext.Current?.AddChild(scrollView);
             return scrollView;
         }
 
         protected UIElement Toggle(State<bool> isOn, string label, Action<bool> onValueChanged = null)
-        {
-            return new ToggleElement(isOn, label, onValueChanged);
-        }
+            => new ToggleElement(isOn, label, onValueChanged);
 
-        protected UIElement ZStack(Action content)
-        {
-            return ZStack(content, null, ZStackAlignment.Center);
-        }
+        protected UIElement ZStack(Action content) => ZStack(content, null, ZStackAlignment.Center);
 
         protected UIElement ZStack(Action content, State[] states = null)
-        {
-            return ZStack(content, states, ZStackAlignment.Center);
-        }
+            => ZStack(content, states, ZStackAlignment.Center);
 
         protected UIElement ZStack(Action content, State[] states = null, ZStackAlignment alignment = ZStackAlignment.Center)
         {
-            ZStackElement stack = new ZStackElement(content, states, alignment);
-            if (UIContext.Current != null)
-            {
-                UIContext.Current.AddChild(stack);
-            }
+            var stack = new ZStackElement(content, states, alignment);
+            UIContext.Current?.AddChild(stack);
             return stack;
         }
 
         protected TextFieldElement TextField(State<string> text, string placeholder, Action<string> onTextChanged = null)
-        {
-            return new TextFieldElement(text, placeholder, onTextChanged);
-        }
+            => new TextFieldElement(text, placeholder, onTextChanged);
 
-        /// <summary>
-        /// SwiftUI の <c>ForEach(0...9, id: \.self)</c>（閉区間）に相当。<paramref name="fromInclusive"/> と <paramref name="toInclusive"/> は両端を含みます。
-        /// 半開区間 <c>0..&lt;10</c> は <see cref="ForEach(Range, Action{int})"/> に <c>0..10</c> を渡してください。
-        /// </summary>
+        /// <summary>Inclusive integer range loop (<c>ForEach(0, 9, …)</c>).</summary>
         protected void ForEach(int fromInclusive, int toInclusive, Action<int> content)
         {
             if (toInclusive < fromInclusive) return;
@@ -202,15 +134,13 @@ namespace UniftUI
                 content(id);
         }
 
-        /// <summary>
-        /// SwiftUI の <c>ForEach(0..&lt;10, id: \.self)</c> に相当。C# の範囲 <c>0..10</c> は終端を含みません（<c>..</c> の右側は排他的）。
-        /// </summary>
+        /// <summary>Half-open range loop (C# <c>0..10</c>).</summary>
         protected void ForEach(Range range, Action<int> content)
         {
             if (content == null) return;
             if (range.Start.IsFromEnd || range.End.IsFromEnd)
             {
-                Debug.LogWarning("ForEach(Range): ^（末尾から）を使う範囲は未対応です。");
+                Debug.LogWarning("[UniftUI] ForEach(Range): from-end ranges are not supported.");
                 return;
             }
 
@@ -220,31 +150,19 @@ namespace UniftUI
                 content(i);
         }
 
-        /// <summary>
-        /// SwiftUI の <c>ForEach(items, id: ...)</c> に相当。列の各要素でビューを組み立てます。
-        /// </summary>
+        /// <summary>Iterates a collection.</summary>
         protected void ForEach<T>(IEnumerable<T> data, Action<T> content)
         {
             foreach (T item in data)
                 content(item);
         }
 
-        // ─── Animation helpers ──────────────────────────────────────────────
+        /// <summary>Animates state changes inside <paramref name="changes"/>.</summary>
+        protected void WithAnimation(Animation animation, Action changes)
+            => AnimationContext.WithAnimation(animation, changes);
 
-        /// <summary>
-        /// SwiftUI の <c>withAnimation(.spring()) { ... }</c> に相当。
-        /// クロージャ内の State 変化をすべて指定したアニメーションで補間する。
-        /// </summary>
-        protected void withAnimation(Animation animation, Action changes)
-        {
-            AnimationContext.Push(animation);
-            try { changes(); }
-            finally { AnimationContext.Pop(); }
-        }
-
-        /// <summary>
-        /// デフォルトアニメーション（easeInOut 0.35 秒）で State 変化をアニメートする。
-        /// </summary>
-        protected void withAnimation(Action changes) => withAnimation(Animation.Default, changes);
+        /// <summary>Animates state changes with <see cref="Animation.Default"/>.</summary>
+        protected void WithAnimation(Action changes)
+            => AnimationContext.WithAnimation(changes);
     }
 }

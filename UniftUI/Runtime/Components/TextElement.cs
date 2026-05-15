@@ -5,6 +5,9 @@ using TMPro;
 
 namespace UniftUI
 {
+    /// <summary>
+    /// A declarative text view backed by TextMeshPro.
+    /// </summary>
     public class TextElement : UIElement
     {
         private string text;
@@ -22,10 +25,10 @@ namespace UniftUI
         private Vector2 shadowOffset = new Vector2(1, -1);
         private float shadowSoftness = 0;
 
-        // 構築済みのGameObjectとテキストコンポーネントへの参照を追加
         private GameObject builtTextObject;
         private TextMeshProUGUI builtTextComponent;
 
+        /// <summary>Creates a static text element.</summary>
         public TextElement(string text)
         {
             this.text = text;
@@ -33,7 +36,8 @@ namespace UniftUI
         }
 
         /// <summary>
-        /// 静的な文字列に加え、指定した <see cref="State"/> のいずれかが変わったとき本文を再評価します（中身は一定でも監視用に利用可能）。
+        /// Creates a static text element and re-evaluates the string when any of
+        /// <paramref name="dependencyStates"/> changes (useful for monitoring even when the text is constant).
         /// </summary>
         public TextElement(string text, State[] dependencyStates)
             : this((Func<string>)(() => text), dependencyStates)
@@ -41,7 +45,8 @@ namespace UniftUI
         }
 
         /// <summary>
-        /// 依存する <see cref="State"/> が変わるたびに <paramref name="textProvider"/> を再実行して本文を更新します（文字列補間の動的更新向け）。
+        /// Re-runs <paramref name="textProvider"/> whenever a dependency <see cref="State"/> changes
+        /// (intended for dynamic string interpolation).
         /// </summary>
         public TextElement(Func<string> textProvider, State[] dependencyStates = null)
         {
@@ -62,8 +67,8 @@ namespace UniftUI
         }
 
         /// <summary>
-        /// 文字列を <see cref="State{T}"/> で渡し、値変更をフル再構築なしで反映します。
-        /// （<c>Text(state)</c> は implicit conversion で <see cref="Text(string)"/> に落ちないよう本コンストラクタが優先されます）
+        /// Binds the displayed string to <paramref name="textState"/> and updates without a full rebuild.
+        /// This constructor is preferred over implicit conversion to <see cref="TextElement(string)"/>.
         /// </summary>
         public TextElement(State<string> textState)
             : this(textState, null)
@@ -71,7 +76,7 @@ namespace UniftUI
         }
 
         /// <summary>
-        /// <paramref name="textState"/> に加え、追加の <see cref="State"/> が変わったときも本文を <paramref name="textState"/> から再同期します。
+        /// Binds to <paramref name="textState"/> and also re-syncs when any additional <see cref="State"/> changes.
         /// </summary>
         public TextElement(State<string> textState, State[] additionalStates)
         {
@@ -118,11 +123,11 @@ namespace UniftUI
             ApplyTextString(textProvider());
         }
 
+        /// <summary>Sets the background color behind the text.</summary>
         public TextElement SetBackgroundColor(Color color)
         {
             this.backgroundColor = color;
-            
-            // すでに構築済みのオブジェクトがあれば背景色を更新
+
             if (builtTextObject != null)
             {
                 Image background = builtTextObject.GetComponent<Image>();
@@ -131,10 +136,11 @@ namespace UniftUI
                     background.color = color;
                 }
             }
-            
+
             return this;
         }
 
+        /// <summary>Sets the foreground text color.</summary>
         public TextElement SetTextColor(Color color)
         {
             if (useAnimation && builtTextComponent != null && animationDuration > 0)
@@ -144,37 +150,35 @@ namespace UniftUI
             else
             {
                 this.textColor = color;
-                
-                // すでに構築済みのテキストコンポーネントがあれば更新
+
                 if (builtTextComponent != null)
                 {
                     builtTextComponent.color = color;
                 }
             }
-            
+
             return this;
         }
-        
+
         private void AnimateTextColor(GameObject textObj, Color targetColor)
         {
             if (textObj == null || builtTextComponent == null) return;
-            
+
             TextColorAnimator animator = textObj.GetComponent<TextColorAnimator>();
             if (animator == null)
             {
                 animator = textObj.AddComponent<TextColorAnimator>();
             }
-            
-            // イージング指定を追加
+
             animator.AnimateTo(textColor, targetColor, animationDuration, animationEasing);
             textColor = targetColor;
         }
 
+        /// <summary>Applies or removes bold style.</summary>
         public TextElement SetBold(bool bold)
         {
             this.isBold = bold;
-            
-            // すでに構築済みのテキストコンポーネントがあれば太字設定を更新
+
             if (builtTextComponent != null)
             {
                 FontStyles fontStyle = builtTextComponent.fontStyle;
@@ -184,15 +188,15 @@ namespace UniftUI
                     fontStyle &= ~FontStyles.Bold;
                 builtTextComponent.fontStyle = fontStyle;
             }
-            
+
             return this;
         }
-        
+
+        /// <summary>Applies or removes italic style.</summary>
         public TextElement SetItalic(bool italic)
         {
             this.isItalic = italic;
-            
-            // すでに構築済みのテキストコンポーネントがあればイタリック設定を更新
+
             if (builtTextComponent != null)
             {
                 FontStyles fontStyle = builtTextComponent.fontStyle;
@@ -202,15 +206,15 @@ namespace UniftUI
                     fontStyle &= ~FontStyles.Italic;
                 builtTextComponent.fontStyle = fontStyle;
             }
-            
+
             return this;
         }
-        
+
+        /// <summary>Applies or removes underline style.</summary>
         public TextElement SetUnderline(bool underline)
         {
             this.isUnderlined = underline;
-            
-            // すでに構築済みのテキストコンポーネントがあれば下線設定を更新
+
             if (builtTextComponent != null)
             {
                 FontStyles fontStyle = builtTextComponent.fontStyle;
@@ -220,15 +224,15 @@ namespace UniftUI
                     fontStyle &= ~FontStyles.Underline;
                 builtTextComponent.fontStyle = fontStyle;
             }
-            
+
             return this;
         }
-        
+
+        /// <summary>Applies or removes strikethrough style.</summary>
         public TextElement SetStrikethrough(bool strikethrough)
         {
             this.isStrikethrough = strikethrough;
-            
-            // すでに構築済みのテキストコンポーネントがあれば取り消し線設定を更新
+
             if (builtTextComponent != null)
             {
                 FontStyles fontStyle = builtTextComponent.fontStyle;
@@ -238,66 +242,66 @@ namespace UniftUI
                     fontStyle &= ~FontStyles.Strikethrough;
                 builtTextComponent.fontStyle = fontStyle;
             }
-            
+
             return this;
         }
-        
+
+        /// <summary>Sets the font size in points.</summary>
         public TextElement SetFontSize(float size)
         {
             this.fontSize = size;
-            
-            // すでに構築済みのテキストコンポーネントがあればフォントサイズを更新
+
             if (builtTextComponent != null)
             {
                 builtTextComponent.fontSize = size;
             }
-            
+
             return this;
         }
 
+        /// <summary>Sets the TextMesh Pro font asset.</summary>
         public TextElement SetFont(TMP_FontAsset font)
         {
             this.fontAsset = font;
-            
-            // すでに構築済みのテキストコンポーネントがあればフォントを更新
+
             if (builtTextComponent != null && font != null)
             {
                 builtTextComponent.font = font;
             }
-            
+
             return this;
         }
 
+        /// <summary>Applies a TextMesh Pro underlay shadow.</summary>
         public TextElement SetTMProShadow(Color color, Vector2 offset, float softness = 0)
         {
             this.hasShadow = true;
-            
+
             float minAlpha = 0.5f;
             if (color.a < minAlpha) {
                 color = new Color(color.r, color.g, color.b, minAlpha);
             }
             this.shadowColor = color;
-            
+
             float offsetMultiplier = 1.5f;
             this.shadowOffset = offset * offsetMultiplier;
-            
+
             this.shadowSoftness = softness * 0.7f;
 
-            // すでに構築済みのテキストコンポーネントがあれば影設定を更新
             if (builtTextComponent != null)
             {
                 ApplyShadowToTextComponent(builtTextComponent);
             }
-            
+
             return this;
         }
 
         private void ApplyShadowToTextComponent(TextMeshProUGUI textComponent)
         {
             if (!hasShadow || textComponent == null) return;
-            
+
             textComponent.enableVertexGradient = false;
-            
+
             Material mat = null;
             if (textComponent.fontSharedMaterial != null)
             {
@@ -307,21 +311,22 @@ namespace UniftUI
             {
                 mat = new Material(textComponent.font.material);
             }
-            
+
             if (mat != null)
             {
                 mat.EnableKeyword("UNDERLAY_ON");
-                
+
                 mat.SetColor("_UnderlayColor", shadowColor);
                 mat.SetFloat("_UnderlayOffsetX", shadowOffset.x);
                 mat.SetFloat("_UnderlayOffsetY", shadowOffset.y);
                 mat.SetFloat("_UnderlayDilate", 1);
                 mat.SetFloat("_UnderlaySoftness", shadowSoftness);
-                
+
                 textComponent.fontMaterial = mat;
             }
         }
 
+        /// <inheritdoc />
         public override GameObject Build(Transform parent)
         {
             GameObject textObj = new GameObject("Text");
@@ -339,19 +344,19 @@ namespace UniftUI
             textComponent.fontSize = fontSize;
             textComponent.color = textColor;
             textComponent.alignment = TextAlignmentOptions.Center;
-            
+
             TMP_FontAsset effectiveFont = fontAsset ?? UIContext.DefaultFont;
             if (effectiveFont != null)
             {
                 textComponent.font = effectiveFont;
             }
-            
+
             FontStyles fontStyle = FontStyles.Normal;
             if (isBold) fontStyle |= FontStyles.Bold;
             if (isItalic) fontStyle |= FontStyles.Italic;
-            if (isUnderlined) fontStyle |= FontStyles.Underline; 
+            if (isUnderlined) fontStyle |= FontStyles.Underline;
             if (isStrikethrough) fontStyle |= FontStyles.Strikethrough;
-            
+
             textComponent.fontStyle = fontStyle;
 
             if (hasShadow)
@@ -361,13 +366,13 @@ namespace UniftUI
 
             LayoutElement layoutElement = textObj.AddComponent<LayoutElement>();
             ContentSizeFitter sizeFitter = textObj.AddComponent<ContentSizeFitter>();
-            
+
             if (infiniteWidth)
             {
                 layoutElement.flexibleWidth = 1;
                 layoutElement.preferredWidth = -1;
                 layoutElement.flexibleHeight = 0;
-                
+
                 sizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
                 sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             }
@@ -378,25 +383,24 @@ namespace UniftUI
                 layoutElement.flexibleWidth = 0;
                 layoutElement.flexibleHeight = 0;
                 layoutElement.layoutPriority = 100;
-                
+
                 RectTransform rectTransform = textObj.GetComponent<RectTransform>();
                 rectTransform.sizeDelta = new Vector2(preferredWidth, rectTransform.sizeDelta.y);
-                
+
                 sizeFitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
                 sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             }
             else
             {
                 layoutElement.flexibleHeight = 0;
-                
+
                 sizeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
                 sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             }
 
-            // 構築したオブジェクトとコンポーネントへの参照を保存
             builtTextObject = textObj;
             builtTextComponent = textComponent;
-            
+
             ApplyAllEffects(textObj, background);
 
             return textObj;

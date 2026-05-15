@@ -3,6 +3,7 @@ using System;
 
 namespace UniftUI
 {
+    /// <summary>Subscribes to <see cref="State"/> changes and triggers a UI rebuild callback.</summary>
     public class StateObserver : MonoBehaviour
     {
         private Action rebuildAction;
@@ -10,6 +11,7 @@ namespace UniftUI
         private bool isDestroyed = false;
         private bool isObserving = false;
 
+        /// <summary>Starts observing the given states and invokes <paramref name="rebuildAction"/> on change.</summary>
         public void Initialize(State[] states, Action rebuildAction)
         {
             RemoveObservers();
@@ -17,7 +19,7 @@ namespace UniftUI
             this.states = states;
             this.rebuildAction = rebuildAction;
             isDestroyed = false;
-            
+
             AddObservers();
         }
 
@@ -41,35 +43,35 @@ namespace UniftUI
         {
             if (isDestroyed || this == null || gameObject == null || !gameObject.activeInHierarchy)
                 return;
-                
+
             try
             {
                 rebuildAction?.Invoke();
             }
             catch (Exception e)
             {
-                Debug.LogError($"StateObserver: UI再構築中にエラーが発生しました: {e.Message}\n{e.StackTrace}");
+                Debug.LogError($"[UniftUI] StateObserver rebuild error: {e.Message}\n{e.StackTrace}");
                 RemoveObservers();
             }
         }
-        
+
         private void OnDestroy()
         {
             isDestroyed = true;
             RemoveObservers();
         }
-        
+
         private void OnDisable()
         {
             RemoveObservers();
         }
-        
+
         private void OnEnable()
         {
             if (!isDestroyed)
                 AddObservers();
         }
-        
+
         private void RemoveObservers()
         {
             if (!isObserving || states == null)

@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 
 namespace UniftUI
 {
     /// <summary>
-    /// SwiftUI の Animation 型と同じ API を提供する構造体。
+    /// Describes how property changes are animated.
+    /// Not related to <see cref="UnityEngine.Animation"/>.
     /// </summary>
     public struct Animation
     {
@@ -14,6 +16,7 @@ namespace UniftUI
         public int animRepeatCount;
         public bool animAutoreverses;
 
+        /// <summary>Default animation: <see cref="easeInOut"/> with a 0.35s duration.</summary>
         public static readonly Animation Default = easeInOut();
 
         public static Animation linear(float duration = 0.35f)
@@ -46,14 +49,25 @@ namespace UniftUI
     }
 
     /// <summary>
-    /// withAnimation { } のグローバルアニメーションコンテキスト。
-    /// Stack を使って再入可能に実装。メインスレッド専用。
+    /// Holds the implicit animation used by <see cref="WithAnimation"/> during a scoped update.
     /// </summary>
     public static class AnimationContext
     {
         private static readonly Stack<Animation> stack = new Stack<Animation>();
 
+        /// <summary>Animation from the innermost active <see cref="WithAnimation"/> scope, if any.</summary>
         public static Animation? Current => stack.Count > 0 ? stack.Peek() : (Animation?)null;
+
+        /// <summary>Runs <paramref name="changes"/> while applying <paramref name="animation"/> to state-driven updates.</summary>
+        public static void WithAnimation(Animation animation, Action changes)
+        {
+            Push(animation);
+            try { changes(); }
+            finally { Pop(); }
+        }
+
+        /// <summary>Runs <paramref name="changes"/> with <see cref="Animation.Default"/>.</summary>
+        public static void WithAnimation(Action changes) => WithAnimation(Animation.Default, changes);
 
         internal static void Push(Animation animation) => stack.Push(animation);
 

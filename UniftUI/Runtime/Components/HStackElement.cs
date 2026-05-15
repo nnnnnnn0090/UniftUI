@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace UniftUI
 {
+    /// <summary>Horizontal stack layout.</summary>
     public class HStackElement : UIElement, ILayoutContainer
     {
         private Action content;
@@ -19,11 +20,11 @@ namespace UniftUI
             this.states = states;
             this.spacing = spacing;
             this.alignment = alignment;
-            
+
             if (content != null)
             {
                 var parentContext = UIContext.Current;
-                
+
                 try
                 {
                     UIContext.Current = this;
@@ -40,7 +41,7 @@ namespace UniftUI
         {
             if (child == null)
                 return;
-                
+
             children.Add(child);
         }
 
@@ -62,7 +63,7 @@ namespace UniftUI
             }
             else
             {
-                 Debug.LogWarning($"ReplaceChild: oldChild not found in HStack. Old: {oldChild}, New: {newChild}. Children count: {children.Count}");
+                 Debug.LogWarning($"[UniftUI] HStack ReplaceChild: oldChild not found. Children count: {children.Count}");
             }
         }
 
@@ -87,7 +88,7 @@ namespace UniftUI
             ContentSizeFitter buttonFitter = container.AddComponent<ContentSizeFitter>();
             buttonFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             buttonFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            
+
             switch (alignment)
             {
                 case HStackAlignment.Top:
@@ -104,12 +105,12 @@ namespace UniftUI
                     layout.childAlignment = TextAnchor.MiddleCenter;
                     break;
             }
-            
+
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = false;
-            
+
             layout.spacing = spacing;
             layout.padding = padding ?? new RectOffset(0,0,0,0);
 
@@ -153,19 +154,19 @@ namespace UniftUI
 
             return container;
         }
-        
+
         private void SetupStateObserver(GameObject container)
         {
             if (container == null) return;
-            
+
             StateObserver observer = container.AddComponent<StateObserver>();
             observer.Initialize(states, () => {
                 if (container == null || !container)
                 {
-                    Debug.LogWarning("HStack: コンテナが既に破棄されています");
+                    Debug.LogWarning("[UniftUI] HStack rebuild skipped: container was destroyed.");
                     return;
                 }
-                
+
                 try
                 {
                     foreach (Transform child in container.transform)
@@ -173,34 +174,34 @@ namespace UniftUI
                         if (child != null && child.gameObject != null)
                             UnityEngine.Object.Destroy(child.gameObject);
                     }
-                    
+
                     children.Clear();
-                    
+
                     var parentContext = UIContext.Current;
                     UIContext.Current = this;
-                    
+
                     if (content != null)
                         content.Invoke();
-                    
+
                     UIContext.Current = parentContext;
-                    
+
                     foreach (var child in children)
                     {
                         if (child == null) continue;
-                        
+
                         if (UIContext.DefaultFont != null)
                             child.Font(UIContext.DefaultFont);
-                        
+
                         child.Build(container.transform);
                     }
-                    
+
                     Canvas.ForceUpdateCanvases();
 
                     BaselineRowAligner.AlignIfNeeded(container, alignment);
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"HStack: UIの再構築中にエラーが発生しました: {e.Message}\n{e.StackTrace}");
+                    Debug.LogError($"[UniftUI] HStack rebuild error: {e.Message}\n{e.StackTrace}");
                 }
             });
         }

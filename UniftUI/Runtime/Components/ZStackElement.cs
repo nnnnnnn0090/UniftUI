@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 namespace UniftUI
 {
+    /// <summary>
+    /// Overlays child views on top of each other.
+    /// </summary>
     public class ZStackElement : UIElement, ILayoutContainer
     {
         private Action content;
@@ -12,12 +15,13 @@ namespace UniftUI
         private List<UIElement> children = new List<UIElement>();
         private ZStackAlignment alignment;
 
+        /// <summary>Creates a <see cref="ZStackElement"/> with the given content builder and optional state dependencies.</summary>
         public ZStackElement(Action content, State[] states = null, ZStackAlignment alignment = ZStackAlignment.Center)
         {
             this.content = content;
             this.states = states;
             this.alignment = alignment;
-            
+
             if (content != null)
             {
                 var parentContext = UIContext.Current;
@@ -33,16 +37,19 @@ namespace UniftUI
             }
         }
 
+        /// <inheritdoc />
         public void AddChild(UIElement child)
         {
             if (child != null) children.Add(child);
         }
 
+        /// <inheritdoc />
         public void RemoveChild(UIElement child)
         {
             if (child != null) children.Remove(child);
         }
 
+        /// <inheritdoc />
         public void ReplaceChild(UIElement oldChild, UIElement newChild)
         {
             if (oldChild == null || newChild == null) return;
@@ -50,14 +57,16 @@ namespace UniftUI
             if (index != -1)
                 children[index] = newChild;
             else
-                Debug.LogWarning($"ReplaceChild: oldChild not found in ZStack. Old: {oldChild}, New: {newChild}. Children count: {children.Count}");
+                Debug.LogWarning($"[UniftUI] ReplaceChild: oldChild not found in ZStack. Old: {oldChild}, New: {newChild}. Children count: {children.Count}");
         }
 
+        /// <inheritdoc />
         public IEnumerable<UIElement> GetChildren()
         {
             return children;
         }
 
+        /// <inheritdoc />
         public override GameObject Build(Transform parent)
         {
             GameObject container = new GameObject("ZStack");
@@ -72,12 +81,10 @@ namespace UniftUI
 
             LayoutElement layoutElement = container.AddComponent<LayoutElement>();
             ContentSizeFitter buttonFitter = container.AddComponent<ContentSizeFitter>();
-            
-            // 重要な修正: コンテンツサイズフィッターのデフォルト設定を変更
+
             buttonFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             buttonFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            // サイズ設定
             if (infiniteWidth)
             {
                 layoutElement.flexibleWidth = 1;
@@ -100,52 +107,46 @@ namespace UniftUI
                 layoutElement.minHeight = preferredHeight;
             }
 
-            // アライメント変換
             TextAnchor childAlignment = GetTextAnchorFromAlignment(alignment);
             RectOffset actualPadding = padding ?? new RectOffset(0, 0, 0, 0);
 
             float maxWidth = 0;
             float maxHeight = 0;
-            
-            // 子要素を配置
+
             foreach (var child in children)
             {
                 if (child == null) continue;
-                
+
                 GameObject childObj = child.Build(container.transform);
-                
+
                 RectTransform childRect = childObj.GetComponent<RectTransform>();
                 if (childRect != null)
                 {
-                    // 最大サイズを計算
                     LayoutRebuilder.ForceRebuildLayoutImmediate(childRect);
                     maxWidth = Mathf.Max(maxWidth, childRect.rect.width);
                     maxHeight = Mathf.Max(maxHeight, childRect.rect.height);
-                    
+
                     ApplyZStackChildRect(child, childObj, childRect, actualPadding, childAlignment);
                 }
             }
-            
-            // 自動サイズ調整
+
             if (!infiniteWidth && preferredWidth < 0 && maxWidth > 0)
             {
                 layoutElement.preferredWidth = maxWidth + actualPadding.left + actualPadding.right;
                 layoutElement.minWidth = maxWidth + actualPadding.left + actualPadding.right;
             }
-            
+
             if (!infiniteHeight && preferredHeight < 0 && maxHeight > 0)
             {
                 layoutElement.preferredHeight = maxHeight + actualPadding.top + actualPadding.bottom;
                 layoutElement.minHeight = maxHeight + actualPadding.top + actualPadding.bottom;
             }
 
-            // 状態監視の設定
             if (states != null && states.Length > 0)
             {
                 SetupStateObserver(container);
             }
-            
-            // すべてのエフェクトを適用
+
             ApplyAllEffects(container, backgroundImage);
 
             return container;
@@ -154,68 +155,64 @@ namespace UniftUI
         private void SetupStateObserver(GameObject container)
         {
             if (container == null) return;
-            
+
             StateObserver observer = container.AddComponent<StateObserver>();
-            
+
             observer.Initialize(states, () => {
                 if (container == null || !container)
                 {
-                    Debug.LogWarning("ZStack: コンテナが既に破棄されています");
+                    Debug.LogWarning("[UniftUI] ZStack: container was already destroyed.");
                     return;
                 }
-                
+
                 try
                 {
-                    // 子要素をクリア
                     foreach (Transform child in container.transform)
                     {
                         if (child != null && child.gameObject != null)
                             GameObject.Destroy(child.gameObject);
                     }
-                    
+
                     children.Clear();
-                    
-                    // コンテンツを再生成
+
                     var parentContext = UIContext.Current;
                     UIContext.Current = this;
-                    
+
                     if (content != null)
                         content.Invoke();
-                    
+
                     UIContext.Current = parentContext;
-                    
-                    // アライメントとパディングを準備
+
                     TextAnchor childAlignment = GetTextAnchorFromAlignment(alignment);
                     RectOffset actualPadding = padding ?? new RectOffset(0, 0, 0, 0);
-                    
-                    // 子要素を再構築
+
                     foreach (var child in children)
                     {
                         if (child == null) continue;
-                        
+
                         if (UIContext.DefaultFont != null)
                             child.Font(UIContext.DefaultFont);
-                        
+
                         GameObject childObj = child.Build(container.transform);
-                        
+
                         RectTransform childRect = childObj.GetComponent<RectTransform>();
                         if (childRect != null)
                         {
                             ApplyZStackChildRect(child, childObj, childRect, actualPadding, childAlignment);
                         }
                     }
-                    
+
                     Canvas.ForceUpdateCanvases();
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"ZStack: UIの再構築中にエラーが発生しました: {e.Message}\n{e.StackTrace}");
+                    Debug.LogError($"[UniftUI] ZStack: error while rebuilding UI: {e.Message}\n{e.StackTrace}");
                 }
             });
         }
 
         /// <summary>
-        /// Position() は親左上基準・Y は上から下向きが正（Unity 左上アンカーでは Y を反転して適用）。
+        /// Lays out a child in the stack. <see cref="UIElement.WithPosition"/> uses a top-left origin with Y increasing downward.
         /// </summary>
         private void ApplyZStackChildRect(UIElement child, GameObject childObj, RectTransform childRect,
             RectOffset actualPadding, TextAnchor childAlignment)
@@ -244,7 +241,6 @@ namespace UniftUI
                 childRect.anchorMax = new Vector2(0, 1);
                 childRect.pivot = new Vector2(0, 1);
                 Vector2 p = child.customPosition;
-                // API の Y は上から下向き正。Unity 左上アンカーでは負の Y が下方向（TopLeading の -padding.top と同じ）
                 childRect.anchoredPosition = new Vector2(
                     actualPadding.left + p.x,
                     -actualPadding.top - p.y);
@@ -293,7 +289,7 @@ namespace UniftUI
 
             SetChildAlignment(childObj, childAlignment);
         }
-        
+
         private TextAnchor GetTextAnchorFromAlignment(ZStackAlignment alignment)
         {
             switch (alignment)
@@ -327,18 +323,18 @@ namespace UniftUI
                 default: return new Vector2(0.5f, 0.5f);
             }
         }
-        
+
         private void SetChildAlignment(GameObject childObj, TextAnchor alignment)
         {
             VerticalLayoutGroup vlg = childObj.GetComponent<VerticalLayoutGroup>();
             if (vlg != null) { vlg.childAlignment = alignment; return; }
-            
+
             HorizontalLayoutGroup hlg = childObj.GetComponent<HorizontalLayoutGroup>();
             if (hlg != null) { hlg.childAlignment = alignment; return; }
-            
+
             GridLayoutGroup glg = childObj.GetComponent<GridLayoutGroup>();
             if (glg != null) { glg.childAlignment = alignment; return; }
-            
+
             TMPro.TextMeshProUGUI tmpText = childObj.GetComponent<TMPro.TextMeshProUGUI>();
             if (tmpText != null)
             {
@@ -359,27 +355,12 @@ namespace UniftUI
 
         protected override void PropagateInfiniteWidthToContent()
         {
-            // 修正: すべての子要素に強制的に無限幅を設定しない
-            // 代わりに、ZStackの中で無限拡張が必要な場合のみ対応する
-            // このメソッドは基本的に空にして、必要なら個別に対応する
-            // foreach (var child in children)
-            // {
-            //     child?.WithInfiniteWidth();
-            // }
         }
 
         protected override void PropagateInfiniteHeightToContent()
         {
-            // 修正: すべての子要素に強制的に無限高さを設定しない
-            // 代わりに、ZStackの中で無限拡張が必要な場合のみ対応する
-            // このメソッドは基本的に空にして、必要なら個別に対応する
-            // foreach (var child in children)
-            // {
-            //     child?.WithInfiniteHeight();
-            // }
         }
 
-        // アライメントに基づいたアンカー位置を取得するヘルパーメソッドを追加
         private Vector2 GetAnchorFromAlignment(ZStackAlignment alignment)
         {
             switch (alignment)
@@ -398,6 +379,7 @@ namespace UniftUI
         }
     }
 
+    /// <summary>Alignment options for <see cref="ZStackElement"/> children.</summary>
     public enum ZStackAlignment
     {
         TopLeading,

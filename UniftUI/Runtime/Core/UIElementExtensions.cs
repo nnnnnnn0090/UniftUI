@@ -6,52 +6,55 @@ using System.Threading.Tasks;
 
 namespace UniftUI
 {
+    /// <summary>
+    /// Modifier extensions for <see cref="UIElement"/> types.
+    /// </summary>
     public static class UIElementExtensions
     {
-        public static T Frame<T>(this T element, float? width = null, float? height = null, 
+        /// <summary>Sets frame dimensions and optional infinite expansion.</summary>
+        public static T Frame<T>(this T element, float? width = null, float? height = null,
                                 bool? infiniteWidth = null, bool? infiniteHeight = null) where T : UIElement
         {
             if (width.HasValue)
             {
                 element.WithWidth(width.Value);
             }
-            
+
             if (height.HasValue)
             {
                 element.WithHeight(height.Value);
             }
-            
+
             if (infiniteWidth.HasValue && infiniteWidth.Value)
             {
                 element.WithInfiniteWidth();
             }
-            
+
             if (infiniteHeight.HasValue && infiniteHeight.Value)
             {
                 element.WithInfiniteHeight();
             }
-            
+
             return element;
         }
-        
-        // State対応フレーム設定 - 修正版
+
+        /// <summary>Sets frame dimensions from reactive <see cref="State{T}"/> values.</summary>
         public static T Frame<T>(this T element, State<float> width = null, State<float> height = null) where T : UIElement
         {
             if (width != null)
             {
-                // Stateオブジェクト自体をWithWidthに直接渡す
                 element.WithWidth(width);
             }
-            
+
             if (height != null)
             {
-                // Stateオブジェクト自体をWithHeightに直接渡す
                 element.WithHeight(height);
             }
-            
+
             return element;
         }
-        
+
+        /// <summary>Wraps the element in a background layer.</summary>
         public static BackgroundElement Background<T>(this T element, Color color) where T : UIElement
         {
             var backgroundElement = new BackgroundElement(element, color);
@@ -59,12 +62,12 @@ namespace UniftUI
             backgroundElement.preferredHeight = element.preferredHeight;
             backgroundElement.infiniteWidth = element.infiniteWidth;
             backgroundElement.infiniteHeight = element.infiniteHeight;
-            
+
             UIContext.Current?.ReplaceChild(element, backgroundElement);
             return backgroundElement;
         }
-        
-        // State対応背景設定
+
+        /// <summary>Wraps the element in a reactive background layer.</summary>
         public static BackgroundElement Background<T>(this T element, State<Color> color) where T : UIElement
         {
             var backgroundElement = new BackgroundElement(element, color.Value);
@@ -72,15 +75,14 @@ namespace UniftUI
             backgroundElement.preferredHeight = element.preferredHeight;
             backgroundElement.infiniteWidth = element.infiniteWidth;
             backgroundElement.infiniteHeight = element.infiniteHeight;
-            
-            // Stateの更新をバインド
+
             backgroundElement.WithBackgroundColor(color);
-            
+
             UIContext.Current?.ReplaceChild(element, backgroundElement);
             return backgroundElement;
         }
 
-        /// <summary>SwiftUI の <c>.offset(x:y:)</c> に相当します。</summary>
+        /// <summary>Applies a visual offset by x and y.</summary>
         public static OffsetElement Offset<T>(this T element, float x, float y) where T : UIElement
         {
             var offsetElement = new OffsetElement(element, new Vector2(x, y));
@@ -88,7 +90,7 @@ namespace UniftUI
             return offsetElement;
         }
 
-        /// <summary>SwiftUI の <c>.offset(_:)</c>（CGSize / Vector2）に相当します。</summary>
+        /// <summary>Applies a visual offset from a vector.</summary>
         public static OffsetElement Offset<T>(this T element, Vector2 offset) where T : UIElement
         {
             var offsetElement = new OffsetElement(element, offset);
@@ -96,6 +98,7 @@ namespace UniftUI
             return offsetElement;
         }
 
+        /// <summary>Reactive offset from <see cref="State{Vector2}"/>.</summary>
         public static OffsetElement Offset<T>(this T element, State<Vector2> offset) where T : UIElement
         {
             var offsetElement = new OffsetElement(element, offset);
@@ -103,13 +106,15 @@ namespace UniftUI
             return offsetElement;
         }
 
+        /// <summary>Reactive offset with independent X state.</summary>
         public static OffsetElement Offset<T>(this T element, State<float> x, float y) where T : UIElement
         {
             var offsetElement = new OffsetElement(element, x, y);
             UIContext.Current?.ReplaceChild(element, offsetElement);
             return offsetElement;
         }
-        
+
+        /// <summary>Sets foreground color on text-like elements and propagates through layout containers.</summary>
         public static T ForegroundColor<T>(this T element, Color color) where T : UIElement
         {
             if (element is TextElement textElement)
@@ -133,15 +138,15 @@ namespace UniftUI
             }
             return element;
         }
-        
-        // State対応前景色設定
+
+        /// <summary>Reactive foreground color.</summary>
         public static T ForegroundColor<T>(this T element, State<Color> color) where T : UIElement
         {
             if (element is TextElement textElement)
             {
                 if (color != null) {
                     textElement.SetTextColor(color.Value);
-                    
+
                     textElement.AddPropertyBinding(color, () => {
                         textElement.SetTextColor(color.Value);
                     }, "textColor");
@@ -151,7 +156,7 @@ namespace UniftUI
             {
                 if (color != null) {
                     buttonElement.SetTextColor(color.Value);
-                    
+
                     buttonElement.AddPropertyBinding(color, () => {
                         buttonElement.SetTextColor(color.Value);
                     }, "buttonTextColor");
@@ -161,7 +166,7 @@ namespace UniftUI
             {
                 if (color != null) {
                     textFieldElement.SetTextColor(color.Value);
-                    
+
                     textFieldElement.AddPropertyBinding(color, () => {
                         textFieldElement.SetTextColor(color.Value);
                     }, "textFieldTextColor");
@@ -176,7 +181,8 @@ namespace UniftUI
             }
             return element;
         }
-        
+
+        /// <summary>Wraps the element with uniform padding.</summary>
         public static PaddingElement Padding<T>(this T element, int padding) where T : UIElement
         {
             var paddingValue = new RectOffset(padding, padding, padding, padding);
@@ -189,8 +195,8 @@ namespace UniftUI
             UIContext.Current?.ReplaceChild(element, paddingElement);
             return paddingElement;
         }
-        
-        // State対応パディング設定
+
+        /// <summary>Wraps the element with reactive uniform padding.</summary>
         public static PaddingElement Padding<T>(this T element, State<int> padding) where T : UIElement
         {
             var paddingValue = new RectOffset(padding.Value, padding.Value, padding.Value, padding.Value);
@@ -199,9 +205,8 @@ namespace UniftUI
             paddingElement.preferredHeight = element.preferredHeight;
             paddingElement.infiniteWidth = element.infiniteWidth;
             paddingElement.infiniteHeight = element.infiniteHeight;
-            
+
             paddingElement.AddPropertyBinding(padding, () => {
-                // PaddingElementのUpdatePaddingメソッドを呼び出す
                 paddingElement.UpdatePadding(padding.Value);
             }, "padding");
 
@@ -209,7 +214,7 @@ namespace UniftUI
             return paddingElement;
         }
 
-        /// <summary>SwiftUI の <c>.fixedSize()</c> / <c>fixedSize(horizontal:vertical:)</c> に相当します。</summary>
+        /// <summary>Sizes to content instead of expanding to fill the parent.</summary>
         public static FixedSizeElement FixedSize<T>(this T element, bool horizontal = true, bool vertical = true) where T : UIElement
         {
             var fs = new FixedSizeElement(element, horizontal, vertical);
@@ -217,6 +222,7 @@ namespace UniftUI
             return fs;
         }
 
+        /// <summary>Wraps the element with explicit <see cref="RectOffset"/> padding.</summary>
         public static PaddingElement Padding<T>(this T element, RectOffset padding) where T : UIElement
         {
             var paddingElement = new PaddingElement(element, padding);
@@ -224,11 +230,12 @@ namespace UniftUI
             paddingElement.preferredHeight = element.preferredHeight;
             paddingElement.infiniteWidth = element.infiniteWidth;
             paddingElement.infiniteHeight = element.infiniteHeight;
-            
+
             UIContext.Current?.ReplaceChild(element, paddingElement);
             return paddingElement;
         }
 
+        /// <summary>Wraps the element with per-edge padding.</summary>
         public static PaddingElement Padding<T>(this T element, float? top = null, float? bottom = null, float? left = null, float? right = null) where T : UIElement
         {
             var paddingValue = new RectOffset(
@@ -247,7 +254,8 @@ namespace UniftUI
             UIContext.Current?.ReplaceChild(element, paddingElement);
             return paddingElement;
         }
-        
+
+        /// <summary>Applies bold to text elements and propagates through layout containers.</summary>
         public static T Bold<T>(this T element) where T : UIElement
         {
             if (element is TextElement textElement)
@@ -263,7 +271,8 @@ namespace UniftUI
             }
             return element;
         }
-        
+
+        /// <summary>Applies italic to text elements and propagates through layout containers.</summary>
         public static T Italic<T>(this T element) where T : UIElement
         {
             if (element is TextElement textElement)
@@ -279,7 +288,8 @@ namespace UniftUI
             }
             return element;
         }
-        
+
+        /// <summary>Applies underline to text elements and propagates through layout containers.</summary>
         public static T Underline<T>(this T element) where T : UIElement
         {
             if (element is TextElement textElement)
@@ -295,7 +305,8 @@ namespace UniftUI
             }
             return element;
         }
-        
+
+        /// <summary>Applies strikethrough to text elements and propagates through layout containers.</summary>
         public static T Strikethrough<T>(this T element) where T : UIElement
         {
             if (element is TextElement textElement)
@@ -311,22 +322,26 @@ namespace UniftUI
             }
             return element;
         }
-        
+
+        /// <summary>Sets image tint color.</summary>
         public static ImageElement TintColor(this ImageElement element, Color color)
         {
             return element.WithTintColor(color);
         }
-        
+
+        /// <summary>Sets image scale mode.</summary>
         public static ImageElement ScaleMode(this ImageElement element, ImageScaleMode mode)
         {
             return element.WithScaleMode(mode);
         }
-        
+
+        /// <summary>Sets image opacity.</summary>
         public static ImageElement Opacity(this ImageElement element, float opacity)
         {
             return element.WithOpacity(opacity);
         }
-        
+
+        /// <summary>Sets view opacity (delegates to <see cref="UIElement.WithOpacity"/>).</summary>
         public static T Opacity<T>(this T element, float opacity) where T : UIElement
         {
             if (element is ImageElement)
@@ -335,8 +350,8 @@ namespace UniftUI
             }
             return (T)element.WithOpacity(opacity);
         }
-        
-        // State対応不透明度設定
+
+        /// <summary>Reactive opacity.</summary>
         public static T Opacity<T>(this T element, State<float> opacity) where T : UIElement
         {
             if (element is ImageElement)
@@ -345,7 +360,8 @@ namespace UniftUI
             }
             return (T)element.WithOpacity(opacity);
         }
-        
+
+        /// <summary>Sets font size on text-like elements and propagates through layout containers.</summary>
         public static T FontSize<T>(this T element, float size) where T : UIElement
         {
             if (element is TextElement textElement)
@@ -365,12 +381,12 @@ namespace UniftUI
             }
             return element;
         }
-        
+
+        /// <summary>
+        /// Sets font on text-like elements within this subtree. Does not change global <see cref="UIContext.DefaultFont"/>.
+        /// </summary>
         public static T Font<T>(this T element, TMP_FontAsset font) where T : UIElement
         {
-            // グローバルの DefaultFont は更新しない（親スタックの兄弟へ波及させない）。SwiftUI の .font スコープに近い。
-            // アプリ全体の既定フォントは TabView 等が UIContext.SetDefaultFont を明示するか、ルートで必要なら直接呼ぶ。
-
             if (element is TextElement textElement)
             {
                 textElement.SetFont(font);
@@ -398,227 +414,252 @@ namespace UniftUI
                     child.Font(font);
                 }
             }
-            
+
             return element;
         }
 
+        /// <summary>Applies uniform corner radius.</summary>
         public static T CornerRadius<T>(this T element, float radius) where T : UIElement
         {
             element.WithCornerRadius(radius);
             return element;
         }
-        
-        // State対応角丸設定
+
+        /// <summary>Reactive uniform corner radius.</summary>
         public static T CornerRadius<T>(this T element, State<float> radius) where T : UIElement
         {
             element.WithCornerRadius(radius);
             return element;
         }
-        
+
+        /// <summary>Applies per-corner corner radius.</summary>
         public static T CornerRadius<T>(this T element, float topLeft, float topRight, float bottomRight, float bottomLeft) where T : UIElement
         {
             element.WithCornerRadius(topLeft, topRight, bottomRight, bottomLeft);
             return element;
         }
-        
+
+        /// <summary>Applies corner radius to selected corners.</summary>
         public static T CornerRadius<T>(this T element, RectCorner corners, float radius) where T : UIElement
         {
             element.WithCornerRadius(radius, corners);
             return element;
         }
-        
+
+        /// <summary>Applies a shadow to the element or TextMesh Pro underlay shadow for text.</summary>
         public static UIElement Shadow<T>(this T element, Color? color = null, float radius = 3f, float x = 0, float y = 0) where T : UIElement
         {
             Color shadowColor = color ?? new Color(0,0,0);
             Vector2 offset = new Vector2(x, y);
-            
+
             if (element is TextElement textElement)
             {
                 return textElement.SetTMProShadow(shadowColor, offset, radius);
             }
-            
+
             var shadowElement = new ShadowElement(element, shadowColor, offset, radius);
-            
+
             shadowElement.preferredWidth = element.preferredWidth;
             shadowElement.preferredHeight = element.preferredHeight;
             shadowElement.infiniteWidth = element.infiniteWidth;
             shadowElement.infiniteHeight = element.infiniteHeight;
-            
+
             UIContext.Current?.ReplaceChild(element, shadowElement);
             return shadowElement;
         }
-        
+
+        /// <summary>Sets text field line limit.</summary>
         public static TextFieldElement LineLimit(this TextFieldElement element, int? limit = null)
         {
             return element.SetLineLimit(limit);
         }
-        
+
+        /// <summary>Applies rotation effect in degrees (Z axis).</summary>
         public static T RotationEffect<T>(this T element, float degrees) where T : UIElement
         {
             return (T)element.WithRotationEffect(degrees);
         }
-        
+
+        /// <summary>Applies rotation effect with Euler angles.</summary>
         public static T RotationEffect<T>(this T element, float x, float y, float z) where T : UIElement
         {
             return (T)element.WithRotationEffect(x, y, z);
         }
-        
+
+        /// <summary>Reactive rotation on the Z axis.</summary>
         public static T RotationEffect<T>(this T element, State<float> degrees) where T : UIElement
         {
             return (T)element.WithRotationEffect(degrees);
         }
-        
+
+        /// <summary>Reactive rotation with bound X component.</summary>
         public static T RotationEffect<T>(this T element, State<float> x, float y, float z) where T : UIElement
         {
             return (T)element.WithRotationEffect(x, y, z);
         }
-        
+
+        /// <summary>Reactive rotation with bound Y component.</summary>
         public static T RotationEffect<T>(this T element, float x, State<float> y, float z) where T : UIElement
         {
             return (T)element.WithRotationEffect(x, y, z);
         }
-        
+
+        /// <summary>Reactive rotation with bound Z component.</summary>
         public static T RotationEffect<T>(this T element, float x, float y, State<float> z) where T : UIElement
         {
             return (T)element.WithRotationEffect(x, y, z);
         }
-        
+
+        /// <summary>Reactive rotation with bound <see cref="Vector3"/> Euler angles.</summary>
         public static T RotationEffect<T>(this T element, State<Vector3> euler) where T : UIElement
         {
             return (T)element.WithRotationEffect(euler);
         }
-        
+
+        /// <summary>Applies uniform scale effect.</summary>
         public static T ScaleEffect<T>(this T element, float scale) where T : UIElement
         {
             return (T)element.WithScaleEffect(scale);
         }
-        
+
+        /// <summary>Applies scale effect on X and Y.</summary>
         public static T ScaleEffect<T>(this T element, float x, float y) where T : UIElement
         {
             return (T)element.WithScaleEffect(x, y);
         }
-        
+
+        /// <summary>Applies scale effect on X, Y, and Z.</summary>
         public static T ScaleEffect<T>(this T element, float x, float y, float z) where T : UIElement
         {
             return (T)element.WithScaleEffect(x, y, z);
         }
-        
+
+        /// <summary>Applies scale effect from a <see cref="Vector3"/>.</summary>
         public static T ScaleEffect<T>(this T element, Vector3 scale) where T : UIElement
         {
             return (T)element.WithScaleEffect(scale);
         }
-        
+
+        /// <summary>Reactive uniform scale.</summary>
         public static T ScaleEffect<T>(this T element, State<float> scale) where T : UIElement
         {
             return (T)element.WithScaleEffect(scale);
         }
-        
+
+        /// <summary>Reactive scale with bound X component.</summary>
         public static T ScaleEffect<T>(this T element, State<float> x, float y) where T : UIElement
         {
             return (T)element.WithScaleEffect(x, y);
         }
-        
+
+        /// <summary>Reactive scale with bound Y component.</summary>
         public static T ScaleEffect<T>(this T element, float x, State<float> y) where T : UIElement
         {
             return (T)element.WithScaleEffect(x, y);
         }
-        
+
+        /// <summary>Reactive scale with bound <see cref="Vector3"/>.</summary>
         public static T ScaleEffect<T>(this T element, State<Vector3> scale) where T : UIElement
         {
             return (T)element.WithScaleEffect(scale);
         }
 
+        /// <summary>Sets absolute position (top-left origin, Y down).</summary>
         public static T Position<T>(this T element, float x, float y) where T : UIElement
         {
             return (T)element.WithPosition(x, y);
         }
-        
-        // State対応位置設定
+
+        /// <summary>Reactive position from <see cref="State{Vector2}"/>.</summary>
         public static T Position<T>(this T element, State<Vector2> position) where T : UIElement
         {
             return (T)element.WithPosition(position);
         }
-        
+
+        /// <summary>Reactive position with bound X.</summary>
         public static T Position<T>(this T element, State<float> x, float y) where T : UIElement
         {
             return (T)element.WithPosition(x, y);
         }
-        
+
+        /// <summary>Reactive position with bound Y.</summary>
         public static T Position<T>(this T element, float x, State<float> y) where T : UIElement
         {
             return (T)element.WithPosition(x, y);
         }
-        
+
+        /// <summary>Registers a synchronous callback when the view appears.</summary>
         public static T OnAppear<T>(this T element, Action action) where T : UIElement
         {
             return (T)element.WithOnAppear(action);
         }
-        
+
+        /// <summary>Registers an async callback when the view appears.</summary>
         public static T OnAppear<T>(this T element, Func<Task> asyncAction) where T : UIElement
         {
             return (T)element.WithOnAppearAsync(asyncAction);
         }
-        
+
+        /// <summary>Registers a per-frame update callback.</summary>
         public static T Update<T>(this T element, Action action) where T : UIElement
         {
             return (T)element.WithUpdate(action);
         }
-        
+
+        /// <summary>Enables implicit animation for property changes over <paramref name="duration"/> seconds.</summary>
         public static T Animation<T>(this T element, float duration) where T : UIElement
         {
             return (T)element.WithAnimation(duration);
         }
-        
-        // イージング指定可能なアニメーションメソッドを追加
+
+        /// <summary>Enables implicit animation with easing over <paramref name="duration"/> seconds.</summary>
         public static T Animation<T>(this T element, AnimationEasing easing, float duration) where T : UIElement
         {
             return (T)element.WithAnimation(easing, duration);
         }
 
-        // ── SwiftUI スタイル .animation(_:value:) ───────────────────────────
-
         /// <summary>
-        /// SwiftUI の <c>.animation(.spring(), value: myState)</c> に相当。
-        /// 指定した State が変化したとき、このビューをアニメーションで補間する。
+        /// Binds an animation to a state so changes to that state are animated:
+        /// animates this view when <paramref name="value"/> changes.
         /// </summary>
-        public static T animation<T>(this T element, Animation anim, State value) where T : UIElement
+        public static T Animation<T>(this T element, Animation anim, State value) where T : UIElement
         {
-            ((UIElement)element).animation(anim, value);
+            ((UIElement)element).Animation(anim, value);
             return element;
         }
 
-        /// <summary>デフォルトアニメーションで補間する。</summary>
-        public static T animation<T>(this T element, State value) where T : UIElement
+        /// <summary>Animates property changes when <paramref name="value"/> changes using the default animation.</summary>
+        public static T Animation<T>(this T element, State value) where T : UIElement
         {
-            ((UIElement)element).animation(UniftUI.Animation.Default, value);
+            ((UIElement)element).Animation(global::UniftUI.Animation.Default, value);
             return element;
         }
 
-        // ── ScrollView（SwiftUI 風チェーン）──────────────────────────────────
-
-        /// <summary>弾性スクロールの有無（<see cref="ScrollRect.MovementType"/>）。</summary>
+        /// <summary>Sets elastic scroll bounce (<see cref="ScrollRect.MovementType"/>).</summary>
         public static ScrollViewElement ScrollBounce(this ScrollViewElement e, bool elastic) =>
             e.WithScrollBounce(elastic);
 
+        /// <summary>Sets scroll wheel and trackpad sensitivity.</summary>
         public static ScrollViewElement ScrollSensitivity(this ScrollViewElement e, float sensitivity) =>
             e.WithScrollSensitivity(sensitivity);
 
+        /// <summary>Sets <see cref="ScrollRect.movementType"/> directly.</summary>
         public static ScrollViewElement ScrollMovementType(this ScrollViewElement e, ScrollRect.MovementType type) =>
             e.WithMovementType(type);
 
-        /// <summary>縦正規化位置（1=先頭、0=末尾）を <see cref="State{T}"/> にバインド。</summary>
+        /// <summary>Binds vertical normalized scroll position (1 = top, 0 = bottom) to a <see cref="State{T}"/>.</summary>
         public static ScrollViewElement ScrollPositionY(this ScrollViewElement e, State<float> normalized, bool twoWay = false) =>
             e.BindScrollPositionY(normalized, twoWay);
 
-        /// <summary>SwiftUI の <c>.scrollIndicators(_:axes:)</c> に相当。有効な軸すべてに適用。</summary>
+        /// <summary>Sets scroll indicator visibility for all enabled axes.</summary>
         public static ScrollViewElement ScrollIndicators(this ScrollViewElement e, ScrollIndicatorVisibility visibility) =>
             e.WithScrollIndicators(visibility);
 
-        /// <summary>SwiftUI の <c>.scrollIndicators(_:axes:)</c> に相当。指定軸のみ更新。</summary>
+        /// <summary>Sets scroll indicator visibility for selected axes.</summary>
         public static ScrollViewElement ScrollIndicators(this ScrollViewElement e, ScrollIndicatorVisibility visibility, UniftUIScrollAxis axes) =>
             e.WithScrollIndicators(visibility, axes);
 
-        /// <summary>水平正規化位置（0=左、1=右）をバインド。</summary>
+        /// <summary>Binds horizontal normalized scroll position (0 = left, 1 = right) to a <see cref="State{T}"/>.</summary>
         public static ScrollViewElement ScrollPositionX(this ScrollViewElement e, State<float> normalized, bool twoWay = false) =>
             e.BindScrollPositionX(normalized, twoWay);
     }

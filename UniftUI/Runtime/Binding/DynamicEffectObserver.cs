@@ -5,8 +5,8 @@ using System.Collections.Generic;
 namespace UniftUI
 {
     /// <summary>
-    /// State 変化を監視し、UIElement のプロパティバインディングを LateUpdate で適用する。
-    /// OnDisable/OnEnable で購読を一時停止・再開し、オーファン化しない。
+    /// Subscribes to <see cref="State"/> changes and applies <see cref="UIElement"/> bindings in <c>LateUpdate</c>.
+    /// Pauses subscriptions while disabled to avoid orphaned observers.
     /// </summary>
     public sealed class DynamicEffectObserver : MonoBehaviour
     {
@@ -18,9 +18,6 @@ namespace UniftUI
         private Animation? capturedAnimation;
         private bool attached;
 
-        // ── 初期化 ───────────────────────────────────────────────────────────
-
-        /// <summary>新しい UIElement と BindingRegistry をアタッチする。</summary>
         internal void Attach(UIElement element, BindingRegistry reg)
         {
             Detach();
@@ -30,7 +27,6 @@ namespace UniftUI
             Subscribe();
         }
 
-        /// <summary>購読を全て解除してターゲット参照を切る。</summary>
         public void Detach()
         {
             Unsubscribe();
@@ -39,9 +35,7 @@ namespace UniftUI
             attached = false;
         }
 
-        // ── 後方互換 Initialize ──────────────────────────────────────────────
-        // Components/VStack 等が呼び出す旧 API を維持する
-
+        /// <summary>Legacy entry point used by some container elements.</summary>
         public void Initialize(State[] states, UIElement element)
         {
             Detach();
@@ -61,8 +55,6 @@ namespace UniftUI
                 }
             }
         }
-
-        // ── 購読管理 ─────────────────────────────────────────────────────────
 
         private void Subscribe()
         {
@@ -84,13 +76,10 @@ namespace UniftUI
             subscriptions.Clear();
         }
 
-        // ── State 変化ハンドラ ────────────────────────────────────────────────
-
         private void OnStateChanged(State changed)
         {
             isDirty = true;
 
-            // アニメーション優先度: stateAnimationMap > withAnimation コンテキスト
             if (!capturedAnimation.HasValue)
             {
                 if (target?.stateAnimationMap != null &&
@@ -113,14 +102,11 @@ namespace UniftUI
             }
         }
 
-        // ── LateUpdate ───────────────────────────────────────────────────────
-
         private void LateUpdate()
         {
             if (!isDirty) return;
             isDirty = false;
 
-            // オーファン防止: ターゲットが null なら自己無効化
             if (target == null)
             {
                 enabled = false;
@@ -142,8 +128,6 @@ namespace UniftUI
                 Debug.LogError($"[UniftUI] DynamicEffectObserver: error during ApplyDynamicEffects: {e.Message}");
             }
         }
-
-        // ── Unity ライフサイクル ─────────────────────────────────────────────
 
         private void OnEnable()
         {

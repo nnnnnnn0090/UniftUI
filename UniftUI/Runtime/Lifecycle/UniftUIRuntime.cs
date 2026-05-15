@@ -6,8 +6,7 @@ using System.Collections.Generic;
 namespace UniftUI
 {
     /// <summary>
-    /// UniftUI のライフサイクルを管理するシングルトン。
-    /// UniftUICleanup の後継。ActionManager への依存なし。
+    /// Application-wide singleton for UniftUI lifecycle (shutdown hooks, texture cleanup).
     /// </summary>
     [DefaultExecutionOrder(-1000)]
     public sealed class UniftUIRuntime : MonoBehaviour
@@ -16,8 +15,6 @@ namespace UniftUI
         private static bool isQuitting;
 
         private readonly List<Action> shutdownCallbacks = new List<Action>();
-
-        // ── シングルトン ──────────────────────────────────────────────────────
 
         public static UniftUIRuntime Instance => GetOrCreate();
 
@@ -37,23 +34,17 @@ namespace UniftUI
             SceneManager.sceneUnloaded += OnSceneUnloaded;
         }
 
-        // ── 公開 API ──────────────────────────────────────────────────────────
-
-        /// <summary>シーンアンロード・アプリ終了時に実行するコールバックを登録する。</summary>
+        /// <summary>Registers a callback invoked on scene unload or application quit.</summary>
         public static void RegisterShutdownCallback(Action action)
         {
             if (action != null) Instance.shutdownCallbacks.Add(action);
         }
 
-        /// <summary>アプリケーションが終了中かどうか。</summary>
+        /// <summary>Returns whether the application is shutting down.</summary>
         public static bool IsApplicationQuitting() => isQuitting;
 
-        // ── UniftUICleanup 後方互換 ──────────────────────────────────────────────
-
-        /// <summary>後方互換用エイリアス。</summary>
+        /// <summary>Runs shutdown callbacks and releases tracked resources.</summary>
         public static void CleanupResources() => Instance.RunShutdown();
-
-        // ── 内部 ─────────────────────────────────────────────────────────────
 
         private void OnSceneUnloaded(Scene _) => RunShutdown();
 

@@ -6,9 +6,7 @@ using UnityEngine.UI;
 
 namespace UniftUI
 {
-    // ──────────────────────────────────────────────────────────────────────────
-    // UIAnimator — Fade / SlideHorizontal などの高レベルアニメーションユーティリティ
-    // ──────────────────────────────────────────────────────────────────────────
+    /// <summary>Coroutine-based fade and slide helpers for built UI objects.</summary>
     public static class UIAnimator
     {
         private static readonly Dictionary<RectTransform, SlideState> activeSlides
@@ -115,12 +113,7 @@ namespace UniftUI
         private class AnimationRunner : MonoBehaviour { }
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // BaseAnimator<T> — 全アニメーターの汎用基底クラス
-    //
-    // GetOrReplace<TAnimator>(go) で重複コンポーネントを防ぐ。
-    // CancelAnimation() でコールバックを発火させずに停止できる。
-    // ──────────────────────────────────────────────────────────────────────────
+    /// <summary>Base class for per-property MonoBehaviour animators on UI elements.</summary>
     public abstract class BaseAnimator<T> : MonoBehaviour
     {
         protected T startValue;
@@ -135,10 +128,6 @@ namespace UniftUI
         internal int CurrentGeneration => generation;
         internal bool IsAnimating => isAnimating;
 
-        /// <summary>
-        /// 同じ GameObject 上に既存コンポーネントがあればキャンセルして再利用する。
-        /// 新規の場合は AddComponent する。
-        /// </summary>
         public static TAnimator GetOrReplace<TAnimator>(GameObject go)
             where TAnimator : BaseAnimator<T>
         {
@@ -167,7 +156,7 @@ namespace UniftUI
             SetInitialValue(from);
         }
 
-        /// <summary>アニメーションを停止する。onComplete コールバックは呼ばれない。</summary>
+        /// <summary>Stops the animation without invoking the completion callback.</summary>
         public void CancelAnimation()
         {
             isAnimating = false;
@@ -218,10 +207,6 @@ namespace UniftUI
         protected abstract void SetInitialValue(T value);
         protected abstract void UpdateValue(float t);
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // 具体的アニメーターコンポーネント
-    // ──────────────────────────────────────────────────────────────────────────
 
     public class RotationAnimator : BaseAnimator<Vector3>
     {

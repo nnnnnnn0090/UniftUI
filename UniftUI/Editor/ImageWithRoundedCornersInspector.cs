@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using Nobi.UiRoundedCorners;
 
 namespace Nobi.UiRoundedCorners.Editor {
+    /// <summary>Custom inspector for <see cref="ImageWithRoundedCorners"/>.</summary>
     [CustomEditor(typeof(ImageWithRoundedCorners)), CanEditMultipleObjects]
     public class ImageWithRoundedCornersInspector : UnityEditor.Editor {
         private ImageWithRoundedCorners script;

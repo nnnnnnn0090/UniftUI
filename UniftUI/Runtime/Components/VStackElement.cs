@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace UniftUI
 {
+    /// <summary>Vertical stack layout.</summary>
     public class VStackElement : UIElement, ILayoutContainer
     {
         private Action content;
@@ -13,18 +14,18 @@ namespace UniftUI
         private float spacing;
         private VStackAlignment alignment;
 
-        public VStackElement(Action content, State[] states = null, float spacing = 8f, 
+        public VStackElement(Action content, State[] states = null, float spacing = 8f,
                      VStackAlignment alignment = VStackAlignment.Center)
         {
             this.content = content;
             this.states = states;
             this.spacing = spacing;
             this.alignment = alignment;
-            
+
             if (content != null)
             {
                 var parentContext = UIContext.Current;
-                
+
                 try
                 {
                     UIContext.Current = this;
@@ -60,7 +61,7 @@ namespace UniftUI
             if (index != -1)
                 children[index] = newChild;
             else
-                 Debug.LogWarning($"ReplaceChild: oldChild not found in VStack. Old: {oldChild}, New: {newChild}. Children count: {children.Count}");
+                 Debug.LogWarning($"[UniftUI] VStack ReplaceChild: oldChild not found. Children count: {children.Count}");
         }
 
         public IEnumerable<UIElement> GetChildren()
@@ -81,9 +82,7 @@ namespace UniftUI
             }
 
             VerticalLayoutGroup layout = container.AddComponent<VerticalLayoutGroup>();
-            
-            // SwiftUI の VStack と同様、主軸は上から下。余白があるとき子ブロック全体を Middle* にすると
-            // Text + Spacer でも中央に寄ってしまうため、横方向のみ Leading/Center/Trailing を反映し縦は上端を基準にする。
+
             switch (alignment)
             {
                 case VStackAlignment.Leading:
@@ -96,7 +95,7 @@ namespace UniftUI
                     layout.childAlignment = TextAnchor.UpperRight;
                     break;
             }
-            
+
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = false;
@@ -141,61 +140,61 @@ namespace UniftUI
             {
                 SetupStateObserver(container);
             }
-            
+
             ApplyAllEffects(container, backgroundImage);
 
             return container;
         }
-        
+
         private void SetupStateObserver(GameObject container)
         {
             if (container == null) return;
-            
+
             StateObserver observer = container.AddComponent<StateObserver>();
-            
+
             var localContent = content;
             var localChildren = children;
-            
+
             observer.Initialize(states, () => {
                 if (container == null || !container)
                 {
-                    Debug.LogWarning("VStack: コンテナが既に破棄されています");
+                    Debug.LogWarning("[UniftUI] VStack rebuild skipped: container was destroyed.");
                     return;
                 }
-                
+
                 try
                 {
                     foreach (Transform child in container.transform)
                         if (child != null && child.gameObject != null)
                             UnityEngine.Object.Destroy(child.gameObject);
-                    
+
                     localChildren.Clear();
-                    
+
                     var parentContext = UIContext.Current;
                     UIContext.Current = this;
-                    
+
                     if (localContent != null)
                         localContent.Invoke();
-                    
+
                     UIContext.Current = parentContext;
-                    
+
                     foreach (var child in localChildren)
                     {
                         if (child != null && container != null && container.transform != null)
                         {
                             if (UIContext.DefaultFont != null)
                                 child.Font(UIContext.DefaultFont);
-                            
+
                             child.Build(container.transform);
                         }
                     }
-                    
+
                     if (container != null)
                         Canvas.ForceUpdateCanvases();
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"VStack: UIの再構築中にエラーが発生しました: {e.Message}\n{e.StackTrace}");
+                    Debug.LogError($"[UniftUI] VStack rebuild error: {e.Message}\n{e.StackTrace}");
                 }
             });
         }

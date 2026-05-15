@@ -2,7 +2,7 @@
 
 [English](./Example.md)
 
-はじめて画面を作る人向けの手順です。C# で UI の「設計図」を書き、最後に `.Build(canvas)` で Unity の uGUI オブジェクトにします（SwiftUI に近い考え方です）。
+はじめて画面を作る人向けの手順です。C# で UI の「設計図」を書き、最後に `.Build(canvas)` で Unity の uGUI オブジェクトにします。
 
 ## はじめる前に（Unity エディタ）
 
@@ -38,7 +38,7 @@ public class MyView : UniftView
 }
 ```
 
-**ヒント:** `VStack` の中に `HStack`、`HStack` の中に `Text`…と入れ子にできます（SwiftUI と同様）。
+**ヒント:** `VStack` の中に `HStack`、`HStack` の中に `Text`…と入れ子にできます。
 
 **上級者向け:** `UniftView` の外では `UIElements.VStack(...)` も使えますが、`UIContext` の親子ルールが必要です。慣れるまでは `UniftView` だけで十分です。
 
@@ -98,7 +98,7 @@ ZStack(() =>
 **行（`GridRow`）** を **`Grid`** の中に並べます。電卓のキー配置や、列を揃えた表向け。
 
 - `GridRow` は **必ず `Grid` の内側** で使う。
-- 列幅は行どうしで揃います（SwiftUI の `Grid` に近い）。
+- 列幅は行どうしで揃います。
 
 ```csharp
 Grid(() =>
@@ -180,7 +180,7 @@ Image(sprite)
 
 ## Spacer（伸びる空白）
 
-スタック内の「空き」を埋める（SwiftUI の `Spacer`）。
+スタック内の「空き」を埋める（`Spacer`）。
 
 - **`Spacer(8)`** — 主軸方向の最小 8。親に余裕があれば **それ以上に伸びる**。
 - **常に 8px だけ空けたい** 場合は `.Padding()` や `.Frame()` を使う。
@@ -305,19 +305,19 @@ Text(() => $"回数: {counter.Value}", new State[] { counter });
 
 ### 変化をアニメーション
 
-**`withAnimation`** で囲む（SwiftUI の `withAnimation` に相当）:
+**`WithAnimation`** で囲む:
 
 ```csharp
 var width = new State<float>(100f);
 
-withAnimation(Animation.easeInOut(0.25f), () =>
+WithAnimation(Animation.easeInOut(0.25f), () =>
 {
     width.Value = 200f;
 });
 
 // または: width が変わったときだけこの要素をアニメート
 SomeElement()
-    .animation(Animation.Default, width);
+    .Animation(Animation.Default, width);
 ```
 
 ---
@@ -346,7 +346,7 @@ Text("フェード")
     .OnAppear(() => Debug.Log("表示された"));
 ```
 
-**`FixedSize`** — 親に引き伸ばされず、中身のサイズに合わせる（SwiftUI の `fixedSize`）:
+**`FixedSize`** — 親に引き伸ばされず、中身のサイズに合わせる:
 
 ```csharp
 Text("内容に合わせる").FixedSize(horizontal: true, vertical: true);

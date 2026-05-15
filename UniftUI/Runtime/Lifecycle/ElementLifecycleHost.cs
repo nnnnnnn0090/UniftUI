@@ -3,9 +3,7 @@ using UnityEngine;
 namespace UniftUI
 {
     /// <summary>
-    /// UIElement がビルドした GameObject に追加されるオーナーコンポーネント。
-    /// GameObject が破棄されたとき DynamicEffectObserver を確実にデタッチし、
-    /// BindingRegistry を Dispose する。
+    /// Attached to built <see cref="UIElement"/> GameObjects to detach observers and dispose bindings on destroy.
     /// </summary>
     internal sealed class ElementLifecycleHost : MonoBehaviour
     {

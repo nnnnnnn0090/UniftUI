@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 
 namespace Nobi.UiRoundedCorners {
+	/// <summary>UI Image with per-corner independent corner radii.</summary>
 	[ExecuteInEditMode]
 	[DisallowMultipleComponent]
 	[RequireComponent(typeof(RectTransform))]
@@ -15,6 +16,8 @@ namespace Nobi.UiRoundedCorners {
 		private static readonly Vector2 hNorm = new Vector2(.7071068f, .7071068f);
 
 		[SerializeField] private Vector4 _r = new Vector4(40f, 40f, 40f, 40f);
+
+		/// <summary>Corner radii (x: top-left, y: top-right, z: bottom-right, w: bottom-left).</summary>
 		public Vector4 r {
 			get { return _r; }
 			set {
@@ -63,6 +66,7 @@ namespace Nobi.UiRoundedCorners {
 			material = null;
 		}
 
+		/// <summary>Ensures material and target graphic are assigned.</summary>
 		public void Validate() {
 			if (material == null) {
 				material = new Material(Shader.Find("UI/RoundedCorners/IndependentRoundedCorners"));
@@ -81,6 +85,7 @@ namespace Nobi.UiRoundedCorners {
 			}
 		}
 
+		/// <summary>Pushes current size and corner radii to the shader.</summary>
 		public void Refresh() {
 			var rect = ((RectTransform)transform).rect;
 			RecalculateProps(rect.size);

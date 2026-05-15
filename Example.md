@@ -2,7 +2,7 @@
 
 [日本語](./Example-ja.md)
 
-A step-by-step guide for your first screen. You write UI in C# (similar to SwiftUI), then call `.Build(canvas)` to create Unity uGUI objects.
+A step-by-step guide for your first screen. You write UI in C#, then call `.Build(canvas)` to create Unity uGUI objects.
 
 ## Before you start (Unity Editor)
 
@@ -38,7 +38,7 @@ public class MyView : UniftView
 }
 ```
 
-**Tip:** Nesting works like SwiftUI — put `HStack` inside `VStack`, put `Text` inside either, and so on.
+**Tip:** Nesting works naturally — put `HStack` inside `VStack`, put `Text` inside either, and so on.
 
 **Advanced:** Outside `UniftView`, you can use `UIElements.VStack(...)` etc., but you must respect `UIContext` (parent/child rules). Beginners should stay on `UniftView` until comfortable.
 
@@ -98,7 +98,7 @@ ZStack(() =>
 A **table**: rows (`GridRow`) inside a `Grid`. Good for keypad-style layouts or aligned columns.
 
 - `GridRow` must be used **inside** `Grid` (not alone).
-- Column widths sync across rows (like SwiftUI `Grid`).
+- Column widths sync across rows.
 
 ```csharp
 Grid(() =>
@@ -180,7 +180,7 @@ Image(sprite)
 
 ## Spacer
 
-Flexible empty space in a stack (like SwiftUI `Spacer`).
+Flexible empty space in a stack (`Spacer`).
 
 - **`Spacer(8)`** — minimum size 8 on the main axis; **grows** if the parent has extra room.
 - For a **fixed** gap (always 8 px), use `.Padding()` or `.Frame()` instead.
@@ -305,19 +305,19 @@ Text(() => $"Count: {counter.Value}", new State[] { counter });
 
 ### Animate a change
 
-Wrap updates in **`withAnimation`** (like SwiftUI):
+Wrap updates in **`WithAnimation`**:
 
 ```csharp
 var width = new State<float>(100f);
 
-withAnimation(Animation.easeInOut(0.25f), () =>
+WithAnimation(Animation.easeInOut(0.25f), () =>
 {
     width.Value = 200f;
 });
 
 // Or: animate this view when `width` changes
 SomeElement()
-    .animation(Animation.Default, width);
+    .Animation(Animation.Default, width);
 ```
 
 ---
@@ -346,7 +346,7 @@ Text("Fade in")
     .OnAppear(() => Debug.Log("now visible"));
 ```
 
-**`FixedSize`** — do not stretch to fill the parent; size to content (SwiftUI `fixedSize`):
+**`FixedSize`** — do not stretch to fill the parent; size to content:
 
 ```csharp
 Text("Hugs content").FixedSize(horizontal: true, vertical: true);

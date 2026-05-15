@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace UniftUI
 {
-    /// <summary>SwiftUI の <c>GridRow</c> に相当。親の <see cref="GridElement"/> のコンテンツ内でのみ使用してください。</summary>
+    /// <summary>A row inside <see cref="GridElement"/>. Use only within a grid content closure.</summary>
     public class GridRowElement : UIElement, ILayoutContainer
     {
         private readonly List<UIElement> children = new List<UIElement>();
@@ -16,7 +16,7 @@ namespace UniftUI
         {
             if (parentGrid == null)
             {
-                Debug.LogWarning("GridRow は Grid のコンテンツ内（GridRow(() => ...)）でのみ使用してください。");
+                Debug.LogWarning("[UniftUI] GridRow must be created inside a Grid content closure.");
                 horizontalSpacing = 8f;
                 rowAlignment = HStackAlignment.Center;
                 return;
@@ -58,7 +58,7 @@ namespace UniftUI
             if (index != -1)
                 children[index] = newChild;
             else
-                Debug.LogWarning($"ReplaceChild: GridRow に oldChild が見つかりません。Children: {children.Count}");
+                Debug.LogWarning($"[UniftUI] GridRow ReplaceChild: oldChild not found. Children count: {children.Count}");
         }
 
         public IEnumerable<UIElement> GetChildren() => children;

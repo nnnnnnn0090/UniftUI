@@ -5,8 +5,8 @@ using System.Collections.Generic;
 namespace UniftUI
 {
     /// <summary>
-    /// SwiftUI の <c>.offset(x:y:)</c> に相当。親から割り当てられたレイアウト枠はそのままに、中身だけ視覚的にずらします。
-    /// UniftUI の座標系は <see cref="UIElement.WithPosition"/> と同じく X 右・Y 下向きが正です。
+    /// Visual offset (<c>x</c>, <c>y</c>). Keeps the layout frame; shifts content only.
+    /// Coordinates match <see cref="UIElement.WithPosition"/> (X right, Y down positive).
     /// </summary>
     public class OffsetElement : UIElement, ILayoutContainer
     {
@@ -61,7 +61,7 @@ namespace UniftUI
         public void AddChild(UIElement child)
         {
             if (this.content == null) this.content = child;
-            else Debug.LogWarning("OffsetElement can only contain one child.");
+            else Debug.LogWarning("[UniftUI] OffsetElement can only contain one child.");
         }
 
         public void RemoveChild(UIElement child)
@@ -80,7 +80,7 @@ namespace UniftUI
             return new List<UIElement>();
         }
 
-        /// <summary>SwiftUI offset と同じ向き → Unity の anchoredPosition 加算分。</summary>
+        /// <summary>Applies offset as a Unity <c>anchoredPosition</c> delta.</summary>
         public static Vector2 SwiftOffsetToAnchoredDelta(Vector2 swift)
         {
             return new Vector2(swift.x, -swift.y);
@@ -171,7 +171,6 @@ namespace UniftUI
                 }
 
                 ConfigureChildRectForContentSizing(childLe, w, h);
-                // 初回 Build 時は即時反映（この時点では withAnimation コンテキストはない）
                 SetVisualOffset(_contentRect, GetCurrentOffset());
 
                 if (useVectorState && offsetState != null)
@@ -216,10 +215,6 @@ namespace UniftUI
             return offset;
         }
 
-        /// <summary>
-        /// 子を親（Offset 外周）いっぱいにストレッチさせるか、intrinsic サイズで左上固定にするか。
-        /// Build 後にここで上書きしていたため、ZStack の infiniteHeight などが効かなくなっていた。
-        /// </summary>
         private void ConfigureChildRectForContentSizing(LayoutElement childLe, float resolvedW, float resolvedH)
         {
             if (content == null || _contentRect == null) return;
@@ -227,7 +222,6 @@ namespace UniftUI
             bool iw = content.infiniteWidth;
             bool ih = content.infiniteHeight;
 
-            // intrinsic（両軸とも無限でない）: レイアウトから外し、測った矩形で左上固定
             if (!iw && !ih)
             {
                 childLe.ignoreLayout = true;
@@ -240,7 +234,6 @@ namespace UniftUI
 
             childLe.ignoreLayout = false;
 
-            // 両方ストレッチ: 親矩形いっぱい（ZStack の全画面オーバーレイ等）
             if (iw && ih)
             {
                 _contentRect.anchorMin = Vector2.zero;
@@ -251,7 +244,6 @@ namespace UniftUI
                 return;
             }
 
-            // 幅固定・縦ストレッチ（ドロワー列など）
             if (!iw && ih)
             {
                 float colW = preferredWidth >= 0 ? preferredWidth : resolvedW;
@@ -263,7 +255,6 @@ namespace UniftUI
                 return;
             }
 
-            // 横ストレッチ・高さ固定（ナビバー等：上辺に張り付く）
             if (iw && !ih)
             {
                 float rowH = preferredHeight >= 0 ? preferredHeight : resolvedH;
@@ -276,17 +267,12 @@ namespace UniftUI
             }
         }
 
-        /// <summary>アンカーは触らず、SwiftUI 方向のオフセットだけを anchoredPosition に反映する。</summary>
         private static void SetVisualOffset(RectTransform rt, Vector2 swiftOffset)
         {
             if (rt == null) return;
             rt.anchoredPosition = SwiftOffsetToAnchoredDelta(swiftOffset);
         }
 
-        /// <summary>
-        /// State 更新時: <see cref="UIElement.WithPosition(State{float}, float)"/> と同様、
-        /// <c>withAnimation</c> 中は <see cref="PositionAnimator"/> でスライドする。
-        /// </summary>
         private void ApplyVisualOffsetFromBinding(Vector2 swiftOffset)
         {
             if (_contentRect == null || builtGameObject == null) return;

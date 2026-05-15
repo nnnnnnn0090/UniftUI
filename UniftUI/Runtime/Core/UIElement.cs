@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace UniftUI
 {
-    // ──────────────────────────────────────────────────────────────────────────
-    // UIElement — UniftUI フレームワークの全 UI 要素の基底クラス
-    // ──────────────────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Base class for all declarative UniftUI elements. Subclasses implement <see cref="Build"/>
+    /// to produce Unity UI <see cref="GameObject"/> hierarchies.
+    /// </summary>
     public abstract class UIElement
     {
-        // ── Layout ────────────────────────────────────────────────────────────
         internal bool infiniteWidth;
         internal bool infiniteHeight;
         internal float preferredWidth = -1;
@@ -20,40 +20,31 @@ namespace UniftUI
         internal bool useCustomPosition;
         internal Vector2 customPosition;
 
-        // ── Style ─────────────────────────────────────────────────────────────
         protected Color backgroundColor = Color.clear;
         protected float opacity = 1f;
         protected Vector4 cornerRadius = Vector4.zero;
 
-        // ── Transform effects ─────────────────────────────────────────────────
         internal Vector3 rotationEffectEuler = Vector3.zero;
         internal Vector3 scaleEffect = Vector3.one;
 
-        // ── Legacy animation config (WithAnimation / ApplyDynamicEffects path) ─
         internal float animationDuration;
         internal bool useAnimation;
         internal AnimationEasing animationEasing = AnimationEasing.Linear;
 
-        // ── SwiftUI-style .animation(_:value:) ───────────────────────────────
         internal Dictionary<State, Animation> stateAnimationMap;
         internal Animation? pendingAnimation;
 
-        // ── Callbacks ─────────────────────────────────────────────────────────
         protected Action onAppearAction;
         protected Func<Task> onAppearAsyncAction;
         protected Action updateAction;
 
-        // ── Binding state ────────────────────────────────────────────────────
-        // observedStates と propertyBindings は BindingRegistry に集約。
-        // ただし外部コンポーネント (Components/) が直接参照しているため
-        // 後方互換のアクセサを提供する。
         internal readonly BindingRegistry bindingRegistry = new BindingRegistry();
 
+        /// <summary>Backward-compatible read-only view of observed states (register via <see cref="ObserveState"/>).</summary>
         protected List<State> observedStates
         {
             get
             {
-                // 読み取り専用の後方互換リスト（設定は ObserveState() 経由）
                 var list = new List<State>(bindingRegistry.ObservedStates);
                 return list;
             }
@@ -61,7 +52,7 @@ namespace UniftUI
 
         protected GameObject builtGameObject;
 
-        // ── StateReference (Effects 用の補助型) ──────────────────────────────
+        /// <summary>Associates a <see cref="State"/> with a property name for dynamic effect updates.</summary>
         protected class StateReference
         {
             public State state;
@@ -80,22 +71,15 @@ namespace UniftUI
 
         protected List<StateReference> stateReferences = new List<StateReference>();
 
-        // ── 後方互換: propertyBindings ────────────────────────────────────────
-        // Components が AddPropertyBinding で登録したバインディングの参照を
-        // ApplyDynamicEffects がまとめて呼び出す。BindingRegistry 内で管理。
+        /// <summary>Backward-compatible accessor; bindings are managed by <see cref="bindingRegistry"/>.</summary>
         protected List<PropertyBinding> propertyBindings
         {
             get
             {
-                // PropertyBinding は公開 API なので後方互換用に生成して返す
                 var list = new List<PropertyBinding>();
                 return list;
             }
         }
-
-        // ═══════════════════════════════════════════════════════════════════════
-        // BINDING
-        // ═══════════════════════════════════════════════════════════════════════
 
         protected void ObserveState(State state)
         {
@@ -103,13 +87,13 @@ namespace UniftUI
                 bindingRegistry.Register("__observe__" + state.GetHashCode(), state, () => { });
         }
 
+        /// <summary>Registers a state-driven property update and returns a legacy <see cref="PropertyBinding"/> handle.</summary>
         public PropertyBinding AddPropertyBinding(State state, Action updateAction, string propertyName)
         {
             if (state == null || updateAction == null) return null;
 
             bindingRegistry.Register(propertyName, state, updateAction);
 
-            // 後方互換のために PropertyBinding オブジェクトを返す
             return new PropertyBinding(state, updateAction, propertyName);
         }
 
@@ -126,6 +110,7 @@ namespace UniftUI
             observer.Attach(this, bindingRegistry);
         }
 
+        /// <summary>Applies all registered property bindings, honoring any pending animation.</summary>
         public virtual void ApplyDynamicEffects()
         {
             if (builtGameObject == null) return;
@@ -155,9 +140,8 @@ namespace UniftUI
             }
         }
 
-        // ── .animation(_:value:) ──────────────────────────────────────────────
-
-        public UIElement animation(Animation anim, State value)
+        /// <summary>Animates this element when <paramref name="value"/> changes.</summary>
+        public UIElement Animation(Animation anim, State value)
         {
             if (value == null) return this;
             if (stateAnimationMap == null) stateAnimationMap = new Dictionary<State, Animation>();
@@ -167,12 +151,10 @@ namespace UniftUI
             return this;
         }
 
-        public UIElement animation(State value) => animation(Animation.Default, value);
+        /// <summary>Animates this element when <paramref name="value"/> changes using <see cref="global::UniftUI.Animation.Default"/>.</summary>
+        public UIElement Animation(State value) => Animation(global::UniftUI.Animation.Default, value);
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // CALLBACKS
-        // ═══════════════════════════════════════════════════════════════════════
-
+        /// <summary>Registers a synchronous callback invoked when the view appears.</summary>
         public UIElement WithOnAppear(Action action)
         {
             onAppearAction = action;
@@ -180,6 +162,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Registers an async callback invoked when the view appears.</summary>
         public UIElement WithOnAppearAsync(Func<Task> asyncAction)
         {
             onAppearAsyncAction = asyncAction;
@@ -187,6 +170,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Registers a per-frame update callback.</summary>
         public UIElement WithUpdate(Action action)
         {
             updateAction = action;
@@ -225,10 +209,7 @@ namespace UniftUI
 
         protected void CleanupActions() { }
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // ANIMATION CONFIG
-        // ═══════════════════════════════════════════════════════════════════════
-
+        /// <summary>Enables implicit linear animation for subsequent property changes.</summary>
         public UIElement WithAnimation(float duration)
         {
             useAnimation = duration > 0;
@@ -237,6 +218,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Enables implicit animation with the given easing for subsequent property changes.</summary>
         public UIElement WithAnimation(AnimationEasing easing, float duration)
         {
             useAnimation = duration > 0;
@@ -245,10 +227,7 @@ namespace UniftUI
             return this;
         }
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // BUILD
-        // ═══════════════════════════════════════════════════════════════════════
-
+        /// <summary>Builds this element under <paramref name="parent"/> and returns the root <see cref="GameObject"/>.</summary>
         public virtual GameObject Build(Transform parent)
         {
             builtGameObject = null;
@@ -256,8 +235,8 @@ namespace UniftUI
         }
 
         /// <summary>
-        /// SwiftUI のルートがウィンドウ／セーフエリアから最大の proposed size を受け取るのと同様、
-        /// Canvas 上のルート <see cref="RectTransform"/> を常にキャンバス全面に張る。
+        /// Builds on a <see cref="Canvas"/> and stretches the root <see cref="RectTransform"/> to fill the canvas,
+        /// similar to a root view receiving the maximum proposed size.
         /// </summary>
         public UIElement Build(Canvas canvas)
         {
@@ -290,10 +269,7 @@ namespace UniftUI
             return this;
         }
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // LAYOUT MODIFIERS
-        // ═══════════════════════════════════════════════════════════════════════
-
+        /// <summary>Allows the element to expand to the maximum proposed width.</summary>
         public virtual UIElement WithInfiniteWidth()
         {
             infiniteWidth = true;
@@ -301,6 +277,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Allows the element to expand to the maximum proposed height.</summary>
         public virtual UIElement WithInfiniteHeight()
         {
             infiniteHeight = true;
@@ -308,12 +285,14 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets a fixed preferred width.</summary>
         public virtual UIElement WithWidth(float width)
         {
             preferredWidth = width;
             return this;
         }
 
+        /// <summary>Sets a reactive preferred width.</summary>
         public virtual UIElement WithWidth(State<float> width)
         {
             preferredWidth = width.Value;
@@ -324,12 +303,14 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets a fixed preferred height.</summary>
         public virtual UIElement WithHeight(float height)
         {
             preferredHeight = height;
             return this;
         }
 
+        /// <summary>Sets a reactive preferred height.</summary>
         public virtual UIElement WithHeight(State<float> height)
         {
             preferredHeight = height.Value;
@@ -340,12 +321,14 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets uniform padding on all edges.</summary>
         public virtual UIElement WithPadding(int pad)
         {
             padding = new RectOffset(pad, pad, pad, pad);
             return this;
         }
 
+        /// <summary>Sets reactive uniform padding.</summary>
         public virtual UIElement WithPadding(State<int> pad)
         {
             padding = new RectOffset(pad.Value, pad.Value, pad.Value, pad.Value);
@@ -356,12 +339,14 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets explicit per-edge padding.</summary>
         public virtual UIElement WithPadding(RectOffset pad)
         {
             padding = pad;
             return this;
         }
 
+        /// <summary>Sets absolute position (top-left origin, Y increasing downward).</summary>
         public virtual UIElement WithPosition(float x, float y)
         {
             var newPos = new Vector2(x, y);
@@ -376,6 +361,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets reactive absolute position.</summary>
         public virtual UIElement WithPosition(State<Vector2> position)
         {
             useCustomPosition = true;
@@ -393,6 +379,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets reactive X with fixed Y.</summary>
         public virtual UIElement WithPosition(State<float> x, float y)
         {
             useCustomPosition = true;
@@ -410,6 +397,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets fixed X with reactive Y.</summary>
         public virtual UIElement WithPosition(float x, State<float> y)
         {
             useCustomPosition = true;
@@ -427,10 +415,7 @@ namespace UniftUI
             return this;
         }
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // STYLE MODIFIERS
-        // ═══════════════════════════════════════════════════════════════════════
-
+        /// <summary>Sets background color.</summary>
         public virtual UIElement WithBackgroundColor(Color color)
         {
             if (useAnimation && builtGameObject != null && animationDuration > 0)
@@ -440,6 +425,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets reactive background color.</summary>
         public virtual UIElement WithBackgroundColor(State<Color> color)
         {
             backgroundColor = color.Value;
@@ -456,6 +442,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets opacity (0–1).</summary>
         public virtual UIElement WithOpacity(float value)
         {
             value = Mathf.Clamp01(value);
@@ -466,6 +453,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets reactive opacity (0–1).</summary>
         public virtual UIElement WithOpacity(State<float> value)
         {
             opacity = Mathf.Clamp01(value.Value);
@@ -482,6 +470,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets uniform corner radius (0–50, mapped to UiRoundedCorners scale).</summary>
         public virtual UIElement WithCornerRadius(float radius)
         {
             radius = Mathf.Clamp(radius, 0f, 50f);
@@ -494,6 +483,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets reactive uniform corner radius.</summary>
         public virtual UIElement WithCornerRadius(State<float> radius)
         {
             float s = Mathf.Clamp(radius.Value, 0f, 50f) * (40f / 50f);
@@ -512,6 +502,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets per-corner radius values.</summary>
         public virtual UIElement WithCornerRadius(float topLeft, float topRight, float bottomRight, float bottomLeft)
         {
             float f = 40f / 50f;
@@ -527,6 +518,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Sets corner radius on selected corners only.</summary>
         public virtual UIElement WithCornerRadius(float radius, RectCorner corners)
         {
             radius = Mathf.Clamp(radius, 0f, 50f);
@@ -540,10 +532,7 @@ namespace UniftUI
             return this;
         }
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // EFFECTS (ROTATION / SCALE)
-        // ═══════════════════════════════════════════════════════════════════════
-
+        /// <summary>Applies Z-axis rotation in degrees.</summary>
         public virtual UIElement WithRotationEffect(float degrees)
         {
             var newRot = new Vector3(0, 0, degrees);
@@ -554,6 +543,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Applies rotation with Euler angles.</summary>
         public virtual UIElement WithRotationEffect(float x, float y, float z)
         {
             var newRot = new Vector3(x, y, z);
@@ -564,6 +554,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Applies rotation from a <see cref="Vector3"/> Euler angles.</summary>
         public virtual UIElement WithRotationEffect(Vector3 euler)
         {
             if (useAnimation && builtGameObject != null && animationDuration > 0)
@@ -573,6 +564,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Reactive Z-axis rotation in degrees.</summary>
         public virtual UIElement WithRotationEffect(State<float> degrees)
         {
             rotationEffectEuler = new Vector3(0, 0, degrees.Value);
@@ -589,6 +581,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Reactive rotation with bound X component.</summary>
         public virtual UIElement WithRotationEffect(State<float> x, float y, float z)
         {
             rotationEffectEuler = new Vector3(x.Value, y, z);
@@ -605,6 +598,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Reactive rotation with bound Y component.</summary>
         public virtual UIElement WithRotationEffect(float x, State<float> y, float z)
         {
             rotationEffectEuler = new Vector3(x, y.Value, z);
@@ -621,6 +615,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Reactive rotation with bound Z component.</summary>
         public virtual UIElement WithRotationEffect(float x, float y, State<float> z)
         {
             rotationEffectEuler = new Vector3(x, y, z.Value);
@@ -637,6 +632,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Reactive rotation with bound <see cref="Vector3"/> Euler angles.</summary>
         public virtual UIElement WithRotationEffect(State<Vector3> rotation)
         {
             rotationEffectEuler = rotation.Value;
@@ -647,6 +643,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Applies uniform scale.</summary>
         public virtual UIElement WithScaleEffect(float scale)
         {
             var newScale = new Vector3(scale, scale, scale);
@@ -657,6 +654,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Applies scale on X and Y (Z = 1).</summary>
         public virtual UIElement WithScaleEffect(float x, float y)
         {
             var newScale = new Vector3(x, y, 1f);
@@ -667,6 +665,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Applies scale on X, Y, and Z.</summary>
         public virtual UIElement WithScaleEffect(float x, float y, float z)
         {
             var newScale = new Vector3(x, y, z);
@@ -677,6 +676,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Applies scale from a <see cref="Vector3"/>.</summary>
         public virtual UIElement WithScaleEffect(Vector3 scale)
         {
             if (useAnimation && builtGameObject != null && animationDuration > 0)
@@ -686,6 +686,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Reactive uniform scale.</summary>
         public virtual UIElement WithScaleEffect(State<float> scale)
         {
             scaleEffect = new Vector3(scale.Value, scale.Value, scale.Value);
@@ -702,6 +703,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Reactive scale with bound X component.</summary>
         public virtual UIElement WithScaleEffect(State<float> x, float y)
         {
             scaleEffect = new Vector3(x.Value, y, 1f);
@@ -712,6 +714,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Reactive scale with bound Y component.</summary>
         public virtual UIElement WithScaleEffect(float x, State<float> y)
         {
             scaleEffect = new Vector3(x, y.Value, 1f);
@@ -722,6 +725,7 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Reactive scale with bound <see cref="Vector3"/>.</summary>
         public virtual UIElement WithScaleEffect(State<Vector3> scale)
         {
             scaleEffect = scale.Value;
@@ -732,10 +736,7 @@ namespace UniftUI
             return this;
         }
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // APPLY HELPERS (internal / protected)
-        // ═══════════════════════════════════════════════════════════════════════
-
+        /// <summary>Applies opacity, corners, position, rotation, scale, callbacks, and dynamic effects.</summary>
         protected void ApplyAllEffects(GameObject gameObject, Image backgroundImage = null)
         {
             ApplyOpacity(gameObject);
@@ -759,7 +760,6 @@ namespace UniftUI
                 return cg;
             }
             if (cg == null) cg = gameObject.AddComponent<CanvasGroup>();
-            // cg が破棄済みの場合は安全に無視する
             if (cg != null) cg.alpha = opacity;
             return cg;
         }
@@ -868,8 +868,6 @@ namespace UniftUI
             }
         }
 
-        // ── Animate helpers ─────────────────────────────────────────────────
-
         protected void AnimatePosition(GameObject gameObject, Vector2 target)
         {
             if (gameObject == null) return;
@@ -934,22 +932,25 @@ namespace UniftUI
             scaleEffect = target;
         }
 
-        // ─────────────────────────────────────────────────────────────────────
+        /// <summary>Propagates infinite width to child content (override in layout containers).</summary>
         protected virtual void PropagateInfiniteWidthToContent() { }
+
+        /// <summary>Propagates infinite height to child content (override in layout containers).</summary>
         protected virtual void PropagateInfiniteHeightToContent() { }
     }
 
-    // ── Alignment enums ──────────────────────────────────────────────────────
-
+    /// <summary>Horizontal alignment for vertical stacks.</summary>
     public enum VStackAlignment { Leading, Center, Trailing }
+
+    /// <summary>Vertical alignment for horizontal stacks.</summary>
     public enum HStackAlignment
     {
         Top,
         Center,
         Bottom,
-        /// <summary>SwiftUI <c>VerticalAlignment.firstTextBaseline</c> に相当。</summary>
+        /// <summary>Aligns children by the first text baseline.</summary>
         FirstTextBaseline,
-        /// <summary>SwiftUI <c>VerticalAlignment.lastTextBaseline</c> に相当。</summary>
+        /// <summary>Aligns children by the last text baseline.</summary>
         LastTextBaseline
     }
 }

@@ -4,10 +4,11 @@ using UnityEngine;
 
 namespace UniftUI
 {
+    /// <summary>Observable value container used for declarative UI updates.</summary>
     public class State
     {
         private readonly List<Action> observers = new List<Action>();
-        private static int batchDepth = 0;
+        private static int batchDepth;
         private static readonly HashSet<State> changedStates = new HashSet<State>();
 
         public IDisposable AddObserver(Action onChanged)
@@ -50,12 +51,9 @@ namespace UniftUI
             }
         }
 
-        public static void BeginBatchUpdate()
-        {
-            batchDepth++;
-        }
+        public static void BeginBatchUpdate() => batchDepth++;
 
-        // Drain loop: handles re-entrant State changes triggered during notification.
+        /// <summary>Flushes batched notifications, including any triggered during flush (re-entrant safe).</summary>
         public static void EndBatchUpdate()
         {
             if (batchDepth == 0)
@@ -116,14 +114,12 @@ namespace UniftUI
         }
     }
 
+    /// <summary>Typed observable state.</summary>
     public class State<T> : State
     {
         private T value;
 
-        public State(T initialValue)
-        {
-            value = initialValue;
-        }
+        public State(T initialValue) => value = initialValue;
 
         public T Value
         {

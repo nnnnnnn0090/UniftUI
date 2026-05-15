@@ -4,16 +4,14 @@ using UnityEngine.UI;
 namespace UniftUI
 {
     /// <summary>
-    /// SwiftUI の <c>Spacer(minLength:)</c>。親が <see cref="VerticalLayoutGroup"/> のときは縦方向のみ、
-    /// <see cref="HorizontalLayoutGroup"/> のときは横方向のみ伸縮し、それ以外（ZStack 等）は両軸で伸びます。
-    /// コンストラクタ引数は主軸の<strong>最小</strong>長だけで、スタックに余白があれば <c>flexibleWidth</c>/<c>flexibleHeight</c> により<strong>それより大きくなります</strong>。
-    /// ピクセル固定の隙間は SwiftUI と同様 <c>Spacer().Frame(width:)</c> / <c>Frame(height:)</c> で指定してください。
+    /// Flexible space along the parent stack main axis (<c>minLength</c> is a minimum, not a fixed size);
+    /// use <see cref="UIElementExtensions.Frame{T}(T, float?, float?, bool, bool)"/> for a fixed-size gap.
     /// </summary>
     public class SpacerElement : UIElement
     {
-        /// <summary>主軸に沿った最小長さ（<see cref="UniftView.Spacer(float)"/> の <c>minLength</c>。VStack では高さ、HStack では幅）。</summary>
         private readonly float minAlongAxis;
 
+        /// <param name="minAlongAxis">Minimum size along the stack main axis (height in VStack, width in HStack).</param>
         public SpacerElement(float minAlongAxis = 0)
         {
             this.minAlongAxis = minAlongAxis;
@@ -34,7 +32,6 @@ namespace UniftUI
 
             LayoutElement layoutElement = spacerObj.AddComponent<LayoutElement>();
 
-            // 親がレイアウトグループを付けないラッパーのときがあるため、祖先を辿って主軸を解決（SwiftUI の Spacer は親スタックの主軸にのみ効く）。
             bool verticalMain = false;
             bool horizontalMain = false;
             Transform t = parent;
@@ -42,7 +39,6 @@ namespace UniftUI
             {
                 bool hasH = t.GetComponent<HorizontalLayoutGroup>() != null;
                 bool hasV = t.GetComponent<VerticalLayoutGroup>() != null;
-                // 同一ノードに両方ある場合は横並び（行）を優先（稀な構成）
                 if (hasH)
                 {
                     horizontalMain = true;

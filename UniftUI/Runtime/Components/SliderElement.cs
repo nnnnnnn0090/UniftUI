@@ -4,6 +4,7 @@ using TMPro;
 
 namespace UniftUI
 {
+    /// <summary>Integer slider bound to a <see cref="State{int}"/> value.</summary>
     public class SliderElement : UIElement
     {
         private State<int> value;
@@ -12,7 +13,7 @@ namespace UniftUI
         private bool showValue;
         private Color accentColor = new Color(0.2f, 0.6f, 1.0f);
         private Color handleColor = new Color(0.1f, 0.4f, 0.8f);
-        
+
         private float handleWidth = -1;
         private float handleHeight = -1;
 
@@ -52,7 +53,7 @@ namespace UniftUI
             }
 
             LayoutElement layoutElement = sliderObj.AddComponent<LayoutElement>();
-            
+
             float defaultSliderHeight = 40f;
             float defaultSliderMinWidth = 100f;
 
@@ -60,19 +61,19 @@ namespace UniftUI
             {
                 layoutElement.flexibleWidth = 1;
                 layoutElement.preferredWidth = -1;
-                layoutElement.minWidth = 0; 
+                layoutElement.minWidth = 0;
             }
             else if (preferredWidth >= 0)
             {
                 layoutElement.preferredWidth = preferredWidth;
-                layoutElement.minWidth = preferredWidth; 
+                layoutElement.minWidth = preferredWidth;
                 layoutElement.flexibleWidth = 0;
             }
             else
             {
                 layoutElement.flexibleWidth = 1;
                 layoutElement.preferredWidth = -1;
-                layoutElement.minWidth = defaultSliderMinWidth; 
+                layoutElement.minWidth = defaultSliderMinWidth;
             }
 
             if (infiniteHeight)
@@ -89,11 +90,11 @@ namespace UniftUI
             }
             else
             {
-                layoutElement.preferredHeight = defaultSliderHeight; 
-                layoutElement.minHeight = defaultSliderHeight;       
+                layoutElement.preferredHeight = defaultSliderHeight;
+                layoutElement.minHeight = defaultSliderHeight;
                 layoutElement.flexibleHeight = 0;
             }
-            
+
             if (showValue)
             {
                 VerticalLayoutGroup vertLayout = sliderObj.AddComponent<VerticalLayoutGroup>();
@@ -118,7 +119,7 @@ namespace UniftUI
             slider.wholeNumbers = true;
             slider.value = this.value.Value;
             slider.transition = Selectable.Transition.ColorTint;
-            
+
             ColorBlock colors = slider.colors;
             colors.normalColor = Color.white;
             colors.highlightedColor = new Color(0.95f, 0.95f, 0.95f);
@@ -132,7 +133,7 @@ namespace UniftUI
             bgImage.color = new Color(0.9f, 0.9f, 0.9f, 0.5f);
             bgImage.sprite = CreateRoundedRectSprite(10);
             bgImage.type = Image.Type.Sliced;
-            
+
             RectTransform bgRect = background.GetComponent<RectTransform>();
             bgRect.anchorMin = new Vector2(0, 0.35f);
             bgRect.anchorMax = new Vector2(1, 0.65f);
@@ -146,20 +147,20 @@ namespace UniftUI
             fillAreaRect.anchorMax = new Vector2(1, 0.65f);
             fillAreaRect.offsetMin = new Vector2(5, 0);
             fillAreaRect.offsetMax = new Vector2(-5, 0);
-            
+
             GameObject fill = new GameObject("Fill");
             fill.transform.SetParent(fillArea.transform, false);
             Image fillImage = fill.AddComponent<Image>();
             fillImage.color = accentColor;
             fillImage.sprite = CreateRoundedRectSprite(10);
             fillImage.type = Image.Type.Sliced;
-            
+
             RectTransform fillRect = fill.GetComponent<RectTransform>();
             fillRect.anchorMin = Vector2.zero;
             fillRect.anchorMax = Vector2.one;
             fillRect.sizeDelta = Vector2.zero;
             slider.fillRect = fillRect;
-            
+
             GameObject handleSlideArea = new GameObject("Handle Slide Area");
             handleSlideArea.transform.SetParent(sliderContainer.transform, false);
             RectTransform handleSlideAreaRect = handleSlideArea.AddComponent<RectTransform>();
@@ -174,29 +175,28 @@ namespace UniftUI
             handleImage.color = handleColor;
             handleImage.sprite = CreateCircleSprite();
             handleImage.preserveAspect = true;
-            
+
             Shadow handleShadow = handle.AddComponent<Shadow>();
             handleShadow.effectColor = new Color(0, 0, 0, 0.3f);
             handleShadow.effectDistance = new Vector2(1, -1);
-            
+
             RectTransform handleRect = handle.GetComponent<RectTransform>();
             handleRect.anchorMin = new Vector2(0.5f, 0.5f);
             handleRect.anchorMax = new Vector2(0.5f, 0.5f);
             handleRect.pivot = new Vector2(0.5f, 0.5f);
-            
-            float referenceHeight = (preferredHeight >= 0 && !infiniteHeight) 
-                ? preferredHeight 
+
+            float referenceHeight = (preferredHeight >= 0 && !infiniteHeight)
+                ? preferredHeight
                 : defaultSliderHeight;
-            
+
             if (showValue) referenceHeight *= 0.7f;
-            
+
             float calculatedHandleSize = Mathf.Min(24, referenceHeight * 0.6f);
             float handleW = (handleWidth >= 0) ? handleWidth : calculatedHandleSize;
             float handleH = (handleHeight >= 0) ? handleHeight : calculatedHandleSize;
-            
+
             handleRect.sizeDelta = new Vector2(handleW, handleH);
 
-            // 親レイアウトや Slider 領域の縦横比で Rect が潰れないよう正方形を固定（丸つまみが楕円になるのを防ぐ）
             LayoutElement handleLayout = handle.AddComponent<LayoutElement>();
             handleLayout.preferredWidth = handleW;
             handleLayout.preferredHeight = handleH;
@@ -204,7 +204,7 @@ namespace UniftUI
             handleLayout.minHeight = handleH;
             handleLayout.flexibleWidth = 0;
             handleLayout.flexibleHeight = 0;
-            
+
             slider.handleRect = handleRect;
             slider.targetGraphic = handleImage;
 
@@ -217,7 +217,7 @@ namespace UniftUI
                 tmpText.alignment = TextAlignmentOptions.MidlineRight;
                 tmpText.text = this.value.Value.ToString();
                 tmpText.color = new Color(0.2f, 0.2f, 0.2f);
-                
+
                 LayoutElement textLayout = valueText.AddComponent<LayoutElement>();
                 textLayout.preferredHeight = 20;
                 textLayout.flexibleWidth = 1;
@@ -261,7 +261,7 @@ namespace UniftUI
                     }
                 }
             });
-            
+
             ApplyAllEffects(sliderObj, sliderObjBackgroundImage);
 
             slider.value = this.value.Value;
@@ -272,10 +272,10 @@ namespace UniftUI
         {
             int width = 100;
             int height = 20;
-            
+
             Texture2D texture = new Texture2D(width, height);
             Color[] colors = new Color[width * height];
-            
+
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
@@ -306,23 +306,23 @@ namespace UniftUI
                     }
                 }
             }
-            
+
             texture.SetPixels(colors);
             texture.Apply();
-            
+
             TextureTracker.RegisterTexture(texture);
-            
+
             return Sprite.Create(texture, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f), 100, 0, SpriteMeshType.FullRect, new Vector4(cornerRadius, cornerRadius, cornerRadius, cornerRadius));
         }
-        
+
         private Sprite CreateCircleSprite()
         {
             int size = 64;
             int radius = size / 2;
-            
+
             Texture2D texture = new Texture2D(size, size);
             Color[] colors = new Color[size * size];
-            
+
             for (int y = 0; y < size; y++)
             {
                 for (int x = 0; x < size; x++)
@@ -330,7 +330,7 @@ namespace UniftUI
                     float dx = x - radius + 0.5f;
                     float dy = y - radius + 0.5f;
                     float distance = Mathf.Sqrt(dx * dx + dy * dy);
-                    
+
                     if (distance <= radius)
                     {
                         colors[y * size + x] = Color.white;
@@ -341,12 +341,12 @@ namespace UniftUI
                     }
                 }
             }
-            
+
             texture.SetPixels(colors);
             texture.Apply();
-            
+
             TextureTracker.RegisterTexture(texture);
-            
+
             return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100);
         }
     }

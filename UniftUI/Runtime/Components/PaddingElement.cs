@@ -4,20 +4,19 @@ using System.Collections.Generic;
 
 namespace UniftUI
 {
+    /// <summary>Applies insets around a single child.</summary>
     public class PaddingElement : UIElement, ILayoutContainer
     {
         private UIElement content;
         private RectOffset paddingValue;
-        // 構築したVerticalLayoutGroupへの参照を保持
         private VerticalLayoutGroup layoutGroup;
 
         public PaddingElement(UIElement content, RectOffset padding)
         {
             this.content = content;
             this.paddingValue = padding;
-            // 基底クラスのpaddingも同期する
             this.padding = padding;
-            
+
             if (content != null)
             {
                 this.useCustomPosition = content.useCustomPosition;
@@ -27,21 +26,18 @@ namespace UniftUI
             }
         }
 
-        // パディング値を動的に更新するメソッド
+        /// <summary>Updates padding uniformly on all edges.</summary>
         public void UpdatePadding(int padding)
         {
             UpdatePadding(new RectOffset(padding, padding, padding, padding));
         }
 
-        // パディング値を動的に更新するメソッド
+        /// <summary>Updates padding and refreshes the built layout when already on screen.</summary>
         public void UpdatePadding(RectOffset newPadding)
         {
-            // 内部のpaddingValue値を更新
             this.paddingValue = newPadding;
-            // 基底クラスのpadding値も更新
             this.padding = newPadding;
-            
-            // レイアウトグループがすでに構築されていれば直接更新
+
             if (layoutGroup != null && layoutGroup.gameObject != null)
             {
                 layoutGroup.padding = newPadding;
@@ -49,11 +45,9 @@ namespace UniftUI
             }
         }
 
-        // 基底クラスのWithPaddingメソッドをオーバーライド
         public override UIElement WithPadding(int padding)
         {
             base.WithPadding(padding);
-            // 独自のパディング値も更新
             UpdatePadding(padding);
             return this;
         }
@@ -61,23 +55,22 @@ namespace UniftUI
         public override UIElement WithPadding(RectOffset padding)
         {
             base.WithPadding(padding);
-            // 独自のパディング値も更新
             UpdatePadding(padding);
             return this;
         }
 
-        public void AddChild(UIElement child) 
+        public void AddChild(UIElement child)
         {
             if (this.content == null) this.content = child;
-            else Debug.LogWarning("PaddingElement can only contain one child.");
+            else Debug.LogWarning("[UniftUI] PaddingElement can only contain one child.");
         }
 
-        public void RemoveChild(UIElement child) 
+        public void RemoveChild(UIElement child)
         {
             if (this.content == child) this.content = null;
         }
 
-        public void ReplaceChild(UIElement oldChild, UIElement newChild) 
+        public void ReplaceChild(UIElement oldChild, UIElement newChild)
         {
             if (this.content == oldChild) this.content = newChild;
         }
@@ -97,13 +90,12 @@ namespace UniftUI
             paddingContainer.transform.SetParent(parent, false);
 
             Image bgImage = null;
-            if (base.backgroundColor != Color.clear) 
+            if (base.backgroundColor != Color.clear)
             {
                 bgImage = paddingContainer.AddComponent<Image>();
                 bgImage.color = base.backgroundColor;
             }
 
-            // レイアウトグループへの参照を保持
             layoutGroup = paddingContainer.AddComponent<VerticalLayoutGroup>();
             layoutGroup.padding = paddingValue;
             layoutGroup.childControlWidth = true;
@@ -168,10 +160,9 @@ namespace UniftUI
             {
                 PropagateInfiniteHeightToContent();
             }
-            
+
             ApplyAllEffects(paddingContainer, bgImage);
-            
-            // builtGameObject参照を設定
+
             builtGameObject = paddingContainer;
 
             content?.Build(paddingContainer.transform);

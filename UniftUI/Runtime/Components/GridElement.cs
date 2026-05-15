@@ -6,12 +6,9 @@ using System.Collections.Generic;
 namespace UniftUI
 {
     /// <summary>
-    /// SwiftUI の <c>Grid</c> に相当。子は <see cref="GridRowElement"/> のみを想定（<c>GridRow { }</c>）。
-    /// 行間は <see cref="VerticalLayoutGroup.spacing"/>（<paramref name="verticalSpacing"/>）、セル間は各行の水平 <paramref name="horizontalSpacing"/>。
+    /// Two-dimensional grid layout. Children should be <see cref="GridRowElement"/> instances.
+    /// Column widths are synchronized after build via <see cref="GridColumnSynchronizer"/>.
     /// </summary>
-    /// <remarks>
-    /// 構築後に <see cref="GridColumnSynchronizer"/> が各行同一列のセルに、列ごとの最大希望幅を適用し SwiftUI の Grid に近い列揃えを行います。
-    /// </remarks>
     public class GridElement : UIElement, ILayoutContainer
     {
         private readonly Action content;
@@ -65,7 +62,7 @@ namespace UniftUI
             if (index != -1)
                 children[index] = newChild;
             else
-                Debug.LogWarning($"ReplaceChild: Grid に oldChild が見つかりません。Children: {children.Count}");
+                Debug.LogWarning($"[UniftUI] Grid ReplaceChild: oldChild not found. Children count: {children.Count}");
         }
 
         public IEnumerable<UIElement> GetChildren() => children;
@@ -83,11 +80,9 @@ namespace UniftUI
             }
 
             VerticalLayoutGroup layout = container.AddComponent<VerticalLayoutGroup>();
-            // 親（ルート Canvas など）よりコンテンツが低いとき、行全体を縦方向に中央へ（SwiftUI で可視領域いっぱいの Grid が中央に寄る挙動に近づける）
             layout.childAlignment = TextAnchor.MiddleCenter;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
-            // 各行（GridRow）をグリッドの利用可能幅いっぱいに伸ばす（セル側の Frame(infiniteWidth: true) が効く前提）
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
             layout.spacing = VerticalSpacing;
@@ -147,7 +142,7 @@ namespace UniftUI
             {
                 if (container == null || !container)
                 {
-                    Debug.LogWarning("Grid: コンテナが既に破棄されています");
+                    Debug.LogWarning("[UniftUI] Grid rebuild skipped: container was destroyed.");
                     return;
                 }
 
@@ -180,7 +175,7 @@ namespace UniftUI
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"Grid: UI の再構築中にエラー: {e.Message}\n{e.StackTrace}");
+                    Debug.LogError($"[UniftUI] Grid rebuild error: {e.Message}\n{e.StackTrace}");
                 }
             });
         }
