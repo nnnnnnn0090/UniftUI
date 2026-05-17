@@ -313,6 +313,7 @@ const docs = {
       toc: "このページ",
       noResults: "見つかりませんでした。",
       docsTitle: "ドキュメント",
+      menu: "メニュー",
       theme: "テーマ",
       themeSystem: "デバイス",
       themeLight: "ライト",
@@ -1108,6 +1109,7 @@ Text("Primary action")
       toc: "On This Page",
       noResults: "No results found.",
       docsTitle: "Documentation",
+      menu: "Menu",
       theme: "Theme",
       themeSystem: "System",
       themeLight: "Light",
@@ -1925,6 +1927,8 @@ const searchInput = document.getElementById("search-input");
 const languageButtons = [...document.querySelectorAll("[data-lang]")];
 const themeButtons = [...document.querySelectorAll("[data-theme-choice]")];
 const themeToggle = document.querySelector(".theme-toggle");
+const mobileMenuButton = document.querySelector(".mobile-menu-button");
+const mobileScrim = document.querySelector(".mobile-scrim");
 const systemDarkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 const reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 let revealObserver;
@@ -2020,6 +2024,16 @@ function renderSidebar() {
 
   if (!symbolList.children.length) {
     symbolList.innerHTML = `<div class="empty">${docs[currentLanguage].chrome.noResults}</div>`;
+  }
+}
+
+function setMobileNavOpen(open) {
+  document.body.classList.toggle("nav-open", open);
+  if (mobileMenuButton) {
+    mobileMenuButton.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  if (mobileScrim) {
+    mobileScrim.hidden = !open;
   }
 }
 
@@ -2162,6 +2176,10 @@ function renderChrome() {
   searchInput.placeholder = chrome.search;
   document.querySelector(".toc-title").textContent = chrome.toc;
   document.querySelector(".sidebar-title").textContent = "UniftUI";
+  if (mobileMenuButton) {
+    mobileMenuButton.setAttribute("aria-label", chrome.menu);
+    mobileMenuButton.setAttribute("title", chrome.menu);
+  }
   languageButtons.forEach(button => {
     const active = button.dataset.lang === currentLanguage;
     button.classList.toggle("active", active);
@@ -2192,6 +2210,24 @@ themeButtons.forEach(button => {
   button.addEventListener("click", () => setTheme(button.dataset.themeChoice));
 });
 
+if (mobileMenuButton) {
+  mobileMenuButton.addEventListener("click", () => {
+    setMobileNavOpen(!document.body.classList.contains("nav-open"));
+  });
+}
+
+if (mobileScrim) {
+  mobileScrim.addEventListener("click", () => setMobileNavOpen(false));
+}
+
+symbolList.addEventListener("click", event => {
+  if (event.target.closest("a")) setMobileNavOpen(false);
+});
+
+window.addEventListener("keydown", event => {
+  if (event.key === "Escape") setMobileNavOpen(false);
+});
+
 if (systemDarkQuery.addEventListener) {
   systemDarkQuery.addEventListener("change", applyTheme);
 } else {
@@ -2200,6 +2236,7 @@ if (systemDarkQuery.addEventListener) {
 
 searchInput.addEventListener("input", renderSidebar);
 window.addEventListener("hashchange", () => {
+  setMobileNavOpen(false);
   renderArticle();
   document.getElementById("main").focus({ preventScroll: true });
   window.scrollTo({ top: 0, behavior: "auto" });
