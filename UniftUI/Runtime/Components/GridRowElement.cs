@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Collections.Generic;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -75,63 +76,22 @@ namespace UniftUI
                 backgroundImage.color = backgroundColor;
             }
 
-            HorizontalLayoutGroup layout = container.AddComponent<HorizontalLayoutGroup>();
-            ContentSizeFitter fitter = container.AddComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            switch (rowAlignment)
-            {
-                case HStackAlignment.Top:
-                    layout.childAlignment = TextAnchor.UpperCenter;
-                    break;
-                case HStackAlignment.Center:
-                    layout.childAlignment = TextAnchor.MiddleCenter;
-                    break;
-                case HStackAlignment.Bottom:
-                    layout.childAlignment = TextAnchor.LowerCenter;
-                    break;
-                case HStackAlignment.FirstTextBaseline:
-                case HStackAlignment.LastTextBaseline:
-                    layout.childAlignment = TextAnchor.MiddleCenter;
-                    break;
-            }
-
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = false;
-            layout.spacing = horizontalSpacing;
+            UniftUIStackLayoutGroup layout = container.AddComponent<UniftUIStackLayoutGroup>();
             layout.padding = padding ?? new RectOffset(0, 0, 0, 0);
+            layout.Configure(UniftUIStackAxis.Horizontal, horizontalSpacing, VStackAlignment.Center, rowAlignment);
 
-            LayoutElement layoutElement = container.AddComponent<LayoutElement>();
-            if (preferredWidth >= 0)
-            {
-                layoutElement.preferredWidth = preferredWidth;
-                layoutElement.minWidth = preferredWidth;
-                layoutElement.flexibleWidth = 0;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-            else
-            {
-                layoutElement.flexibleWidth = 1;
-                layoutElement.minWidth = 0;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            }
-
-            if (infiniteHeight)
-            {
-                layoutElement.flexibleHeight = 1;
-                fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
-            }
-            else if (preferredHeight >= 0)
-            {
-                layoutElement.preferredHeight = preferredHeight;
-                layoutElement.minHeight = preferredHeight;
-            }
+            LayoutElementUtility.Configure(
+                container,
+                preferredWidth,
+                preferredHeight,
+                preferredWidth < 0 || infiniteWidth,
+                infiniteHeight);
 
             foreach (var child in children)
+            {
+                ApplyInheritedFont(child);
                 child.Build(container.transform);
+            }
 
             ApplyAllEffects(container, backgroundImage);
 

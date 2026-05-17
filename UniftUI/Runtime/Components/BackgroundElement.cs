@@ -1,51 +1,47 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
+    /// <summary>Wraps content in a colored background layer.</summary>
     public class BackgroundElement : UIElement, ILayoutContainer
     {
         private UIElement content;
-        private Color elementBackgroundColor;
+        private readonly Color elementBackgroundColor;
 
         public BackgroundElement(UIElement content, Color bgColor)
         {
             this.content = content;
             this.elementBackgroundColor = bgColor;
-            
-            if (content != null)
-            {
-                this.useCustomPosition = content.useCustomPosition;
-                this.customPosition = content.customPosition;
-                this.rotationEffectEuler = content.rotationEffectEuler;
-                this.scaleEffect = content.scaleEffect;
-            }
+            CopyFrameFrom(content);
         }
 
         public void AddChild(UIElement child)
         {
-            if (this.content == null) this.content = child;
-            else Debug.LogWarning("BackgroundElement can only contain one child.");
+            if (content == null)
+                content = child;
+            else
+                Debug.LogWarning("[UniftUI] BackgroundElement can only contain one child.");
         }
 
         public void RemoveChild(UIElement child)
         {
-            if (this.content == child) this.content = null;
+            if (content == child)
+                content = null;
         }
 
         public void ReplaceChild(UIElement oldChild, UIElement newChild)
         {
-            if (this.content == oldChild) this.content = newChild;
+            if (content == oldChild)
+                content = newChild;
         }
 
         public IEnumerable<UIElement> GetChildren()
         {
             if (content != null)
-            {
-                return new List<UIElement> { content };
-            }
-            return new List<UIElement>();
+                yield return content;
         }
 
         public override GameObject Build(Transform parent)
@@ -53,16 +49,17 @@ namespace UniftUI
             GameObject backgroundContainer = new GameObject("BackgroundContainer");
             backgroundContainer.transform.SetParent(parent, false);
 
-            GameObject contentObj = null;
-            Image existingImage = null;
-            
-            if (content != null)
-            {
-                contentObj = content.Build(backgroundContainer.transform);
-                existingImage = contentObj?.GetComponent<Image>();
-            }
+            var layoutGroup = backgroundContainer.AddComponent<UniftUISingleChildLayoutGroup>();
+            layoutGroup.Configure(new RectOffset(0, 0, 0, 0), TextAnchor.MiddleCenter);
 
-            Image bgImage = existingImage ?? backgroundContainer.AddComponent<Image>();
+            LayoutElementUtility.Configure(backgroundContainer, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight);
+
+            if (infiniteWidth)
+                PropagateInfiniteWidthToContent();
+            if (infiniteHeight)
+                PropagateInfiniteHeightToContent();
+
+            Image bgImage = backgroundContainer.AddComponent<Image>();
             bgImage.color = elementBackgroundColor;
 
             if (base.backgroundColor != Color.clear && base.backgroundColor != elementBackgroundColor)
@@ -70,64 +67,21 @@ namespace UniftUI
                 GameObject additionalBg = new GameObject("AdditionalBackground");
                 additionalBg.transform.SetParent(backgroundContainer.transform, false);
                 additionalBg.transform.SetAsFirstSibling();
-                
+
                 RectTransform rectTransform = additionalBg.AddComponent<RectTransform>();
                 rectTransform.anchorMin = Vector2.zero;
                 rectTransform.anchorMax = Vector2.one;
                 rectTransform.offsetMin = Vector2.zero;
                 rectTransform.offsetMax = Vector2.zero;
-                
+
                 Image additionalImage = additionalBg.AddComponent<Image>();
                 additionalImage.color = base.backgroundColor;
-                
+
                 ApplyRoundedCorners(additionalBg, additionalImage);
             }
 
-            var layoutGroup = backgroundContainer.AddComponent<VerticalLayoutGroup>();
-            layoutGroup.childControlWidth = true;
-            layoutGroup.childControlHeight = true;
-            layoutGroup.childForceExpandWidth = false;
-            layoutGroup.childForceExpandHeight = false;
-            layoutGroup.childAlignment = TextAnchor.UpperCenter;
-
-            LayoutElement le = backgroundContainer.AddComponent<LayoutElement>();
-            ContentSizeFitter fitter = backgroundContainer.AddComponent<ContentSizeFitter>();
-
-            if (this.infiniteWidth)
-            {
-                le.flexibleWidth = 1;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            }
-            else if (this.preferredWidth >= 0)
-            {
-                le.preferredWidth = this.preferredWidth;
-                le.minWidth = this.preferredWidth;
-                le.flexibleWidth = 0;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-            else
-            {
-                le.flexibleWidth = 0;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-
-            if (this.infiniteHeight)
-            {
-                le.flexibleHeight = 1;
-                fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
-            }
-            else if (this.preferredHeight >= 0)
-            {
-                le.preferredHeight = this.preferredHeight;
-                le.minHeight = this.preferredHeight;
-                le.flexibleHeight = 0;
-                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-            else
-            {
-                le.flexibleHeight = 0;
-                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
+            ApplyInheritedFont(content);
+            content?.Build(backgroundContainer.transform);
 
             ApplyAllEffects(backgroundContainer, bgImage);
 
@@ -136,12 +90,14 @@ namespace UniftUI
 
         protected override void PropagateInfiniteWidthToContent()
         {
-            content?.WithInfiniteWidth();
+            if (ChildMayFillWidth(content))
+                content?.WithInfiniteWidth();
         }
 
         protected override void PropagateInfiniteHeightToContent()
         {
-            content?.WithInfiniteHeight();
+            if (ChildMayFillHeight(content))
+                content?.WithInfiniteHeight();
         }
     }
 }

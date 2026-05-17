@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -11,12 +12,16 @@ namespace UniftUI
         private string label;
         private Action<bool> onValueChanged;
         private TMP_FontAsset fontAsset = null;
+        private float fontSize = 14f;
+        private Color textColor = Color.black;
+        private TextMeshProUGUI builtLabelText;
+        private Image builtTrackImage;
 
         private const float SwitchWidth = 51f;
         private const float SwitchHeight = 31f;
         private const float KnobDiameter = SwitchHeight - 4f;
-        private readonly Color ActiveTrackColor = new Color(0.2f, 0.8f, 0.35f, 1f);
-        private readonly Color InactiveTrackColor = new Color(0.88f, 0.88f, 0.88f, 1f);
+        private Color activeTrackColor = new Color(0.2f, 0.8f, 0.35f, 1f);
+        private Color inactiveTrackColor = new Color(0.88f, 0.88f, 0.88f, 1f);
         private readonly Color KnobColor = Color.white;
         private const float KnobPaddingFromEdge = 2f;
         private const float AnimationDuration = 0.1f;
@@ -32,6 +37,38 @@ namespace UniftUI
         public ToggleElement SetFont(TMP_FontAsset font)
         {
             fontAsset = font;
+            if (builtLabelText != null)
+            {
+                TMP_FontAsset effectiveFont = ResolveFont(fontAsset);
+                if (effectiveFont != null)
+                    builtLabelText.font = effectiveFont;
+            }
+
+            return this;
+        }
+
+        public ToggleElement SetFontSize(float size)
+        {
+            fontSize = Mathf.Max(1f, size);
+            if (builtLabelText != null)
+                ConfigureLabelText(builtLabelText);
+
+            return this;
+        }
+
+        public ToggleElement SetTextColor(Color color)
+        {
+            textColor = color;
+            if (builtLabelText != null)
+                builtLabelText.color = textColor;
+            return this;
+        }
+
+        public ToggleElement SetTintColor(Color color)
+        {
+            activeTrackColor = color;
+            if (builtTrackImage != null && isOn != null && isOn.Value)
+                builtTrackImage.color = activeTrackColor;
             return this;
         }
 
@@ -47,32 +84,19 @@ namespace UniftUI
                 toggleContainerBackgroundImage.color = backgroundColor;
             }
 
-            LayoutElement containerLayout = toggleContainer.AddComponent<LayoutElement>();
+            LayoutElement containerLayout = LayoutElementUtility.Configure(
+                toggleContainer,
+                preferredWidth,
+                preferredHeight,
+                preferredWidth < 0 || infiniteWidth,
+                infiniteHeight,
+                string.IsNullOrEmpty(label) ? SwitchWidth : -1f,
+                SwitchHeight);
             containerLayout.minHeight = SwitchHeight;
-            containerLayout.preferredHeight = this.preferredHeight > 0 ? this.preferredHeight : SwitchHeight;
-            
-            if (this.preferredWidth > 0)
-            {
-                containerLayout.preferredWidth = this.preferredWidth;
-                containerLayout.flexibleWidth = 0;
-            }
-            else
-            {
-                containerLayout.flexibleWidth = 1;
-                if (string.IsNullOrEmpty(label))
-                {
-                    containerLayout.preferredWidth = SwitchWidth;
-                }
-            }
 
-            HorizontalLayoutGroup hlg = toggleContainer.AddComponent<HorizontalLayoutGroup>();
-            hlg.spacing = 8;
-            hlg.childControlWidth = true;
-            hlg.childControlHeight = true;
-            hlg.childForceExpandWidth = false;
-            hlg.childForceExpandHeight = true;
+            UniftUIStackLayoutGroup hlg = toggleContainer.AddComponent<UniftUIStackLayoutGroup>();
             hlg.padding = new RectOffset(5, 5, 0, 0);
-            hlg.childAlignment = TextAnchor.MiddleLeft;
+            hlg.Configure(UniftUIStackAxis.Horizontal, 8f, VStackAlignment.Leading, HStackAlignment.Center);
 
             if (!string.IsNullOrEmpty(label))
             {
@@ -81,14 +105,13 @@ namespace UniftUI
                 
                 TextMeshProUGUI labelText = labelObj.AddComponent<TextMeshProUGUI>();
                 labelText.text = label;
-                labelText.fontSize = 18;
-                labelText.color = Color.black;
-                labelText.alignment = TextAlignmentOptions.Left;
-                labelText.verticalAlignment = VerticalAlignmentOptions.Middle;
+                ConfigureLabelText(labelText);
+                builtLabelText = labelText;
                 
-                if (fontAsset != null)
+                TMP_FontAsset effectiveFont = ResolveFont(fontAsset);
+                if (effectiveFont != null)
                 {
-                    labelText.font = fontAsset;
+                    labelText.font = effectiveFont;
                 }
 
                 LayoutElement labelLayout = labelObj.AddComponent<LayoutElement>();
@@ -110,6 +133,7 @@ namespace UniftUI
             trackObj.transform.SetParent(switchControl.transform, false);
             Image trackImage = trackObj.AddComponent<Image>();
             trackImage.type = Image.Type.Sliced;
+            builtTrackImage = trackImage;
 
             RectTransform trackRect = trackObj.GetComponent<RectTransform>();
             trackRect.anchorMin = Vector2.zero;
@@ -137,19 +161,24 @@ namespace UniftUI
             switchButton.colors = colors;
 
             switchButton.onClick.AddListener(() => {
+                if (isOn == null)
+                    return;
+
                 isOn.Value = !isOn.Value;
                 onValueChanged?.Invoke(isOn.Value);
             });
             
             Action updateVisuals = () => {
+                bool currentValue = isOn != null && isOn.Value;
+
                 if (trackImage != null)
                 {
-                    trackImage.color = isOn.Value ? ActiveTrackColor : InactiveTrackColor;
+                    trackImage.color = currentValue ? activeTrackColor : inactiveTrackColor;
                 }
                 if (knobRect != null && knobRect.gameObject.activeInHierarchy)
                 {
                     float movableRange = SwitchWidth - KnobDiameter - (KnobPaddingFromEdge * 2);
-                    float targetKnobXPosition = isOn.Value ? 
+                    float targetKnobXPosition = currentValue ? 
                         (movableRange / 2) : 
                         -(movableRange / 2);
                     
@@ -158,7 +187,7 @@ namespace UniftUI
                 else if (knobRect != null)
                 {
                     float movableRange = SwitchWidth - KnobDiameter - (KnobPaddingFromEdge * 2);
-                    float targetKnobXPosition = isOn.Value ? 
+                    float targetKnobXPosition = currentValue ? 
                         (movableRange / 2) : 
                         -(movableRange / 2);
                     
@@ -169,16 +198,32 @@ namespace UniftUI
             updateVisuals();
 
             StateObserver observer = toggleContainer.AddComponent<StateObserver>();
-            observer.Initialize(new State[] { isOn }, () => {
-                if (toggleContainer != null && toggleContainer.activeInHierarchy)
-                {
-                    updateVisuals();
-                }
-            });
+            if (isOn != null)
+            {
+                observer.Initialize(new State[] { isOn }, () => {
+                    if (toggleContainer != null && toggleContainer.activeInHierarchy)
+                    {
+                        updateVisuals();
+                    }
+                });
+            }
 
             ApplyAllEffects(toggleContainer, toggleContainerBackgroundImage);
             
             return toggleContainer;
+        }
+
+        private void ConfigureLabelText(TextMeshProUGUI labelText)
+        {
+            labelText.fontSize = fontSize;
+            labelText.fontSizeMax = fontSize;
+            labelText.fontSizeMin = Mathf.Min(8f, fontSize);
+            labelText.enableAutoSizing = true;
+            labelText.textWrappingMode = TextWrappingModes.NoWrap;
+            labelText.overflowMode = TextOverflowModes.Ellipsis;
+            labelText.color = textColor;
+            labelText.alignment = TextAlignmentOptions.Left;
+            labelText.verticalAlignment = VerticalAlignmentOptions.Middle;
         }
     }
 }

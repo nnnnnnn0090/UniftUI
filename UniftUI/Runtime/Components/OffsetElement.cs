@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -17,7 +18,7 @@ namespace UniftUI
         private float offsetYConst;
         private bool useXyStates;
         private bool useVectorState;
-        private RectTransform _contentRect;
+        private UniftUISingleChildLayoutGroup layoutGroup;
 
         public OffsetElement(UIElement content, Vector2 offset)
         {
@@ -48,36 +49,33 @@ namespace UniftUI
         private void CopyStyleFromContent(UIElement src)
         {
             if (src == null) return;
-            this.useCustomPosition = src.useCustomPosition;
-            this.customPosition = src.customPosition;
-            this.rotationEffectEuler = src.rotationEffectEuler;
-            this.scaleEffect = src.scaleEffect;
-            this.preferredWidth = src.preferredWidth;
-            this.preferredHeight = src.preferredHeight;
-            this.infiniteWidth = src.infiniteWidth;
-            this.infiniteHeight = src.infiniteHeight;
+            CopyFrameFrom(src);
         }
 
         public void AddChild(UIElement child)
         {
-            if (this.content == null) this.content = child;
-            else Debug.LogWarning("[UniftUI] OffsetElement can only contain one child.");
+            if (content == null)
+                content = child;
+            else
+                Debug.LogWarning("[UniftUI] OffsetElement can only contain one child.");
         }
 
         public void RemoveChild(UIElement child)
         {
-            if (this.content == child) this.content = null;
+            if (content == child)
+                content = null;
         }
 
         public void ReplaceChild(UIElement oldChild, UIElement newChild)
         {
-            if (this.content == oldChild) this.content = newChild;
+            if (content == oldChild)
+                content = newChild;
         }
 
         public IEnumerable<UIElement> GetChildren()
         {
-            if (content != null) return new List<UIElement> { content };
-            return new List<UIElement>();
+            if (content != null)
+                yield return content;
         }
 
         /// <summary>Applies offset as a Unity <c>anchoredPosition</c> delta.</summary>
@@ -98,87 +96,32 @@ namespace UniftUI
                 bg.color = backgroundColor;
             }
 
-            ContentSizeFitter fitter = outer.AddComponent<ContentSizeFitter>();
-            LayoutElement outerLe = outer.AddComponent<LayoutElement>();
+            layoutGroup = outer.AddComponent<UniftUISingleChildLayoutGroup>();
+            layoutGroup.Configure(new RectOffset(0, 0, 0, 0), TextAnchor.MiddleCenter);
+            layoutGroup.SetVisualOffset(GetCurrentOffset());
 
-            if (infiniteWidth)
-            {
-                outerLe.flexibleWidth = 1;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            }
-            else if (preferredWidth >= 0)
-            {
-                outerLe.preferredWidth = preferredWidth;
-                outerLe.minWidth = preferredWidth;
-                outerLe.flexibleWidth = 0;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-            else
-            {
-                outerLe.flexibleWidth = 0;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
+            LayoutElementUtility.Configure(outer, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight);
 
-            if (infiniteHeight)
-            {
-                outerLe.flexibleHeight = 1;
-                fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
-            }
-            else if (preferredHeight >= 0)
-            {
-                outerLe.preferredHeight = preferredHeight;
-                outerLe.minHeight = preferredHeight;
-                outerLe.flexibleHeight = 0;
-                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-            else
-            {
-                outerLe.flexibleHeight = 0;
-                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-
-            if (preferredWidth >= 0 && !infiniteWidth)
+            if (preferredWidth >= 0 && !infiniteWidth && ChildMayFillWidth(content))
                 content?.WithInfiniteWidth();
-            if (preferredHeight >= 0 && !infiniteHeight)
+            if (preferredHeight >= 0 && !infiniteHeight && ChildMayFillHeight(content))
                 content?.WithInfiniteHeight();
             if (infiniteWidth)
                 PropagateInfiniteWidthToContent();
             if (infiniteHeight)
                 PropagateInfiniteHeightToContent();
 
+            ApplyInheritedFont(content);
             GameObject contentObj = content != null ? content.Build(outer.transform) : null;
-            RectTransform outerRt = outer.GetComponent<RectTransform>();
 
             if (contentObj != null)
             {
-                _contentRect = contentObj.GetComponent<RectTransform>();
-
-                LayoutElement childLe = contentObj.GetComponent<LayoutElement>();
-                if (childLe == null) childLe = contentObj.AddComponent<LayoutElement>();
-
-                float w = ResolveOuterSpan(preferredWidth, infiniteWidth, _contentRect, outerRt, true);
-                float h = ResolveOuterSpan(preferredHeight, infiniteHeight, _contentRect, outerRt, false);
-
-                if (!infiniteWidth && preferredWidth >= 0)
-                {
-                    outerLe.preferredWidth = w;
-                    outerLe.minWidth = w;
-                }
-                if (!infiniteHeight && preferredHeight >= 0)
-                {
-                    outerLe.preferredHeight = h;
-                    outerLe.minHeight = h;
-                }
-
-                ConfigureChildRectForContentSizing(childLe, w, h);
-                SetVisualOffset(_contentRect, GetCurrentOffset());
-
                 if (useVectorState && offsetState != null)
                 {
                     AddPropertyBinding(offsetState, () =>
                     {
                         ApplyVisualOffsetFromBinding(offsetState.Value);
-                    }, "offset");
+                    }, "offset", BindingKind.Visual);
                 }
 
                 if (useXyStates && offsetXState != null)
@@ -186,26 +129,13 @@ namespace UniftUI
                     AddPropertyBinding(offsetXState, () =>
                     {
                         ApplyVisualOffsetFromBinding(new Vector2(offsetXState.Value, offsetYConst));
-                    }, "offsetX");
+                    }, "offsetX", BindingKind.Visual);
                 }
             }
 
             builtGameObject = outer;
             ApplyAllEffects(outer, bg);
             return outer;
-        }
-
-        private static float ResolveOuterSpan(float preferred, bool infinite, RectTransform contentRt,
-            RectTransform outerRt, bool horizontal)
-        {
-            if (preferred >= 0)
-                return preferred;
-            Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRt);
-            float r = horizontal ? contentRt.rect.width : contentRt.rect.height;
-            if (infinite && r < 2f)
-                return horizontal ? Screen.width : Screen.height;
-            return Mathf.Max(1f, r);
         }
 
         private Vector2 GetCurrentOffset()
@@ -215,93 +145,61 @@ namespace UniftUI
             return offset;
         }
 
-        private void ConfigureChildRectForContentSizing(LayoutElement childLe, float resolvedW, float resolvedH)
-        {
-            if (content == null || _contentRect == null) return;
-
-            bool iw = content.infiniteWidth;
-            bool ih = content.infiniteHeight;
-
-            if (!iw && !ih)
-            {
-                childLe.ignoreLayout = true;
-                _contentRect.anchorMin = _contentRect.anchorMax = new Vector2(0f, 1f);
-                _contentRect.pivot = new Vector2(0f, 1f);
-                _contentRect.sizeDelta = new Vector2(resolvedW, resolvedH);
-                _contentRect.offsetMin = _contentRect.offsetMax = Vector2.zero;
-                return;
-            }
-
-            childLe.ignoreLayout = false;
-
-            if (iw && ih)
-            {
-                _contentRect.anchorMin = Vector2.zero;
-                _contentRect.anchorMax = Vector2.one;
-                _contentRect.pivot = new Vector2(0.5f, 0.5f);
-                _contentRect.offsetMin = Vector2.zero;
-                _contentRect.offsetMax = Vector2.zero;
-                return;
-            }
-
-            if (!iw && ih)
-            {
-                float colW = preferredWidth >= 0 ? preferredWidth : resolvedW;
-                _contentRect.anchorMin = new Vector2(0f, 0f);
-                _contentRect.anchorMax = new Vector2(0f, 1f);
-                _contentRect.pivot = new Vector2(0f, 1f);
-                _contentRect.sizeDelta = new Vector2(colW, 0f);
-                _contentRect.anchoredPosition = Vector2.zero;
-                return;
-            }
-
-            if (iw && !ih)
-            {
-                float rowH = preferredHeight >= 0 ? preferredHeight : resolvedH;
-                _contentRect.anchorMin = new Vector2(0f, 1f);
-                _contentRect.anchorMax = new Vector2(1f, 1f);
-                _contentRect.pivot = new Vector2(0.5f, 1f);
-                _contentRect.sizeDelta = new Vector2(0f, -rowH);
-                _contentRect.anchoredPosition = Vector2.zero;
-                return;
-            }
-        }
-
-        private static void SetVisualOffset(RectTransform rt, Vector2 swiftOffset)
-        {
-            if (rt == null) return;
-            rt.anchoredPosition = SwiftOffsetToAnchoredDelta(swiftOffset);
-        }
-
         private void ApplyVisualOffsetFromBinding(Vector2 swiftOffset)
         {
-            if (_contentRect == null || builtGameObject == null) return;
-
-            Vector2 targetUnity = SwiftOffsetToAnchoredDelta(swiftOffset);
-
-            if (useAnimation && animationDuration > 0)
+            if (builtGameObject == null || layoutGroup == null) return;
+            if (useAnimation && animationDuration > 0f)
             {
-                PositionAnimator animator = _contentRect.gameObject.GetComponent<PositionAnimator>();
-                if (animator == null)
-                    animator = _contentRect.gameObject.AddComponent<PositionAnimator>();
-
-                Vector2 fromUnity = _contentRect.anchoredPosition;
-                animator.AnimateTo(fromUnity, targetUnity, animationDuration, animationEasing);
+                var animator = BaseAnimator<Vector2>.GetOrReplace<VisualOffsetAnimator>(builtGameObject);
+                animator.AnimateTo(layoutGroup.VisualOffset, swiftOffset, animationDuration, animationEasing);
             }
             else
             {
-                SetVisualOffset(_contentRect, swiftOffset);
+                layoutGroup.SetVisualOffset(swiftOffset);
             }
+
+            offset = swiftOffset;
+            LayoutRebuilder.MarkLayoutForRebuild(builtGameObject.GetComponent<RectTransform>());
+        }
+
+        public override UIElement WithCornerRadius(float radius)
+        {
+            base.WithCornerRadius(radius);
+            content?.WithCornerRadius(radius);
+            return this;
+        }
+
+        public override UIElement WithCornerRadius(State<float> radius)
+        {
+            base.WithCornerRadius(radius);
+            content?.WithCornerRadius(radius);
+            return this;
+        }
+
+        public override UIElement WithCornerRadius(float topLeft, float topRight, float bottomRight, float bottomLeft)
+        {
+            base.WithCornerRadius(topLeft, topRight, bottomRight, bottomLeft);
+            content?.WithCornerRadius(topLeft, topRight, bottomRight, bottomLeft);
+            return this;
+        }
+
+        public override UIElement WithCornerRadius(float radius, RectCorner corners)
+        {
+            base.WithCornerRadius(radius, corners);
+            content?.WithCornerRadius(radius, corners);
+            return this;
         }
 
         protected override void PropagateInfiniteWidthToContent()
         {
-            content?.WithInfiniteWidth();
+            if (ChildMayFillWidth(content))
+                content?.WithInfiniteWidth();
         }
 
         protected override void PropagateInfiniteHeightToContent()
         {
-            content?.WithInfiniteHeight();
+            if (ChildMayFillHeight(content))
+                content?.WithInfiniteHeight();
         }
     }
 }

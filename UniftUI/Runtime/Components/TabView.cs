@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Collections.Generic;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -24,6 +25,9 @@ namespace UniftUI
         private GameObject currentContentObj;
         private GameObject pendingContentToDestroy;
         private DelayedCallback currentAnimation;
+        private Transform builtTabBarParent;
+        private Transform builtContentParent;
+        private int renderedIndex = -1;
 
         /// <summary>Sets the font used for tab labels and tab content.</summary>
         public TabView SetFont(TMPro.TMP_FontAsset font)
@@ -142,17 +146,12 @@ namespace UniftUI
                 background.color = backgroundColor;
             }
 
-            VerticalLayoutGroup mainLayout = container.AddComponent<VerticalLayoutGroup>();
-            mainLayout.childControlWidth = true;
-            mainLayout.childControlHeight = true;
-            mainLayout.childForceExpandWidth = true;
-            mainLayout.childForceExpandHeight = false;
-            mainLayout.spacing = 0;
+            UniftUIStackLayoutGroup mainLayout = container.AddComponent<UniftUIStackLayoutGroup>();
             mainLayout.padding = new RectOffset(0, 0, 0, 0);
-
-            GameObject contentArea = CreateContentArea(container.transform);
+            mainLayout.Configure(UniftUIStackAxis.Vertical, 0f, VStackAlignment.Center, HStackAlignment.Center);
 
             GameObject tabBar = CreateTabBar(container.transform);
+            GameObject contentArea = CreateContentArea(container.transform);
 
             ApplyAllEffects(container, background);
 
@@ -167,23 +166,41 @@ namespace UniftUI
             contentArea.transform.SetParent(parent, false);
 
             LayoutElement contentLayout = contentArea.AddComponent<LayoutElement>();
+            contentLayout.minHeight = 0;
+            contentLayout.preferredHeight = -1;
             contentLayout.flexibleHeight = 1;
             contentLayout.flexibleWidth = 1;
 
-            if (tabs.Count > 0 && selectedIndex.Value < tabs.Count)
+            ClampSelectedIndex();
+
+            if (tabs.Count > 0 && selectedIndex.Value >= 0 && selectedIndex.Value < tabs.Count)
             {
                 currentContentObj = CreateTabContent(contentArea.transform, tabs[selectedIndex.Value]);
+                renderedIndex = selectedIndex.Value;
             }
 
             StateObserver observer = contentArea.AddComponent<StateObserver>();
             observer.Initialize(new State[] { selectedIndex }, () => {
-                if (tabs.Count > 0 && selectedIndex.Value < tabs.Count)
-                {
-                    SwitchTabWithAnimation(contentArea.transform, tabs[selectedIndex.Value]);
-                }
+                ApplySelectedTab();
             });
 
+            builtContentParent = contentArea.transform;
             return contentArea;
+        }
+
+        private void ApplySelectedTab()
+        {
+            ClampSelectedIndex();
+            UpdateTabButtons(builtTabBarParent);
+
+            if (builtContentParent == null || tabs.Count == 0 || selectedIndex.Value < 0 || selectedIndex.Value >= tabs.Count)
+                return;
+
+            if (renderedIndex == selectedIndex.Value && currentContentObj != null)
+                return;
+
+            renderedIndex = selectedIndex.Value;
+            SwitchTabWithAnimation(builtContentParent, tabs[renderedIndex]);
         }
 
         private void SwitchTabWithAnimation(Transform contentParent, TabItem newTab)
@@ -194,7 +211,8 @@ namespace UniftUI
             {
                 pendingContentToDestroy = currentContentObj;
 
-                UIAnimator.Fade(pendingContentToDestroy, 1.0f, 0.0f, transitionDuration * 0.5f, null);
+                if (transitionDuration > 0f)
+                    UIAnimator.Fade(pendingContentToDestroy, 1.0f, 0.0f, transitionDuration * 0.5f, null);
             }
 
             GameObject newContent = CreateTabContent(contentParent, newTab);
@@ -204,15 +222,29 @@ namespace UniftUI
             {
                 canvasGroup = newContent.AddComponent<CanvasGroup>();
             }
-            canvasGroup.alpha = 0;
 
             currentContentObj = newContent;
+
+            if (transitionDuration <= 0f)
+            {
+                if (pendingContentToDestroy != null)
+                {
+                    DestroyGameObject(pendingContentToDestroy);
+                    pendingContentToDestroy = null;
+                }
+
+                canvasGroup.alpha = 1f;
+                Canvas.ForceUpdateCanvases();
+                return;
+            }
+
+            canvasGroup.alpha = 0;
 
             currentAnimation = contentParent.gameObject.AddComponent<DelayedCallback>();
             currentAnimation.Initialize(transitionDuration * 0.2f, () => {
                 if (pendingContentToDestroy != null)
                 {
-                    GameObject.Destroy(pendingContentToDestroy);
+                    DestroyGameObject(pendingContentToDestroy);
                     pendingContentToDestroy = null;
                 }
 
@@ -228,13 +260,14 @@ namespace UniftUI
         {
             if (currentAnimation != null)
             {
-                GameObject.Destroy(currentAnimation);
+                currentAnimation.Cancel();
+                DestroyUnityObject(currentAnimation);
                 currentAnimation = null;
             }
 
             if (pendingContentToDestroy != null)
             {
-                GameObject.Destroy(pendingContentToDestroy);
+                DestroyGameObject(pendingContentToDestroy);
                 pendingContentToDestroy = null;
             }
         }
@@ -250,20 +283,16 @@ namespace UniftUI
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
 
-            var layoutGroup = tabRootContentObj.AddComponent<VerticalLayoutGroup>();
-            layoutGroup.childControlWidth = true;
-            layoutGroup.childControlHeight = true;
-            layoutGroup.childForceExpandWidth = false;
-            layoutGroup.childForceExpandHeight = false;
-            layoutGroup.padding = new RectOffset(0,0,0,0);
+            var layoutGroup = tabRootContentObj.AddComponent<UniftUIStackLayoutGroup>();
+            layoutGroup.padding = new RectOffset(0, 0, 0, 0);
+            layoutGroup.Configure(UniftUIStackAxis.Vertical, 0f, VStackAlignment.Center, HStackAlignment.Center);
 
             var tabContentBuilder = new TabContentContainer(tabRootContentObj.transform);
 
-            TMPro.TMP_FontAsset resolvedFont = fontAsset ?? UIContext.DefaultFont;
+            TMPro.TMP_FontAsset resolvedFont = ResolveFont(fontAsset);
             if (resolvedFont != null)
             {
                 tabContentBuilder.SetFont(resolvedFont);
-                UIContext.SetDefaultFont(resolvedFont);
             }
 
             var parentContext = UIContext.Current;
@@ -290,16 +319,14 @@ namespace UniftUI
             tabBarBg.color = tabBarColor;
 
             LayoutElement tabBarLayout = tabBar.AddComponent<LayoutElement>();
+            tabBarLayout.minHeight = 60;
             tabBarLayout.preferredHeight = 60;
             tabBarLayout.flexibleHeight = 0;
+            tabBarLayout.flexibleWidth = 1;
 
-            HorizontalLayoutGroup tabLayout = tabBar.AddComponent<HorizontalLayoutGroup>();
-            tabLayout.childControlWidth = true;
-            tabLayout.childControlHeight = true;
-            tabLayout.childForceExpandWidth = true;
-            tabLayout.childForceExpandHeight = true;
-            tabLayout.spacing = 0;
+            UniftUIStackLayoutGroup tabLayout = tabBar.AddComponent<UniftUIStackLayoutGroup>();
             tabLayout.padding = new RectOffset(0, 0, 0, 0);
+            tabLayout.Configure(UniftUIStackAxis.Horizontal, 0f, VStackAlignment.Center, HStackAlignment.Center);
 
             for (int i = 0; i < tabs.Count; i++)
             {
@@ -311,6 +338,7 @@ namespace UniftUI
                 UpdateTabButtons(tabBar.transform);
             });
 
+            builtTabBarParent = tabBar.transform;
             return tabBar;
         }
 
@@ -325,12 +353,17 @@ namespace UniftUI
             Button button = tabButton.AddComponent<Button>();
             button.targetGraphic = buttonBg;
             button.onClick.AddListener(() => {
+                if (selectedIndex.Value == index)
+                    return;
                 selectedIndex.Value = index;
+                ApplySelectedTab();
                 UpdateTabButtons(parent);
             });
 
             GameObject contentContainer = new GameObject("TabHeaderContent");
             contentContainer.transform.SetParent(tabButton.transform, false);
+            var headerLayout = tabButton.AddComponent<UniftUISingleChildLayoutGroup>();
+            headerLayout.Configure(new RectOffset(0, 0, 0, 0), TextAnchor.MiddleCenter);
 
             RectTransform contentRect = contentContainer.AddComponent<RectTransform>();
             contentRect.anchorMin = Vector2.zero;
@@ -341,6 +374,12 @@ namespace UniftUI
             if (tab.TitleContent != null)
             {
                 var contentBuilder = new TabContentContainer(contentContainer.transform);
+                TMPro.TMP_FontAsset resolvedFont = ResolveFont(fontAsset);
+                if (resolvedFont != null)
+                {
+                    contentBuilder.SetFont(resolvedFont);
+                }
+
                 var parentContext = UIContext.Current;
                 try
                 {
@@ -361,18 +400,25 @@ namespace UniftUI
                 text.fontSize = 16;
                 text.color = Color.white;
 
-                if (fontAsset != null)
+                TMPro.TMP_FontAsset resolvedFont = ResolveFont(fontAsset);
+                if (resolvedFont != null)
                 {
-                    text.font = fontAsset;
+                    text.font = resolvedFont;
                 }
             }
 
             LayoutElement buttonLayout = tabButton.AddComponent<LayoutElement>();
+            buttonLayout.minHeight = 60;
+            buttonLayout.preferredHeight = 60;
             buttonLayout.flexibleWidth = 1;
+            buttonLayout.flexibleHeight = 1;
         }
 
         private void UpdateTabButtons(Transform tabBarParent)
         {
+            if (tabBarParent == null)
+                return;
+
             for (int i = 0; i < tabBarParent.childCount; i++)
             {
                 Transform tabChild = tabBarParent.GetChild(i);
@@ -399,10 +445,30 @@ namespace UniftUI
             }
             else
             {
-                LayoutElement layoutElement = container.AddComponent<LayoutElement>();
-                layoutElement.flexibleWidth = 1;
-                layoutElement.flexibleHeight = 1;
+                LayoutElement layoutElement = LayoutElementUtility.Configure(
+                    container,
+                    preferredWidth,
+                    preferredHeight,
+                    infiniteWidth,
+                    infiniteHeight,
+                    300f,
+                    240f);
+
+                if (preferredWidth < 0 && !infiniteWidth)
+                    layoutElement.flexibleWidth = 1;
+                if (preferredHeight < 0 && !infiniteHeight)
+                    layoutElement.flexibleHeight = 1;
             }
+        }
+
+        private void ClampSelectedIndex()
+        {
+            if (tabs.Count == 0)
+                return;
+
+            int clamped = Mathf.Clamp(selectedIndex.Value, 0, tabs.Count - 1);
+            if (clamped != selectedIndex.Value)
+                selectedIndex.Value = clamped;
         }
     }
 
@@ -420,6 +486,12 @@ namespace UniftUI
             this.callback = callback;
         }
 
+        /// <summary>Cancels the pending callback so it does not fire on destroy.</summary>
+        public void Cancel()
+        {
+            callback = null;
+        }
+
         private void Update()
         {
             elapsed += Time.deltaTime;
@@ -427,28 +499,11 @@ namespace UniftUI
             {
                 if (callback != null)
                 {
-                    var tempCallback = callback;
+                    var pendingCallback = callback;
                     callback = null;
-                    tempCallback.Invoke();
+                    pendingCallback.Invoke();
                 }
                 Destroy(this);
-            }
-        }
-
-        private void OnDestroy()
-        {
-            if (callback != null)
-            {
-                try
-                {
-                    var tempCallback = callback;
-                    callback = null;
-                    tempCallback.Invoke();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[UniftUI] DelayedCallback: error during callback execution on destroy: {e.Message}");
-                }
             }
         }
     }

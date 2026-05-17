@@ -10,6 +10,7 @@ namespace UniftUI
         private State[] states;
         private bool isDestroyed = false;
         private bool isObserving = false;
+        private bool isDirty = false;
 
         /// <summary>Starts observing the given states and invokes <paramref name="rebuildAction"/> on change.</summary>
         public void Initialize(State[] states, Action rebuildAction)
@@ -44,6 +45,26 @@ namespace UniftUI
             if (isDestroyed || this == null || gameObject == null || !gameObject.activeInHierarchy)
                 return;
 
+            isDirty = true;
+            if (!Application.isPlaying)
+                RebuildIfDirty();
+        }
+
+        private void LateUpdate()
+        {
+            if (!isDirty || isDestroyed || this == null || gameObject == null || !gameObject.activeInHierarchy)
+                return;
+
+            RebuildIfDirty();
+        }
+
+        private void RebuildIfDirty()
+        {
+            if (!isDirty || isDestroyed || this == null || gameObject == null || !gameObject.activeInHierarchy)
+                return;
+
+            isDirty = false;
+
             try
             {
                 rebuildAction?.Invoke();
@@ -63,6 +84,7 @@ namespace UniftUI
 
         private void OnDisable()
         {
+            isDirty = false;
             RemoveObservers();
         }
 

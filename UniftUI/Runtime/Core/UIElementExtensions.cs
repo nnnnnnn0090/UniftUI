@@ -9,7 +9,7 @@ namespace UniftUI
     /// <summary>
     /// Modifier extensions for <see cref="UIElement"/> types.
     /// </summary>
-    public static class UIElementExtensions
+    internal static class UIElementExtensions
     {
         /// <summary>Sets frame dimensions and optional infinite expansion.</summary>
         public static T Frame<T>(this T element, float? width = null, float? height = null,
@@ -54,32 +54,139 @@ namespace UniftUI
             return element;
         }
 
-        /// <summary>Wraps the element in a background layer.</summary>
+        /// <summary>Wraps a button in a background layer, preserving SwiftUI-style modifier ordering.</summary>
+        public static BackgroundElement Background(this ButtonElement button, Color color)
+        {
+            button.SetBackgroundColor(Color.clear);
+            return WrapBackground(button, color);
+        }
+
+        /// <summary>Wraps a button in a reactive background layer, preserving SwiftUI-style modifier ordering.</summary>
+        public static BackgroundElement Background(this ButtonElement button, State<Color> color)
+        {
+            button.SetBackgroundColor(Color.clear);
+            return WrapBackground(button, color);
+        }
+
+        /// <summary>Wraps text in a background layer, preserving SwiftUI-style modifier ordering.</summary>
+        public static BackgroundElement Background(this TextElement text, Color color)
+        {
+            return WrapBackground(text, color);
+        }
+
+        /// <summary>Wraps a text field background while leaving the input chrome customizable by modifiers.</summary>
+        public static BackgroundElement Background(this TextFieldElement textField, Color color)
+        {
+            textField.SetBackgroundColor(Color.clear);
+            return WrapBackground(textField, color);
+        }
+
+        /// <summary>Wraps text in a reactive background layer, preserving SwiftUI-style modifier ordering.</summary>
+        public static BackgroundElement Background(this TextElement text, State<Color> color)
+        {
+            return WrapBackground(text, color);
+        }
+
+        /// <summary>Wraps a text field in a reactive background layer.</summary>
+        public static BackgroundElement Background(this TextFieldElement textField, State<Color> color)
+        {
+            textField.SetBackgroundColor(Color.clear);
+            return WrapBackground(textField, color);
+        }
+
+        /// <summary>Wraps a toggle in a background layer, preserving SwiftUI-style modifier ordering.</summary>
+        public static BackgroundElement Background(this ToggleElement toggle, Color color)
+        {
+            return WrapBackground(toggle, color);
+        }
+
+        /// <summary>Wraps the element in a background layer (e.g. behind <see cref="ImageElement"/> in a frame).</summary>
         public static BackgroundElement Background<T>(this T element, Color color) where T : UIElement
         {
-            var backgroundElement = new BackgroundElement(element, color);
-            backgroundElement.preferredWidth = element.preferredWidth;
-            backgroundElement.preferredHeight = element.preferredHeight;
-            backgroundElement.infiniteWidth = element.infiniteWidth;
-            backgroundElement.infiniteHeight = element.infiniteHeight;
-
-            UIContext.Current?.ReplaceChild(element, backgroundElement);
-            return backgroundElement;
+            return WrapBackground(element, color);
         }
 
         /// <summary>Wraps the element in a reactive background layer.</summary>
         public static BackgroundElement Background<T>(this T element, State<Color> color) where T : UIElement
         {
+            return WrapBackground(element, color);
+        }
+
+        /// <summary>Places custom background content behind this element without changing layout.</summary>
+        public static BackgroundContentElement Background<T>(this T element, UIElement background,
+            ZStackAlignment alignment = ZStackAlignment.Center) where T : UIElement
+        {
+            UIContext.Current?.RemoveChild(background);
+            var backgroundElement = new BackgroundContentElement(element, background, alignment);
+            UIContext.Current?.ReplaceChild(element, backgroundElement);
+            return backgroundElement;
+        }
+
+        /// <summary>Builds custom background content behind this element without changing layout.</summary>
+        public static BackgroundContentElement Background<T>(this T element, Action background,
+            ZStackAlignment alignment = ZStackAlignment.Center) where T : UIElement
+        {
+            var backgroundElement = new BackgroundContentElement(element, background, alignment);
+            UIContext.Current?.ReplaceChild(element, backgroundElement);
+            return backgroundElement;
+        }
+
+        private static BackgroundElement WrapBackground(UIElement element, Color color)
+        {
+            var backgroundElement = new BackgroundElement(element, color);
+            backgroundElement.CopyFrameFrom(element);
+
+            UIContext.Current?.ReplaceChild(element, backgroundElement);
+            return backgroundElement;
+        }
+
+        private static BackgroundElement WrapBackground(UIElement element, State<Color> color)
+        {
+            if (color == null)
+                return WrapBackground(element, Color.clear);
+
             var backgroundElement = new BackgroundElement(element, color.Value);
-            backgroundElement.preferredWidth = element.preferredWidth;
-            backgroundElement.preferredHeight = element.preferredHeight;
-            backgroundElement.infiniteWidth = element.infiniteWidth;
-            backgroundElement.infiniteHeight = element.infiniteHeight;
+            backgroundElement.CopyFrameFrom(element);
 
             backgroundElement.WithBackgroundColor(color);
 
             UIContext.Current?.ReplaceChild(element, backgroundElement);
             return backgroundElement;
+        }
+
+        /// <summary>Draws a border around the element without changing its layout.</summary>
+        public static BorderElement Border<T>(this T element, Color color, float width = 1f) where T : UIElement
+        {
+            var borderElement = new BorderElement(element, color, width);
+            UIContext.Current?.ReplaceChild(element, borderElement);
+            return borderElement;
+        }
+
+        /// <summary>Draws a reactive border around the element without changing its layout.</summary>
+        public static BorderElement Border<T>(this T element, State<Color> color, float width = 1f) where T : UIElement
+        {
+            var borderElement = new BorderElement(element, color, width);
+            UIContext.Current?.ReplaceChild(element, borderElement);
+            return borderElement;
+        }
+
+        /// <summary>Places another element over this element without affecting layout.</summary>
+        public static OverlayElement Overlay<T>(this T element, UIElement overlay, ZStackAlignment alignment = ZStackAlignment.Center)
+            where T : UIElement
+        {
+            UIContext.Current?.RemoveChild(overlay);
+            var overlayElement = new OverlayElement(element, overlay, alignment);
+            UIContext.Current?.ReplaceChild(element, overlayElement);
+            return overlayElement;
+        }
+
+        /// <summary>Places overlay content over this element without affecting layout.</summary>
+        public static OverlayElement Overlay<T>(this T element, Action overlay, ZStackAlignment alignment = ZStackAlignment.Center)
+            where T : UIElement
+        {
+            var overlayElement = new OverlayElement(element, overlay, alignment);
+            UIContext.Current?.ReplaceChild(element, overlayElement);
+            return overlayElement;
         }
 
         /// <summary>Applies a visual offset by x and y.</summary>
@@ -129,6 +236,27 @@ namespace UniftUI
             {
                 textFieldElement.SetTextColor(color);
             }
+            else if (element is ToggleElement toggleElement)
+            {
+                toggleElement.SetTextColor(color);
+            }
+            else if (element is RectangleElement rectangleElement)
+            {
+                rectangleElement.SetFillColor(color);
+            }
+            else if (element is LabelElement labelElement)
+            {
+                labelElement.SetTextColor(color);
+                labelElement.SetTintColor(color);
+            }
+            else if (element is StepperElement stepperElement)
+            {
+                stepperElement.SetTextColor(color);
+            }
+            else if (element is PickerElement pickerElement)
+            {
+                pickerElement.SetTextColor(color);
+            }
             else if (element is ILayoutContainer container)
             {
                 foreach (var child in container.GetChildren())
@@ -144,32 +272,97 @@ namespace UniftUI
         {
             if (element is TextElement textElement)
             {
-                if (color != null) {
+                if (color != null)
+                {
                     textElement.SetTextColor(color.Value);
 
-                    textElement.AddPropertyBinding(color, () => {
+                    textElement.AddPropertyBinding(color, () =>
+                    {
                         textElement.SetTextColor(color.Value);
-                    }, "textColor");
+                    }, "textColor", BindingKind.Visual);
                 }
             }
             else if (element is ButtonElement buttonElement)
             {
-                if (color != null) {
+                if (color != null)
+                {
                     buttonElement.SetTextColor(color.Value);
 
-                    buttonElement.AddPropertyBinding(color, () => {
+                    buttonElement.AddPropertyBinding(color, () =>
+                    {
                         buttonElement.SetTextColor(color.Value);
-                    }, "buttonTextColor");
+                    }, "buttonTextColor", BindingKind.Visual);
                 }
             }
             else if (element is TextFieldElement textFieldElement)
             {
-                if (color != null) {
+                if (color != null)
+                {
                     textFieldElement.SetTextColor(color.Value);
 
-                    textFieldElement.AddPropertyBinding(color, () => {
+                    textFieldElement.AddPropertyBinding(color, () =>
+                    {
                         textFieldElement.SetTextColor(color.Value);
-                    }, "textFieldTextColor");
+                    }, "textFieldTextColor", BindingKind.Visual);
+                }
+            }
+            else if (element is RectangleElement rectangleElement)
+            {
+                if (color != null)
+                {
+                    rectangleElement.SetFillColor(color.Value);
+
+                    rectangleElement.AddPropertyBinding(color, () =>
+                    {
+                        rectangleElement.SetFillColor(color.Value);
+                    }, "rectangleFillColor", BindingKind.Visual);
+                }
+            }
+            else if (element is ToggleElement toggleElement)
+            {
+                if (color != null)
+                {
+                    toggleElement.SetTextColor(color.Value);
+                    toggleElement.AddPropertyBinding(color, () =>
+                    {
+                        toggleElement.SetTextColor(color.Value);
+                    }, "toggleForegroundColor", BindingKind.Visual);
+                }
+            }
+            else if (element is LabelElement labelElement)
+            {
+                if (color != null)
+                {
+                    labelElement.SetTextColor(color.Value);
+                    labelElement.SetTintColor(color.Value);
+
+                    labelElement.AddPropertyBinding(color, () =>
+                    {
+                        labelElement.SetTextColor(color.Value);
+                        labelElement.SetTintColor(color.Value);
+                    }, "labelForegroundColor", BindingKind.Visual);
+                }
+            }
+            else if (element is StepperElement stepperElement)
+            {
+                if (color != null)
+                {
+                    stepperElement.SetTextColor(color.Value);
+                    stepperElement.AddPropertyBinding(color, () =>
+                    {
+                        stepperElement.SetTextColor(color.Value);
+                    }, "stepperForegroundColor", BindingKind.Visual);
+                }
+            }
+            else if (element is PickerElement pickerElement)
+            {
+                if (color != null)
+                {
+                    pickerElement.SetTextColor(color.Value);
+                    pickerElement.AddPropertyBinding(color, () =>
+                    {
+                        pickerElement.SetTextColor(color.Value);
+                    }, "pickerForegroundColor", BindingKind.Visual);
                 }
             }
             else if (element is ILayoutContainer container)
@@ -182,13 +375,141 @@ namespace UniftUI
             return element;
         }
 
+        /// <summary>Applies accent tint to controls and accentable visuals.</summary>
+        public static T Tint<T>(this T element, Color color) where T : UIElement
+        {
+            ApplyTint(element, color);
+            return element;
+        }
+
+        /// <summary>Applies reactive accent tint to controls and accentable visuals.</summary>
+        public static T Tint<T>(this T element, State<Color> color) where T : UIElement
+        {
+            if (color == null)
+                return element;
+
+            ApplyTint(element, color.Value);
+            element.AddPropertyBinding(color, () =>
+            {
+                ApplyTint(element, color.Value);
+            }, "tint_" + Guid.NewGuid().ToString("N"), BindingKind.Visual);
+            return element;
+        }
+
+        private static void ApplyTint(UIElement element, Color color)
+        {
+            if (element is TextFieldElement textFieldElement)
+            {
+                textFieldElement.SetCaretColor(color);
+                textFieldElement.SetSelectionColor(SelectionTint(color));
+            }
+            else if (element is ImageElement imageElement)
+            {
+                imageElement.WithTintColor(color);
+            }
+            else if (element is SliderElement sliderElement)
+            {
+                sliderElement.WithColors(color);
+            }
+            else if (element is ToggleElement toggleElement)
+            {
+                toggleElement.SetTintColor(color);
+            }
+            else if (element is ButtonElement buttonElement)
+            {
+                buttonElement.SetBackgroundColor(color);
+            }
+            else if (element is RectangleElement rectangleElement)
+            {
+                rectangleElement.SetFillColor(color);
+            }
+            else if (element is ProgressViewElement progressViewElement)
+            {
+                progressViewElement.SetTintColor(color);
+            }
+            else if (element is StepperElement stepperElement)
+            {
+                stepperElement.SetTintColor(color);
+            }
+            else if (element is PickerElement pickerElement)
+            {
+                pickerElement.SetTintColor(color);
+            }
+            else if (element is LabelElement labelElement)
+            {
+                labelElement.SetTintColor(color);
+            }
+            else if (element is ILayoutContainer container)
+            {
+                foreach (var child in container.GetChildren())
+                {
+                    ApplyTint(child, color);
+                }
+            }
+        }
+
+        /// <summary>Disables interaction for this element subtree.</summary>
+        public static T Disabled<T>(this T element, bool disabled = true) where T : UIElement
+        {
+            element.WithDisabled(disabled);
+            return element;
+        }
+
+        /// <summary>Reactively disables interaction for this element subtree.</summary>
+        public static T Disabled<T>(this T element, State<bool> disabled) where T : UIElement
+        {
+            element.WithDisabled(disabled);
+            return element;
+        }
+
+        /// <summary>Controls whether this element subtree receives pointer events.</summary>
+        public static T AllowsHitTesting<T>(this T element, bool enabled) where T : UIElement
+        {
+            element.WithAllowsHitTesting(enabled);
+            return element;
+        }
+
+        /// <summary>Reactively controls whether this element subtree receives pointer events.</summary>
+        public static T AllowsHitTesting<T>(this T element, State<bool> enabled) where T : UIElement
+        {
+            element.WithAllowsHitTesting(enabled);
+            return element;
+        }
+
+        /// <summary>Runs an action after a state changes. The initial binding pass does not invoke it.</summary>
+        public static T OnChange<T>(this T element, State state, Action action) where T : UIElement
+        {
+            if (state == null || action == null)
+                return element;
+
+            bool initialized = false;
+            element.AddPropertyBinding(state, () =>
+            {
+                if (!initialized)
+                {
+                    initialized = true;
+                    return;
+                }
+
+                action.Invoke();
+            }, "onChange_" + Guid.NewGuid().ToString("N"), BindingKind.ObserveOnly);
+            return element;
+        }
+
+        /// <summary>Runs an action with the new value after a state changes. The initial binding pass does not invoke it.</summary>
+        public static T OnChange<T, TValue>(this T element, State<TValue> state, Action<TValue> action) where T : UIElement
+        {
+            if (state == null || action == null)
+                return element;
+
+            return element.OnChange(state, () => action.Invoke(state.Value));
+        }
+
         /// <summary>Wraps the element with uniform padding.</summary>
         public static PaddingElement Padding<T>(this T element, int padding) where T : UIElement
         {
             var paddingValue = new RectOffset(padding, padding, padding, padding);
             var paddingElement = new PaddingElement(element, paddingValue);
-            paddingElement.preferredWidth = element.preferredWidth;
-            paddingElement.preferredHeight = element.preferredHeight;
             paddingElement.infiniteWidth = element.infiniteWidth;
             paddingElement.infiniteHeight = element.infiniteHeight;
 
@@ -199,16 +520,18 @@ namespace UniftUI
         /// <summary>Wraps the element with reactive uniform padding.</summary>
         public static PaddingElement Padding<T>(this T element, State<int> padding) where T : UIElement
         {
+            if (padding == null)
+                return Padding(element, 0);
+
             var paddingValue = new RectOffset(padding.Value, padding.Value, padding.Value, padding.Value);
             var paddingElement = new PaddingElement(element, paddingValue);
-            paddingElement.preferredWidth = element.preferredWidth;
-            paddingElement.preferredHeight = element.preferredHeight;
             paddingElement.infiniteWidth = element.infiniteWidth;
             paddingElement.infiniteHeight = element.infiniteHeight;
 
-            paddingElement.AddPropertyBinding(padding, () => {
+            paddingElement.AddPropertyBinding(padding, () =>
+            {
                 paddingElement.UpdatePadding(padding.Value);
-            }, "padding");
+            }, "padding", BindingKind.Layout);
 
             UIContext.Current?.ReplaceChild(element, paddingElement);
             return paddingElement;
@@ -222,12 +545,50 @@ namespace UniftUI
             return fs;
         }
 
+        /// <summary>Proposes a width-to-height aspect ratio around the element.</summary>
+        public static AspectRatioElement AspectRatio<T>(this T element, float ratio,
+            AspectRatioContentMode contentMode = AspectRatioContentMode.Fit) where T : UIElement
+        {
+            var aspect = new AspectRatioElement(element, ratio, contentMode);
+            UIContext.Current?.ReplaceChild(element, aspect);
+            return aspect;
+        }
+
+        /// <summary>Clips the element to its layout bounds.</summary>
+        public static ClippedElement Clipped<T>(this T element) where T : UIElement
+        {
+            var clipped = new ClippedElement(element);
+            UIContext.Current?.ReplaceChild(element, clipped);
+            return clipped;
+        }
+
+        /// <summary>Clips the element to a SwiftUI-style shape mask.</summary>
+        public static ClippedElement ClipShape<T>(this T element, UniftUIClipShape shape, float cornerRadius = 12f)
+            where T : UIElement
+        {
+            var clipped = new ClippedElement(element, shape, cornerRadius);
+            UIContext.Current?.ReplaceChild(element, clipped);
+            return clipped;
+        }
+
+        /// <summary>Applies a reusable button style.</summary>
+        public static ButtonElement ButtonStyle(this ButtonElement element, IButtonStyle style)
+        {
+            style?.Apply(element);
+            return element;
+        }
+
+        /// <summary>Applies a reusable text field style.</summary>
+        public static TextFieldElement TextFieldStyle(this TextFieldElement element, ITextFieldStyle style)
+        {
+            style?.Apply(element);
+            return element;
+        }
+
         /// <summary>Wraps the element with explicit <see cref="RectOffset"/> padding.</summary>
         public static PaddingElement Padding<T>(this T element, RectOffset padding) where T : UIElement
         {
             var paddingElement = new PaddingElement(element, padding);
-            paddingElement.preferredWidth = element.preferredWidth;
-            paddingElement.preferredHeight = element.preferredHeight;
             paddingElement.infiniteWidth = element.infiniteWidth;
             paddingElement.infiniteHeight = element.infiniteHeight;
 
@@ -246,8 +607,6 @@ namespace UniftUI
             );
 
             var paddingElement = new PaddingElement(element, paddingValue);
-            paddingElement.preferredWidth = element.preferredWidth;
-            paddingElement.preferredHeight = element.preferredHeight;
             paddingElement.infiniteWidth = element.infiniteWidth;
             paddingElement.infiniteHeight = element.infiniteHeight;
 
@@ -261,6 +620,10 @@ namespace UniftUI
             if (element is TextElement textElement)
             {
                 textElement.SetBold(true);
+            }
+            else if (element is ButtonElement buttonElement)
+            {
+                buttonElement.SetBold(true);
             }
             else if (element is ILayoutContainer container)
             {
@@ -279,6 +642,10 @@ namespace UniftUI
             {
                 textElement.SetItalic(true);
             }
+            else if (element is ButtonElement buttonElement)
+            {
+                buttonElement.SetItalic(true);
+            }
             else if (element is ILayoutContainer container)
             {
                 foreach (var child in container.GetChildren())
@@ -295,6 +662,10 @@ namespace UniftUI
             if (element is TextElement textElement)
             {
                 textElement.SetUnderline(true);
+            }
+            else if (element is ButtonElement buttonElement)
+            {
+                buttonElement.SetUnderline(true);
             }
             else if (element is ILayoutContainer container)
             {
@@ -313,6 +684,10 @@ namespace UniftUI
             {
                 textElement.SetStrikethrough(true);
             }
+            else if (element is ButtonElement buttonElement)
+            {
+                buttonElement.SetStrikethrough(true);
+            }
             else if (element is ILayoutContainer container)
             {
                 foreach (var child in container.GetChildren())
@@ -323,16 +698,16 @@ namespace UniftUI
             return element;
         }
 
-        /// <summary>Sets image tint color.</summary>
-        public static ImageElement TintColor(this ImageElement element, Color color)
+        /// <summary>Sets the maximum number of visible lines for text.</summary>
+        public static TextElement LineLimit(this TextElement element, int? limit = null)
         {
-            return element.WithTintColor(color);
+            return element.SetLineLimit(limit);
         }
 
-        /// <summary>Sets image scale mode.</summary>
-        public static ImageElement ScaleMode(this ImageElement element, ImageScaleMode mode)
+        /// <summary>Sets text alignment for multiline text.</summary>
+        public static TextElement MultilineTextAlignment(this TextElement element, TextAlignmentOptions alignment)
         {
-            return element.WithScaleMode(mode);
+            return element.SetTextAlignment(alignment);
         }
 
         /// <summary>Sets image opacity.</summary>
@@ -341,24 +716,63 @@ namespace UniftUI
             return element.WithOpacity(opacity);
         }
 
-        /// <summary>Sets view opacity (delegates to <see cref="UIElement.WithOpacity"/>).</summary>
-        public static T Opacity<T>(this T element, float opacity) where T : UIElement
+        /// <summary>Reactive image opacity.</summary>
+        public static ImageElement Opacity(this ImageElement element, State<float> opacity)
         {
-            if (element is ImageElement)
-            {
-                return element;
-            }
-            return (T)element.WithOpacity(opacity);
+            return (ImageElement)element.WithOpacity(opacity);
         }
 
-        /// <summary>Reactive opacity.</summary>
-        public static T Opacity<T>(this T element, State<float> opacity) where T : UIElement
+        /// <summary>Wraps a background subtree so opacity applies to the whole rendered result.</summary>
+        public static OpacityElement Opacity(this BackgroundElement element, float opacity)
         {
-            if (element is ImageElement)
-            {
-                return element;
-            }
-            return (T)element.WithOpacity(opacity);
+            return WrapOpacity(element, opacity);
+        }
+
+        /// <summary>Wraps a background subtree with reactive opacity.</summary>
+        public static OpacityElement Opacity(this BackgroundElement element, State<float> opacity)
+        {
+            return WrapOpacity(element, opacity);
+        }
+
+        /// <summary>Wraps a padded subtree so opacity applies after padding.</summary>
+        public static OpacityElement Opacity(this PaddingElement element, float opacity)
+        {
+            return WrapOpacity(element, opacity);
+        }
+
+        /// <summary>Wraps a padded subtree with reactive opacity.</summary>
+        public static OpacityElement Opacity(this PaddingElement element, State<float> opacity)
+        {
+            return WrapOpacity(element, opacity);
+        }
+
+        /// <summary>Wraps the current subtree so opacity follows modifier order.</summary>
+        public static OpacityElement Opacity<T>(this T element, float opacity) where T : UIElement
+        {
+            return WrapOpacity(element, opacity);
+        }
+
+        /// <summary>Wraps the current subtree with reactive opacity.</summary>
+        public static OpacityElement Opacity<T>(this T element, State<float> opacity) where T : UIElement
+        {
+            return WrapOpacity(element, opacity);
+        }
+
+        private static OpacityElement WrapOpacity(UIElement element, float opacity)
+        {
+            var opacityElement = new OpacityElement(element, opacity);
+            UIContext.Current?.ReplaceChild(element, opacityElement);
+            return opacityElement;
+        }
+
+        private static OpacityElement WrapOpacity(UIElement element, State<float> opacity)
+        {
+            if (opacity == null)
+                return WrapOpacity(element, 1f);
+
+            var opacityElement = new OpacityElement(element, opacity);
+            UIContext.Current?.ReplaceChild(element, opacityElement);
+            return opacityElement;
         }
 
         /// <summary>Sets font size on text-like elements and propagates through layout containers.</summary>
@@ -368,9 +782,29 @@ namespace UniftUI
             {
                 textElement.SetFontSize(size);
             }
+            else if (element is ButtonElement buttonElement)
+            {
+                buttonElement.SetFontSize(size);
+            }
             else if (element is TextFieldElement textFieldElement)
             {
                 textFieldElement.SetFontSize(size);
+            }
+            else if (element is ToggleElement toggleElement)
+            {
+                toggleElement.SetFontSize(size);
+            }
+            else if (element is LabelElement labelElement)
+            {
+                labelElement.SetFontSize(size);
+            }
+            else if (element is StepperElement stepperElement)
+            {
+                stepperElement.SetFontSize(size);
+            }
+            else if (element is PickerElement pickerElement)
+            {
+                pickerElement.SetFontSize(size);
             }
             else if (element is ILayoutContainer container)
             {
@@ -387,6 +821,8 @@ namespace UniftUI
         /// </summary>
         public static T Font<T>(this T element, TMP_FontAsset font) where T : UIElement
         {
+            element.SetInheritedFont(font);
+
             if (element is TextElement textElement)
             {
                 textElement.SetFont(font);
@@ -402,6 +838,18 @@ namespace UniftUI
             else if (element is TextFieldElement textFieldElement)
             {
                 textFieldElement.SetFont(font);
+            }
+            else if (element is LabelElement labelElement)
+            {
+                labelElement.SetFont(font);
+            }
+            else if (element is StepperElement stepperElement)
+            {
+                stepperElement.SetFont(font);
+            }
+            else if (element is PickerElement pickerElement)
+            {
+                pickerElement.SetFont(font);
             }
             else if (element is TabView tabView)
             {
@@ -458,20 +906,15 @@ namespace UniftUI
             }
 
             var shadowElement = new ShadowElement(element, shadowColor, offset, radius);
-
-            shadowElement.preferredWidth = element.preferredWidth;
-            shadowElement.preferredHeight = element.preferredHeight;
-            shadowElement.infiniteWidth = element.infiniteWidth;
-            shadowElement.infiniteHeight = element.infiniteHeight;
+            shadowElement.CopyFrameFrom(element);
 
             UIContext.Current?.ReplaceChild(element, shadowElement);
             return shadowElement;
         }
 
-        /// <summary>Sets text field line limit.</summary>
-        public static TextFieldElement LineLimit(this TextFieldElement element, int? limit = null)
+        private static Color SelectionTint(Color color)
         {
-            return element.SetLineLimit(limit);
+            return new Color(color.r, color.g, color.b, Mathf.Min(color.a, 0.35f));
         }
 
         /// <summary>Applies rotation effect in degrees (Z axis).</summary>
@@ -609,13 +1052,15 @@ namespace UniftUI
         /// <summary>Enables implicit animation for property changes over <paramref name="duration"/> seconds.</summary>
         public static T Animation<T>(this T element, float duration) where T : UIElement
         {
-            return (T)element.WithAnimation(duration);
+            ApplyAnimationRecursively(element, AnimationEasing.Linear, duration);
+            return element;
         }
 
         /// <summary>Enables implicit animation with easing over <paramref name="duration"/> seconds.</summary>
         public static T Animation<T>(this T element, AnimationEasing easing, float duration) where T : UIElement
         {
-            return (T)element.WithAnimation(easing, duration);
+            ApplyAnimationRecursively(element, easing, duration);
+            return element;
         }
 
         /// <summary>
@@ -624,15 +1069,42 @@ namespace UniftUI
         /// </summary>
         public static T Animation<T>(this T element, Animation anim, State value) where T : UIElement
         {
-            ((UIElement)element).Animation(anim, value);
+            ApplyStateAnimationRecursively(element, anim, value);
+            return element;
+        }
+
+        /// <summary>
+        /// Binds the same animation to multiple states (e.g. opacity and frame width on one card).
+        /// </summary>
+        public static T Animation<T>(this T element, Animation anim, State value0, State value1) where T : UIElement
+        {
+            ApplyStateAnimationRecursively(element, anim, value0);
+            ApplyStateAnimationRecursively(element, anim, value1);
             return element;
         }
 
         /// <summary>Animates property changes when <paramref name="value"/> changes using the default animation.</summary>
         public static T Animation<T>(this T element, State value) where T : UIElement
         {
-            ((UIElement)element).Animation(global::UniftUI.Animation.Default, value);
+            ApplyStateAnimationRecursively(element, global::UniftUI.Animation.Default, value);
             return element;
+        }
+
+        private static void ApplyAnimationRecursively(UIElement element, AnimationEasing easing, float duration)
+        {
+            if (element == null) return;
+            element.WithAnimation(easing, duration);
+            if (element is ILayoutContainer container)
+            {
+                foreach (var child in container.GetChildren())
+                    ApplyAnimationRecursively(child, easing, duration);
+            }
+        }
+
+        private static void ApplyStateAnimationRecursively(UIElement element, Animation anim, State value)
+        {
+            if (element == null) return;
+            element.RegisterAnimationForBoundStateInSubtree(anim, value);
         }
 
         /// <summary>Sets elastic scroll bounce (<see cref="ScrollRect.MovementType"/>).</summary>

@@ -1,4 +1,6 @@
 using UnityEngine;
+using System;
+using System.Collections.Generic;
 
 namespace UniftUI
 {
@@ -7,12 +9,20 @@ namespace UniftUI
     /// </summary>
     internal sealed class ElementLifecycleHost : MonoBehaviour
     {
-        internal DynamicEffectObserver Observer;
         internal BindingRegistry Registry;
+        private readonly List<IDisposable> disposables = new List<IDisposable>();
+
+        internal void AddDisposable(IDisposable disposable)
+        {
+            if (disposable != null && !disposables.Contains(disposable))
+                disposables.Add(disposable);
+        }
 
         private void OnDestroy()
         {
-            Observer?.Detach();
+            foreach (var disposable in disposables)
+                disposable?.Dispose();
+            disposables.Clear();
             Registry?.Dispose();
         }
     }

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -148,11 +149,22 @@ namespace UniftUI
             generation++;
             startValue = from;
             targetValue = to;
-            duration = dur;
+            duration = Mathf.Max(0f, dur);
             easing = ease;
             elapsedTime = 0f;
-            isAnimating = true;
             onCompleteCallback = onComplete;
+
+            if (duration <= 0f)
+            {
+                isAnimating = false;
+                SetInitialValue(to);
+                var cb = onCompleteCallback;
+                onCompleteCallback = null;
+                cb?.Invoke();
+                return;
+            }
+
+            isAnimating = true;
             SetInitialValue(from);
         }
 
@@ -163,7 +175,7 @@ namespace UniftUI
             onCompleteCallback = null;
         }
 
-        protected virtual void Update()
+        protected void TickAnimation()
         {
             if (!isAnimating) return;
             elapsedTime += Time.deltaTime;
@@ -180,6 +192,10 @@ namespace UniftUI
 
         protected float ApplyEasing(float t, AnimationEasing easingType)
         {
+            t = Mathf.Clamp01(t);
+            if (t <= 0f) return 0f;
+            if (t >= 1f) return 1f;
+
             switch (easingType)
             {
                 case AnimationEasing.Linear:      return t;
@@ -198,8 +214,7 @@ namespace UniftUI
                     float c1 = 1.70158f, c3 = c1 + 1f;
                     return 1f + c3 * Mathf.Pow(t - 1f, 3) + c1 * Mathf.Pow(t - 1f, 2);
                 case AnimationEasing.Spring:
-                    float s = 1f - t;
-                    return 1f - s * Mathf.Sin(10f * Mathf.PI * t) * Mathf.Exp(-5f * t);
+                    return 1f - Mathf.Exp(-6f * t) * Mathf.Cos(10f * Mathf.PI * t);
                 default: return t;
             }
         }
@@ -210,6 +225,8 @@ namespace UniftUI
 
     public class RotationAnimator : BaseAnimator<Vector3>
     {
+        private void Update() => TickAnimation();
+
         protected override void SetInitialValue(Vector3 v)
         {
             var r = GetComponent<RectTransform>();
@@ -224,6 +241,8 @@ namespace UniftUI
 
     public class ScaleAnimator : BaseAnimator<Vector3>
     {
+        private void Update() => TickAnimation();
+
         protected override void SetInitialValue(Vector3 v)
         {
             var r = GetComponent<RectTransform>();
@@ -238,6 +257,8 @@ namespace UniftUI
 
     public class PositionAnimator : BaseAnimator<Vector2>
     {
+        private void Update() => TickAnimation();
+
         protected override void SetInitialValue(Vector2 v)
         {
             var r = GetComponent<RectTransform>();
@@ -250,23 +271,195 @@ namespace UniftUI
         }
     }
 
+    internal class VisualOffsetAnimator : BaseAnimator<Vector2>
+    {
+        private UniftUISingleChildLayoutGroup layoutGroup;
+        private RectTransform rectTransform;
+
+        private void Update() => TickAnimation();
+
+        protected override void SetInitialValue(Vector2 v)
+        {
+            Apply(v);
+        }
+
+        protected override void UpdateValue(float t)
+        {
+            Apply(Vector2.Lerp(startValue, targetValue, t));
+        }
+
+        private void Apply(Vector2 value)
+        {
+            if (layoutGroup == null)
+                layoutGroup = GetComponent<UniftUISingleChildLayoutGroup>();
+            if (rectTransform == null)
+                rectTransform = GetComponent<RectTransform>();
+
+            if (layoutGroup == null)
+                return;
+
+            layoutGroup.SetVisualOffset(value);
+            if (rectTransform != null)
+                LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+        }
+    }
+
+    internal abstract class LayoutAxisSizeAnimator : BaseAnimator<float>
+    {
+        protected abstract int Axis { get; }
+        private LayoutElement layoutElement;
+        private RectTransform rectTransform;
+
+        protected override void SetInitialValue(float v)
+        {
+            Apply(v);
+        }
+
+        protected override void UpdateValue(float t)
+        {
+            Apply(Mathf.Lerp(startValue, targetValue, t));
+        }
+
+        private void Apply(float value)
+        {
+            if (layoutElement == null)
+                layoutElement = GetComponent<LayoutElement>() ?? gameObject.AddComponent<LayoutElement>();
+            if (rectTransform == null)
+                rectTransform = GetComponent<RectTransform>();
+
+            value = Mathf.Max(0f, value);
+            if (Axis == 0)
+            {
+                layoutElement.minWidth = value;
+                layoutElement.preferredWidth = value;
+                layoutElement.flexibleWidth = 0f;
+            }
+            else
+            {
+                layoutElement.minHeight = value;
+                layoutElement.preferredHeight = value;
+                layoutElement.flexibleHeight = 0f;
+            }
+
+            MarkLayoutDirty();
+        }
+
+        private void MarkLayoutDirty()
+        {
+            if (rectTransform == null)
+                return;
+
+            LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+            if (rectTransform.parent is RectTransform parent)
+                LayoutRebuilder.MarkLayoutForRebuild(parent);
+        }
+    }
+
+    internal sealed class LayoutWidthAnimator : LayoutAxisSizeAnimator
+    {
+        protected override int Axis => 0;
+
+        private void Update() => TickAnimation();
+    }
+
+    internal sealed class LayoutHeightAnimator : LayoutAxisSizeAnimator
+    {
+        protected override int Axis => 1;
+
+        private void Update() => TickAnimation();
+    }
+
+    internal sealed class PaddingAnimator : BaseAnimator<Vector4>
+    {
+        private UniftUISingleChildLayoutGroup layoutGroup;
+        private RectTransform rectTransform;
+
+        private void Update() => TickAnimation();
+
+        protected override void SetInitialValue(Vector4 v)
+        {
+            Apply(v);
+        }
+
+        protected override void UpdateValue(float t)
+        {
+            Apply(Vector4.Lerp(startValue, targetValue, t));
+        }
+
+        private void Apply(Vector4 value)
+        {
+            if (layoutGroup == null)
+                layoutGroup = GetComponent<UniftUISingleChildLayoutGroup>();
+            if (rectTransform == null)
+                rectTransform = GetComponent<RectTransform>();
+            if (layoutGroup == null)
+                return;
+
+            layoutGroup.padding = new RectOffset(
+                Mathf.RoundToInt(Mathf.Max(0f, value.x)),
+                Mathf.RoundToInt(Mathf.Max(0f, value.y)),
+                Mathf.RoundToInt(Mathf.Max(0f, value.z)),
+                Mathf.RoundToInt(Mathf.Max(0f, value.w)));
+
+            if (rectTransform != null)
+                LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+        }
+    }
+
+    [ExecuteAlways]
+    [RequireComponent(typeof(RectTransform), typeof(CanvasGroup))]
     public class OpacityAnimator : BaseAnimator<float>
     {
         private CanvasGroup cg;
+
+        private void Update() => TickAnimation();
+
+        private void OnEnable()
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                Canvas.willRenderCanvases += TickAnimation;
+#endif
+            cg = GetOrAddCanvasGroup();
+        }
+
+        private void OnDisable()
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                Canvas.willRenderCanvases -= TickAnimation;
+#endif
+        }
+
         protected override void SetInitialValue(float v)
         {
-            cg = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
+            cg = GetOrAddCanvasGroup();
             if (cg != null) cg.alpha = v;
         }
+
         protected override void UpdateValue(float t)
         {
-            if (cg != null) cg.alpha = Mathf.Lerp(startValue, targetValue, t);
+            if (cg == null)
+                cg = GetOrAddCanvasGroup();
+            if (cg != null)
+                cg.alpha = Mathf.Lerp(startValue, targetValue, t);
+        }
+
+        private CanvasGroup GetOrAddCanvasGroup()
+        {
+            if (gameObject.GetComponent<RectTransform>() == null)
+                gameObject.AddComponent<RectTransform>();
+
+            return GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
         }
     }
 
     public class BackgroundColorAnimator : BaseAnimator<Color>
     {
         private Image img;
+
+        private void Update() => TickAnimation();
+
         protected override void SetInitialValue(Color v)
         {
             img = GetComponent<Image>();
@@ -281,6 +474,9 @@ namespace UniftUI
     public class CornerRadiusAnimator : BaseAnimator<Vector4>
     {
         private Nobi.UiRoundedCorners.ImageWithIndependentRoundedCorners rc;
+
+        private void Update() => TickAnimation();
+
         protected override void SetInitialValue(Vector4 v)
         {
             rc = GetComponent<Nobi.UiRoundedCorners.ImageWithIndependentRoundedCorners>();
@@ -299,6 +495,9 @@ namespace UniftUI
     public class TextColorAnimator : BaseAnimator<Color>
     {
         private TMPro.TextMeshProUGUI tmp;
+
+        private void Update() => TickAnimation();
+
         protected override void SetInitialValue(Color v)
         {
             tmp = GetComponent<TMPro.TextMeshProUGUI>();

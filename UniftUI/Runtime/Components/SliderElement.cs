@@ -1,28 +1,44 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
-    /// <summary>Integer slider bound to a <see cref="State{int}"/> value.</summary>
+    /// <summary>Slider bound to either an integer or float state.</summary>
     public class SliderElement : UIElement
     {
-        private State<int> value;
+        private State<int> intValue;
+        private State<float> floatValue;
         private float minValue;
         private float maxValue;
         private bool showValue;
+        private bool wholeNumbers;
         private Color accentColor = new Color(0.2f, 0.6f, 1.0f);
         private Color handleColor = new Color(0.1f, 0.4f, 0.8f);
+        private Image builtFillImage;
+        private Image builtHandleImage;
 
         private float handleWidth = -1;
         private float handleHeight = -1;
 
         public SliderElement(State<int> value, float minValue, float maxValue, bool showValue = false)
         {
-            this.value = value;
+            this.intValue = value;
             this.minValue = minValue;
             this.maxValue = maxValue;
             this.showValue = showValue;
+            this.wholeNumbers = true;
+            UIContext.Add(this);
+        }
+
+        public SliderElement(State<float> value, float minValue, float maxValue, bool showValue = false)
+        {
+            this.floatValue = value;
+            this.minValue = minValue;
+            this.maxValue = maxValue;
+            this.showValue = showValue;
+            this.wholeNumbers = false;
             UIContext.Add(this);
         }
 
@@ -30,6 +46,10 @@ namespace UniftUI
         {
             this.accentColor = accentColor;
             this.handleColor = handleColor ?? accentColor.MultiplyAlpha(1.2f);
+            if (builtFillImage != null)
+                builtFillImage.color = this.accentColor;
+            if (builtHandleImage != null)
+                builtHandleImage.color = this.handleColor;
             return this;
         }
 
@@ -52,56 +72,28 @@ namespace UniftUI
                 sliderObjBackgroundImage.color = backgroundColor;
             }
 
-            LayoutElement layoutElement = sliderObj.AddComponent<LayoutElement>();
-
             float defaultSliderHeight = 40f;
             float defaultSliderMinWidth = 100f;
-
-            if (infiniteWidth)
+            LayoutElement layoutElement = LayoutElementUtility.Configure(
+                sliderObj,
+                preferredWidth,
+                preferredHeight,
+                infiniteWidth,
+                infiniteHeight,
+                defaultSliderMinWidth,
+                defaultSliderHeight);
+            if (preferredWidth < 0f && !infiniteWidth)
             {
-                layoutElement.flexibleWidth = 1;
-                layoutElement.preferredWidth = -1;
-                layoutElement.minWidth = 0;
-            }
-            else if (preferredWidth >= 0)
-            {
-                layoutElement.preferredWidth = preferredWidth;
-                layoutElement.minWidth = preferredWidth;
-                layoutElement.flexibleWidth = 0;
-            }
-            else
-            {
-                layoutElement.flexibleWidth = 1;
-                layoutElement.preferredWidth = -1;
                 layoutElement.minWidth = defaultSliderMinWidth;
-            }
-
-            if (infiniteHeight)
-            {
-                layoutElement.flexibleHeight = 1;
-                layoutElement.preferredHeight = -1;
-                layoutElement.minHeight = 0;
-            }
-            else if (preferredHeight >= 0)
-            {
-                layoutElement.preferredHeight = preferredHeight;
-                layoutElement.minHeight = preferredHeight;
-                layoutElement.flexibleHeight = 0;
-            }
-            else
-            {
-                layoutElement.preferredHeight = defaultSliderHeight;
-                layoutElement.minHeight = defaultSliderHeight;
-                layoutElement.flexibleHeight = 0;
+                layoutElement.preferredWidth = -1f;
+                layoutElement.flexibleWidth = 1f;
             }
 
             if (showValue)
             {
-                VerticalLayoutGroup vertLayout = sliderObj.AddComponent<VerticalLayoutGroup>();
-                vertLayout.childControlHeight = false;
-                vertLayout.childForceExpandHeight = false;
-                vertLayout.spacing = 5f;
+                UniftUIStackLayoutGroup vertLayout = sliderObj.AddComponent<UniftUIStackLayoutGroup>();
                 vertLayout.padding = new RectOffset(0, 0, 0, 0);
+                vertLayout.Configure(UniftUIStackAxis.Vertical, 5f, VStackAlignment.Center, HStackAlignment.Center);
             }
 
             GameObject sliderContainer = showValue ? new GameObject("SliderContainer") : sliderObj;
@@ -116,8 +108,8 @@ namespace UniftUI
             Slider slider = sliderContainer.AddComponent<Slider>();
             slider.minValue = this.minValue;
             slider.maxValue = this.maxValue;
-            slider.wholeNumbers = true;
-            slider.value = this.value.Value;
+            slider.wholeNumbers = wholeNumbers;
+            slider.value = CurrentValue();
             slider.transition = Selectable.Transition.ColorTint;
 
             ColorBlock colors = slider.colors;
@@ -154,6 +146,7 @@ namespace UniftUI
             fillImage.color = accentColor;
             fillImage.sprite = CreateRoundedRectSprite(10);
             fillImage.type = Image.Type.Sliced;
+            builtFillImage = fillImage;
 
             RectTransform fillRect = fill.GetComponent<RectTransform>();
             fillRect.anchorMin = Vector2.zero;
@@ -175,6 +168,7 @@ namespace UniftUI
             handleImage.color = handleColor;
             handleImage.sprite = CreateCircleSprite();
             handleImage.preserveAspect = true;
+            builtHandleImage = handleImage;
 
             Shadow handleShadow = handle.AddComponent<Shadow>();
             handleShadow.effectColor = new Color(0, 0, 0, 0.3f);
@@ -215,8 +209,11 @@ namespace UniftUI
                 TextMeshProUGUI tmpText = valueText.AddComponent<TextMeshProUGUI>();
                 tmpText.fontSize = 14;
                 tmpText.alignment = TextAlignmentOptions.MidlineRight;
-                tmpText.text = this.value.Value.ToString();
+                tmpText.text = CurrentValueText();
                 tmpText.color = new Color(0.2f, 0.2f, 0.2f);
+                TMP_FontAsset effectiveFont = ResolveFont(null);
+                if (effectiveFont != null)
+                    tmpText.font = effectiveFont;
 
                 LayoutElement textLayout = valueText.AddComponent<LayoutElement>();
                 textLayout.preferredHeight = 20;
@@ -224,9 +221,8 @@ namespace UniftUI
             }
 
             slider.onValueChanged.AddListener((float newValue) => {
-                if (this.value.Value != (int)newValue)
+                if (ApplySliderValue(newValue))
                 {
-                    this.value.Value = (int)newValue;
                     if (showValue && slider.gameObject.activeInHierarchy)
                     {
                         Transform valueTextTrans = sliderObj.transform.Find("ValueText");
@@ -235,7 +231,7 @@ namespace UniftUI
                             TextMeshProUGUI valueTextComponent = valueTextTrans.GetComponent<TextMeshProUGUI>();
                             if (valueTextComponent != null)
                             {
-                                valueTextComponent.text = ((int)newValue).ToString();
+                                valueTextComponent.text = CurrentValueText();
                             }
                         }
                     }
@@ -243,10 +239,11 @@ namespace UniftUI
             });
 
             StateObserver observer = sliderObj.AddComponent<StateObserver>();
-            observer.Initialize(new State[] { this.value }, () => {
-                if (slider != null && slider.value != this.value.Value)
+            observer.Initialize(new[] { WatchedState() }, () => {
+                float current = CurrentValue();
+                if (slider != null && !Mathf.Approximately(slider.value, current))
                 {
-                    slider.value = this.value.Value;
+                    slider.value = current;
                     if (showValue)
                     {
                         Transform valueTextTrans = sliderObj.transform.Find("ValueText");
@@ -255,7 +252,7 @@ namespace UniftUI
                             TextMeshProUGUI valueTextComponent = valueTextTrans.GetComponent<TextMeshProUGUI>();
                             if (valueTextComponent != null)
                             {
-                                valueTextComponent.text = this.value.Value.ToString();
+                                valueTextComponent.text = CurrentValueText();
                             }
                         }
                     }
@@ -264,8 +261,49 @@ namespace UniftUI
 
             ApplyAllEffects(sliderObj, sliderObjBackgroundImage);
 
-            slider.value = this.value.Value;
+            slider.value = CurrentValue();
             return sliderObj;
+        }
+
+        private State WatchedState()
+        {
+            return intValue != null ? (State)intValue : floatValue;
+        }
+
+        private float CurrentValue()
+        {
+            if (intValue != null)
+                return intValue.Value;
+            return floatValue != null ? floatValue.Value : minValue;
+        }
+
+        private bool ApplySliderValue(float newValue)
+        {
+            if (intValue != null)
+            {
+                int next = Mathf.RoundToInt(newValue);
+                if (intValue.Value == next)
+                    return false;
+                intValue.Value = next;
+                return true;
+            }
+
+            if (floatValue != null)
+            {
+                if (Mathf.Approximately(floatValue.Value, newValue))
+                    return false;
+                floatValue.Value = newValue;
+                return true;
+            }
+
+            return false;
+        }
+
+        private string CurrentValueText()
+        {
+            return intValue != null
+                ? intValue.Value.ToString()
+                : CurrentValue().ToString("0.##");
         }
 
         private Sprite CreateRoundedRectSprite(int cornerRadius)

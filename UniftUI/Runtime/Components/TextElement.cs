@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -13,12 +14,17 @@ namespace UniftUI
         private string text;
         private Func<string> textProvider;
         private Color textColor = Color.black;
+        private bool hasExplicitTextColor;
         private bool isBold = false;
         private bool isItalic = false;
         private bool isUnderlined = false;
         private bool isStrikethrough = false;
         private float fontSize = 24;
+        private bool hasExplicitFontSize;
         private TMP_FontAsset fontAsset = null;
+        private bool hasExplicitFont;
+        private int? lineLimit;
+        private TextAlignmentOptions textAlignment = TextAlignmentOptions.Center;
 
         private bool hasShadow = false;
         private Color shadowColor = Color.black;
@@ -59,7 +65,7 @@ namespace UniftUI
                 {
                     State s = dependencyStates[i];
                     if (s == null) continue;
-                    AddPropertyBinding(s, RefreshFromProvider, $"textProvider_dep_{i}");
+                    AddPropertyBinding(s, RefreshFromProvider, $"textProvider_dep_{i}", BindingKind.Content);
                 }
             }
 
@@ -83,7 +89,7 @@ namespace UniftUI
             if (textState != null)
             {
                 ApplyTextString(textState.Value ?? string.Empty);
-                AddPropertyBinding(textState, () => SyncFromTextState(textState), "textContent");
+                AddPropertyBinding(textState, () => SyncFromTextState(textState), "textContent", BindingKind.Content);
 
                 if (additionalStates != null)
                 {
@@ -91,7 +97,7 @@ namespace UniftUI
                     {
                         State s = additionalStates[i];
                         if (s == null || ReferenceEquals(s, textState)) continue;
-                        AddPropertyBinding(s, () => SyncFromTextState(textState), $"textContent_dep_{i}");
+                        AddPropertyBinding(s, () => SyncFromTextState(textState), $"textContent_dep_{i}", BindingKind.Content);
                     }
                 }
             }
@@ -108,7 +114,10 @@ namespace UniftUI
             s ??= string.Empty;
             this.text = s;
             if (builtTextComponent != null)
+            {
                 builtTextComponent.text = s;
+                UpdatePreferredLayout();
+            }
         }
 
         private void SyncFromTextState(State<string> textState)
@@ -121,6 +130,61 @@ namespace UniftUI
         {
             if (textProvider == null) return;
             ApplyTextString(textProvider());
+        }
+
+        public override UIElement WithInfiniteWidth()
+        {
+            base.WithInfiniteWidth();
+            RefreshLayoutAfterFrameChange();
+            return this;
+        }
+
+        public override UIElement WithInfiniteHeight()
+        {
+            base.WithInfiniteHeight();
+            RefreshLayoutAfterFrameChange();
+            return this;
+        }
+
+        public override UIElement WithWidth(float width)
+        {
+            base.WithWidth(width);
+            RefreshLayoutAfterFrameChange();
+            return this;
+        }
+
+        public override UIElement WithWidth(State<float> width)
+        {
+            base.WithWidth(width);
+            if (width != null)
+                AddPropertyBinding(width, RefreshLayoutAfterFrameChange, "textFrameWidthLayout", BindingKind.Layout);
+            RefreshLayoutAfterFrameChange();
+            return this;
+        }
+
+        public override UIElement WithHeight(float height)
+        {
+            base.WithHeight(height);
+            RefreshLayoutAfterFrameChange();
+            return this;
+        }
+
+        public override UIElement WithHeight(State<float> height)
+        {
+            base.WithHeight(height);
+            if (height != null)
+                AddPropertyBinding(height, RefreshLayoutAfterFrameChange, "textFrameHeightLayout", BindingKind.Layout);
+            RefreshLayoutAfterFrameChange();
+            return this;
+        }
+
+        private void RefreshLayoutAfterFrameChange()
+        {
+            if (builtTextComponent == null)
+                return;
+
+            ConfigureLineBehavior(builtTextComponent);
+            UpdatePreferredLayout();
         }
 
         /// <summary>Sets the background color behind the text.</summary>
@@ -143,6 +207,7 @@ namespace UniftUI
         /// <summary>Sets the foreground text color.</summary>
         public TextElement SetTextColor(Color color)
         {
+            hasExplicitTextColor = true;
             if (useAnimation && builtTextComponent != null && animationDuration > 0)
             {
                 AnimateTextColor(builtTextComponent.gameObject, color);
@@ -154,6 +219,7 @@ namespace UniftUI
                 if (builtTextComponent != null)
                 {
                     builtTextComponent.color = color;
+                    UpdatePreferredLayout();
                 }
             }
 
@@ -164,13 +230,8 @@ namespace UniftUI
         {
             if (textObj == null || builtTextComponent == null) return;
 
-            TextColorAnimator animator = textObj.GetComponent<TextColorAnimator>();
-            if (animator == null)
-            {
-                animator = textObj.AddComponent<TextColorAnimator>();
-            }
-
-            animator.AnimateTo(textColor, targetColor, animationDuration, animationEasing);
+            TextColorAnimator animator = BaseAnimator<Color>.GetOrReplace<TextColorAnimator>(textObj);
+            animator.AnimateTo(builtTextComponent.color, targetColor, animationDuration, animationEasing);
             textColor = targetColor;
         }
 
@@ -187,6 +248,7 @@ namespace UniftUI
                 else
                     fontStyle &= ~FontStyles.Bold;
                 builtTextComponent.fontStyle = fontStyle;
+                UpdatePreferredLayout();
             }
 
             return this;
@@ -205,6 +267,7 @@ namespace UniftUI
                 else
                     fontStyle &= ~FontStyles.Italic;
                 builtTextComponent.fontStyle = fontStyle;
+                UpdatePreferredLayout();
             }
 
             return this;
@@ -223,6 +286,7 @@ namespace UniftUI
                 else
                     fontStyle &= ~FontStyles.Underline;
                 builtTextComponent.fontStyle = fontStyle;
+                UpdatePreferredLayout();
             }
 
             return this;
@@ -241,6 +305,7 @@ namespace UniftUI
                 else
                     fontStyle &= ~FontStyles.Strikethrough;
                 builtTextComponent.fontStyle = fontStyle;
+                UpdatePreferredLayout();
             }
 
             return this;
@@ -249,11 +314,13 @@ namespace UniftUI
         /// <summary>Sets the font size in points.</summary>
         public TextElement SetFontSize(float size)
         {
+            hasExplicitFontSize = true;
             this.fontSize = size;
 
             if (builtTextComponent != null)
             {
                 builtTextComponent.fontSize = size;
+                UpdatePreferredLayout();
             }
 
             return this;
@@ -262,13 +329,44 @@ namespace UniftUI
         /// <summary>Sets the TextMesh Pro font asset.</summary>
         public TextElement SetFont(TMP_FontAsset font)
         {
+            hasExplicitFont = font != null;
             this.fontAsset = font;
 
             if (builtTextComponent != null && font != null)
             {
                 builtTextComponent.font = font;
+                UpdatePreferredLayout();
             }
 
+            return this;
+        }
+
+        internal bool HasExplicitTextColor => hasExplicitTextColor;
+
+        internal bool HasExplicitFontSize => hasExplicitFontSize;
+
+        internal bool HasExplicitFont => hasExplicitFont;
+
+        internal string PlainText => text ?? string.Empty;
+
+        /// <summary>Sets the maximum number of visible lines.</summary>
+        public TextElement SetLineLimit(int? limit)
+        {
+            lineLimit = limit.HasValue ? Mathf.Max(1, limit.Value) : null;
+            if (builtTextComponent != null)
+                ConfigureLineBehavior(builtTextComponent);
+            return this;
+        }
+
+        /// <summary>Sets TextMesh Pro alignment.</summary>
+        public TextElement SetTextAlignment(TextAlignmentOptions alignment)
+        {
+            textAlignment = alignment;
+            if (builtTextComponent != null)
+            {
+                builtTextComponent.alignment = textAlignment;
+                UpdatePreferredLayout();
+            }
             return this;
         }
 
@@ -278,15 +376,17 @@ namespace UniftUI
             this.hasShadow = true;
 
             float minAlpha = 0.5f;
-            if (color.a < minAlpha) {
+            if (color.a < minAlpha)
+            {
                 color = new Color(color.r, color.g, color.b, minAlpha);
             }
+
             this.shadowColor = color;
 
             float offsetMultiplier = 1.5f;
             this.shadowOffset = offset * offsetMultiplier;
 
-            this.shadowSoftness = softness * 0.7f;
+            this.shadowSoftness = Mathf.Max(0f, softness) * 0.7f;
 
             if (builtTextComponent != null)
             {
@@ -343,9 +443,10 @@ namespace UniftUI
             textComponent.text = text;
             textComponent.fontSize = fontSize;
             textComponent.color = textColor;
-            textComponent.alignment = TextAlignmentOptions.Center;
+            textComponent.alignment = textAlignment;
+            ConfigureLineBehavior(textComponent);
 
-            TMP_FontAsset effectiveFont = fontAsset ?? UIContext.DefaultFont;
+            TMP_FontAsset effectiveFont = ResolveFont(fontAsset);
             if (effectiveFont != null)
             {
                 textComponent.font = effectiveFont;
@@ -364,46 +465,170 @@ namespace UniftUI
                 ApplyShadowToTextComponent(textComponent);
             }
 
-            LayoutElement layoutElement = textObj.AddComponent<LayoutElement>();
-            ContentSizeFitter sizeFitter = textObj.AddComponent<ContentSizeFitter>();
-
-            if (infiniteWidth)
-            {
-                layoutElement.flexibleWidth = 1;
-                layoutElement.preferredWidth = -1;
-                layoutElement.flexibleHeight = 0;
-
-                sizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-                sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-            else if (preferredWidth > 0)
-            {
-                layoutElement.preferredWidth = preferredWidth;
-                layoutElement.minWidth = preferredWidth;
-                layoutElement.flexibleWidth = 0;
-                layoutElement.flexibleHeight = 0;
-                layoutElement.layoutPriority = 100;
-
-                RectTransform rectTransform = textObj.GetComponent<RectTransform>();
-                rectTransform.sizeDelta = new Vector2(preferredWidth, rectTransform.sizeDelta.y);
-
-                sizeFitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
-                sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-            else
-            {
-                layoutElement.flexibleHeight = 0;
-
-                sizeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-                sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-
             builtTextObject = textObj;
             builtTextComponent = textComponent;
+            UpdatePreferredLayout();
 
             ApplyAllEffects(textObj, background);
 
+            var preferredLayoutSync = textObj.AddComponent<TextPreferredLayoutSync>();
+            preferredLayoutSync.Initialize(this);
+
             return textObj;
+        }
+
+        private void ConfigureLineBehavior(TextMeshProUGUI textComponent)
+        {
+            textComponent.textWrappingMode = ShouldWrapText()
+                ? TextWrappingModes.Normal
+                : TextWrappingModes.NoWrap;
+            textComponent.maxVisibleLines = lineLimit ?? 99999;
+            textComponent.overflowMode = lineLimit == 1
+                ? TextOverflowModes.Ellipsis
+                : TextOverflowModes.Overflow;
+            UpdatePreferredLayout();
+        }
+
+        private bool ShouldWrapText()
+        {
+            return preferredWidth > 0f || infiniteWidth || (lineLimit.HasValue && lineLimit.Value > 1);
+        }
+
+        private Vector2 CalculatePreferredTextSize()
+        {
+            if (builtTextComponent == null)
+                return Vector2.zero;
+
+            try
+            {
+                if (preferredWidth > 0f)
+                    return builtTextComponent.GetPreferredValues(text, preferredWidth, Mathf.Infinity);
+
+                if (infiniteWidth)
+                {
+                    RectTransform rect = builtTextObject != null
+                        ? builtTextObject.GetComponent<RectTransform>()
+                        : null;
+                    float width = rect != null ? rect.rect.width : 0f;
+                    if (width > 0.5f)
+                        return builtTextComponent.GetPreferredValues(text, width, Mathf.Infinity);
+                }
+
+                return builtTextComponent.GetPreferredValues();
+            }
+            catch (NullReferenceException)
+            {
+                return EstimatePreferredTextSize();
+            }
+        }
+
+        private Vector2 EstimatePreferredTextSize()
+        {
+            string value = text ?? string.Empty;
+            float lineHeight = Mathf.Max(1f, fontSize * 1.2f);
+            int lines = Mathf.Max(1, value.Split('\n').Length);
+
+            if (preferredWidth > 0f)
+                return new Vector2(preferredWidth, lineHeight * lines);
+
+            float width = Mathf.Max(1f, value.Length * fontSize * 0.55f);
+            return new Vector2(width, lineHeight * lines);
+        }
+
+        internal void SyncPreferredLayoutAfterGeometryChange()
+        {
+            UpdatePreferredLayout();
+        }
+
+        private void UpdatePreferredLayout()
+        {
+            if (builtTextObject == null || builtTextComponent == null)
+                return;
+
+            Vector2 preferred = CalculatePreferredTextSize();
+            LayoutElement layoutElement = builtTextObject.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+                layoutElement = builtTextObject.AddComponent<LayoutElement>();
+
+            if (infiniteWidth)
+            {
+                layoutElement.minWidth = 0f;
+                layoutElement.preferredWidth = -1f;
+                layoutElement.flexibleWidth = 1f;
+            }
+            else if (preferredWidth > 0f)
+            {
+                layoutElement.minWidth = preferredWidth;
+                layoutElement.preferredWidth = preferredWidth;
+                layoutElement.flexibleWidth = 0f;
+            }
+            else
+            {
+                layoutElement.minWidth = 0f;
+                layoutElement.preferredWidth = Mathf.Max(0f, preferred.x);
+                layoutElement.flexibleWidth = 0f;
+            }
+
+            if (infiniteHeight)
+            {
+                layoutElement.minHeight = 0f;
+                layoutElement.preferredHeight = -1f;
+                layoutElement.flexibleHeight = 1f;
+            }
+            else if (preferredHeight > 0f)
+            {
+                layoutElement.minHeight = preferredHeight;
+                layoutElement.preferredHeight = preferredHeight;
+                layoutElement.flexibleHeight = 0f;
+            }
+            else
+            {
+                layoutElement.minHeight = 0f;
+                layoutElement.preferredHeight = Mathf.Max(0f, preferred.y);
+                layoutElement.flexibleHeight = 0f;
+            }
+
+            ElementHost.MarkLayoutDirty(builtTextObject);
+        }
+    }
+
+    internal sealed class TextPreferredLayoutSync : MonoBehaviour
+    {
+        private TextElement owner;
+        private RectTransform rectTransform;
+        private float lastWidth = -1f;
+
+        internal void Initialize(TextElement textElement)
+        {
+            owner = textElement;
+            rectTransform = GetComponent<RectTransform>();
+            RememberWidth();
+        }
+
+        internal void SyncNow()
+        {
+            if (owner == null)
+                return;
+
+            owner.SyncPreferredLayoutAfterGeometryChange();
+            RememberWidth();
+        }
+
+        private void LateUpdate()
+        {
+            if (owner == null || rectTransform == null)
+                return;
+
+            float width = rectTransform.rect.width;
+            if (width <= 0.5f || Mathf.Abs(width - lastWidth) <= 0.5f)
+                return;
+
+            SyncNow();
+        }
+
+        private void RememberWidth()
+        {
+            lastWidth = rectTransform != null ? rectTransform.rect.width : -1f;
         }
     }
 }

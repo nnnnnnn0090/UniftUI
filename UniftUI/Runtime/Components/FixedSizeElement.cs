@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -21,16 +22,7 @@ namespace UniftUI
             this.fixedVertical = fixedVertical;
 
             if (content != null)
-            {
-                preferredWidth = content.preferredWidth;
-                preferredHeight = content.preferredHeight;
-                infiniteWidth = content.infiniteWidth;
-                infiniteHeight = content.infiniteHeight;
-                useCustomPosition = content.useCustomPosition;
-                customPosition = content.customPosition;
-                rotationEffectEuler = content.rotationEffectEuler;
-                scaleEffect = content.scaleEffect;
-            }
+                CopyFrameFrom(content);
         }
 
         public void AddChild(UIElement child)
@@ -56,8 +48,7 @@ namespace UniftUI
         public IEnumerable<UIElement> GetChildren()
         {
             if (content != null)
-                return new List<UIElement> { content };
-            return new List<UIElement>();
+                yield return content;
         }
 
         public override GameObject Build(Transform parent)
@@ -72,57 +63,24 @@ namespace UniftUI
                 bg.color = backgroundColor;
             }
 
-            LayoutElement outerLe = outer.AddComponent<LayoutElement>();
-            ContentSizeFitter fitter = outer.AddComponent<ContentSizeFitter>();
+            outer.AddComponent<UniftUISingleChildLayoutGroup>()
+                .Configure(new RectOffset(0, 0, 0, 0), TextAnchor.MiddleCenter);
+
+            LayoutElement outerLe = LayoutElementUtility.Configure(
+                outer,
+                preferredWidth,
+                preferredHeight,
+                !fixedHorizontal && infiniteWidth,
+                !fixedVertical && infiniteHeight);
 
             if (fixedHorizontal)
-            {
-                outerLe.flexibleWidth = 0;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-                if (preferredWidth >= 0)
-                {
-                    outerLe.preferredWidth = preferredWidth;
-                    outerLe.minWidth = preferredWidth;
-                }
-            }
-            else
-            {
-                outerLe.flexibleWidth = infiniteWidth ? 1 : 0;
-                fitter.horizontalFit = infiniteWidth
-                    ? ContentSizeFitter.FitMode.Unconstrained
-                    : ContentSizeFitter.FitMode.PreferredSize;
-                if (preferredWidth >= 0)
-                {
-                    outerLe.preferredWidth = preferredWidth;
-                    outerLe.minWidth = preferredWidth;
-                }
-            }
-
+                outerLe.flexibleWidth = 0f;
             if (fixedVertical)
-            {
-                outerLe.flexibleHeight = 0;
-                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-                if (preferredHeight >= 0)
-                {
-                    outerLe.preferredHeight = preferredHeight;
-                    outerLe.minHeight = preferredHeight;
-                }
-            }
-            else
-            {
-                outerLe.flexibleHeight = infiniteHeight ? 1 : 0;
-                fitter.verticalFit = infiniteHeight
-                    ? ContentSizeFitter.FitMode.Unconstrained
-                    : ContentSizeFitter.FitMode.PreferredSize;
-                if (preferredHeight >= 0)
-                {
-                    outerLe.preferredHeight = preferredHeight;
-                    outerLe.minHeight = preferredHeight;
-                }
-            }
+                outerLe.flexibleHeight = 0f;
 
             builtGameObject = outer;
 
+            ApplyInheritedFont(content);
             content?.Build(outer.transform);
 
             Canvas.ForceUpdateCanvases();
@@ -131,15 +89,43 @@ namespace UniftUI
             return outer;
         }
 
+        public override UIElement WithCornerRadius(float radius)
+        {
+            base.WithCornerRadius(radius);
+            content?.WithCornerRadius(radius);
+            return this;
+        }
+
+        public override UIElement WithCornerRadius(State<float> radius)
+        {
+            base.WithCornerRadius(radius);
+            content?.WithCornerRadius(radius);
+            return this;
+        }
+
+        public override UIElement WithCornerRadius(float topLeft, float topRight, float bottomRight, float bottomLeft)
+        {
+            base.WithCornerRadius(topLeft, topRight, bottomRight, bottomLeft);
+            content?.WithCornerRadius(topLeft, topRight, bottomRight, bottomLeft);
+            return this;
+        }
+
+        public override UIElement WithCornerRadius(float radius, RectCorner corners)
+        {
+            base.WithCornerRadius(radius, corners);
+            content?.WithCornerRadius(radius, corners);
+            return this;
+        }
+
         protected override void PropagateInfiniteWidthToContent()
         {
-            if (!fixedHorizontal && content != null)
+            if (!fixedHorizontal && ChildMayFillWidth(content))
                 content.WithInfiniteWidth();
         }
 
         protected override void PropagateInfiniteHeightToContent()
         {
-            if (!fixedVertical && content != null)
+            if (!fixedVertical && ChildMayFillHeight(content))
                 content.WithInfiniteHeight();
         }
     }

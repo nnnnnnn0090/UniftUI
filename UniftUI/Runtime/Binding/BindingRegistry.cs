@@ -4,6 +4,14 @@ using UnityEngine;
 
 namespace UniftUI
 {
+    internal enum BindingKind
+    {
+        Visual,
+        Layout,
+        Content,
+        ObserveOnly
+    }
+
     /// <summary>
     /// Per-<see cref="UIElement"/> registry of state-driven property updates.
     /// Call <see cref="Dispose"/> on rebuild to drop stale bindings.
@@ -14,6 +22,7 @@ namespace UniftUI
         {
             public State State;
             public Action UpdateAction;
+            public BindingKind Kind;
         }
 
         private readonly Dictionary<string, LiveBinding> bindings = new Dictionary<string, LiveBinding>();
@@ -22,11 +31,17 @@ namespace UniftUI
 
         public ICollection<State> ObservedStates => stateToProps.Keys;
 
-        public void Register(string propertyName, State state, Action updateAction)
+        public void Register(string propertyName, State state, Action updateAction,
+            BindingKind kind = BindingKind.Visual)
         {
             if (state == null || updateAction == null || string.IsNullOrEmpty(propertyName)) return;
 
-            bindings[propertyName] = new LiveBinding { State = state, UpdateAction = updateAction };
+            bindings[propertyName] = new LiveBinding
+            {
+                State = state,
+                UpdateAction = updateAction,
+                Kind = kind
+            };
 
             if (!stateToProps.TryGetValue(state, out var list))
             {
@@ -52,18 +67,66 @@ namespace UniftUI
             return null;
         }
 
+        public bool HasAnimatableBindingFor(State state)
+        {
+            if (state == null || !stateToProps.TryGetValue(state, out var properties))
+                return false;
+
+            foreach (string propertyName in properties)
+            {
+                if (!bindings.TryGetValue(propertyName, out var binding))
+                    continue;
+
+                if (!ReferenceEquals(binding.State, state))
+                    continue;
+
+                if (binding.Kind == BindingKind.Visual || binding.Kind == BindingKind.Layout)
+                    return true;
+            }
+
+            return false;
+        }
+
         public void ApplyAll()
         {
             foreach (var kvp in bindings)
             {
-                try
-                {
-                    kvp.Value.UpdateAction?.Invoke();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[UniftUI] BindingRegistry: error updating '{kvp.Key}': {e.Message}");
-                }
+                Apply(kvp.Key, kvp.Value);
+            }
+        }
+
+        public void ApplyForState(State state)
+        {
+            if (state == null)
+            {
+                ApplyAll();
+                return;
+            }
+
+            if (!stateToProps.TryGetValue(state, out var properties))
+                return;
+
+            foreach (string propertyName in properties)
+            {
+                if (!bindings.TryGetValue(propertyName, out var binding))
+                    continue;
+
+                if (!ReferenceEquals(binding.State, state))
+                    continue;
+
+                Apply(propertyName, binding);
+            }
+        }
+
+        private static void Apply(string propertyName, LiveBinding binding)
+        {
+            try
+            {
+                binding.UpdateAction?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[UniftUI] BindingRegistry: error updating '{propertyName}': {e.Message}");
             }
         }
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Collections.Generic;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -48,12 +49,7 @@ namespace UniftUI
             }
         }
 
-        /// <summary>
-        /// Legacy API: <c>true</c> maps to <see cref="ScrollIndicatorVisibility.Automatic"/>,
-        /// <c>false</c> to <see cref="ScrollIndicatorVisibility.Hidden"/>.
-        /// Use <see cref="WithScrollIndicators"/> for always-visible indicators.
-        /// </summary>
-        public ScrollViewElement ShowScrollbars(bool horizontal = true, bool vertical = true)
+        internal ScrollViewElement ShowScrollbars(bool horizontal = true, bool vertical = true)
         {
             if (this.vertical)
                 verticalIndicatorVisibility = vertical ? ScrollIndicatorVisibility.Automatic : ScrollIndicatorVisibility.Hidden;
@@ -193,34 +189,17 @@ namespace UniftUI
             contentContainer.transform.SetParent(container.transform, false);
 
             RectTransform contentRect = contentContainer.AddComponent<RectTransform>();
-            contentRect.anchorMin = new Vector2(0, 1);
-            contentRect.anchorMax = new Vector2(1, 1);
-            contentRect.pivot = new Vector2(0.5f, 1);
-            contentRect.anchoredPosition = Vector2.zero;
-            contentRect.sizeDelta = Vector2.zero;
+            ConfigureContentRect(contentRect);
 
             scrollRect.content = contentRect;
 
-            if (vertical)
-            {
-                VerticalLayoutGroup layoutGroup = contentContainer.AddComponent<VerticalLayoutGroup>();
-                layoutGroup.childControlWidth = true;
-                layoutGroup.childControlHeight = true;
-                layoutGroup.childForceExpandWidth = true;
-                layoutGroup.childForceExpandHeight = false;
-                layoutGroup.spacing = 8f;
-                layoutGroup.padding = this.padding ?? new RectOffset(10, 10, 10, 10);
-            }
-            else if (horizontal)
-            {
-                HorizontalLayoutGroup layoutGroup = contentContainer.AddComponent<HorizontalLayoutGroup>();
-                layoutGroup.childControlWidth = true;
-                layoutGroup.childControlHeight = true;
-                layoutGroup.childForceExpandWidth = false;
-                layoutGroup.childForceExpandHeight = true;
-                layoutGroup.spacing = 8f;
-                layoutGroup.padding = this.padding ?? new RectOffset(10, 10, 10, 10);
-            }
+            UniftUIStackLayoutGroup layoutGroup = contentContainer.AddComponent<UniftUIStackLayoutGroup>();
+            layoutGroup.padding = this.padding ?? new RectOffset(10, 10, 10, 10);
+            layoutGroup.Configure(
+                horizontal && !vertical ? UniftUIStackAxis.Horizontal : UniftUIStackAxis.Vertical,
+                8f,
+                VStackAlignment.Center,
+                HStackAlignment.Center);
 
             ContentSizeFitter contentFitter = contentContainer.AddComponent<ContentSizeFitter>();
             contentFitter.horizontalFit = horizontal ?
@@ -248,43 +227,32 @@ namespace UniftUI
                     : ScrollRect.ScrollbarVisibility.AutoHide;
             }
 
-            LayoutElement layoutElement = container.AddComponent<LayoutElement>();
-            if (preferredWidth > 0)
+            LayoutElement layoutElement = LayoutElementUtility.Configure(
+                container,
+                preferredWidth,
+                preferredHeight,
+                infiniteWidth,
+                infiniteHeight,
+                300f,
+                200f);
+            if (preferredWidth < 0 && !infiniteWidth)
             {
-                layoutElement.preferredWidth = preferredWidth;
-                layoutElement.minWidth = preferredWidth;
-                layoutElement.flexibleWidth = 0;
+                layoutElement.minWidth = 100f;
+                layoutElement.flexibleWidth = 1f;
             }
-            else if (infiniteWidth)
+            if (preferredHeight < 0 && !infiniteHeight)
             {
-                layoutElement.flexibleWidth = 1;
-            }
-            else
-            {
-                layoutElement.preferredWidth = 300;
-                layoutElement.minWidth = 100;
-                layoutElement.flexibleWidth = 1;
-            }
-
-            if (preferredHeight > 0)
-            {
-                layoutElement.preferredHeight = preferredHeight;
-                layoutElement.minHeight = preferredHeight;
-                layoutElement.flexibleHeight = 0;
-            }
-            else if (infiniteHeight)
-            {
-                layoutElement.flexibleHeight = 1;
-            }
-            else
-            {
-                layoutElement.preferredHeight = 200;
-                layoutElement.minHeight = 100;
-                layoutElement.flexibleHeight = 1;
+                layoutElement.minHeight = 100f;
+                layoutElement.flexibleHeight = 1f;
             }
 
             foreach (var child in children)
             {
+                ApplyInheritedFont(child);
+                if (vertical && !horizontal && ChildMayFillWidth(child))
+                    child.WithInfiniteWidth();
+                if (horizontal && !vertical && ChildMayFillHeight(child))
+                    child.WithInfiniteHeight();
                 child.Build(contentContainer.transform);
             }
 
@@ -392,33 +360,74 @@ namespace UniftUI
         {
             StateObserver observer = container.AddComponent<StateObserver>();
             observer.Initialize(states, () => {
+                if (container == null || !container || contentContainer == null || !contentContainer)
+                {
+                    Debug.LogWarning("[UniftUI] ScrollView rebuild skipped: container was destroyed.");
+                    return;
+                }
+
                 foreach (Transform child in contentContainer.transform)
                 {
-                    if (child.gameObject != null)
-                        GameObject.Destroy(child.gameObject);
+                    if (child != null && child.gameObject != null)
+                        DestroyGameObject(child.gameObject);
                 }
 
                 children.Clear();
 
                 var parentContext = UIContext.Current;
-                UIContext.Current = this;
-
-                if (content != null)
-                    content.Invoke();
-
-                UIContext.Current = parentContext;
+                try
+                {
+                    UIContext.Current = this;
+                    content?.Invoke();
+                }
+                finally
+                {
+                    UIContext.Current = parentContext;
+                }
 
                 foreach (var child in children)
                 {
                     if (child == null || contentContainer == null || contentContainer.transform == null)
                         continue;
-                    if (UIContext.DefaultFont != null)
-                        child.Font(UIContext.DefaultFont);
+                    ApplyInheritedFont(child);
+                    if (vertical && !horizontal && ChildMayFillWidth(child))
+                        child.WithInfiniteWidth();
+                    if (horizontal && !vertical && ChildMayFillHeight(child))
+                        child.WithInfiniteHeight();
                     child.Build(contentContainer.transform);
                 }
 
+                LayoutRebuilder.ForceRebuildLayoutImmediate(contentContainer.GetComponent<RectTransform>());
+                LayoutRebuilder.ForceRebuildLayoutImmediate(container.GetComponent<RectTransform>());
                 Canvas.ForceUpdateCanvases();
             });
+        }
+
+        private void ConfigureContentRect(RectTransform contentRect)
+        {
+            if (contentRect == null) return;
+
+            if (vertical && !horizontal)
+            {
+                contentRect.anchorMin = new Vector2(0f, 1f);
+                contentRect.anchorMax = new Vector2(1f, 1f);
+                contentRect.pivot = new Vector2(0.5f, 1f);
+            }
+            else if (horizontal && !vertical)
+            {
+                contentRect.anchorMin = new Vector2(0f, 0f);
+                contentRect.anchorMax = new Vector2(0f, 1f);
+                contentRect.pivot = new Vector2(0f, 0.5f);
+            }
+            else
+            {
+                contentRect.anchorMin = new Vector2(0f, 1f);
+                contentRect.anchorMax = new Vector2(0f, 1f);
+                contentRect.pivot = new Vector2(0f, 1f);
+            }
+
+            contentRect.anchoredPosition = Vector2.zero;
+            contentRect.sizeDelta = Vector2.zero;
         }
     }
 }

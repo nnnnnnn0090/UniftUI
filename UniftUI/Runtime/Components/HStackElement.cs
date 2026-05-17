@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Collections.Generic;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -63,7 +64,7 @@ namespace UniftUI
             }
             else
             {
-                 Debug.LogWarning($"[UniftUI] HStack ReplaceChild: oldChild not found. Children count: {children.Count}");
+                Debug.LogWarning($"[UniftUI] HStack ReplaceChild: oldChild not found. Children count: {children.Count}");
             }
         }
 
@@ -84,62 +85,15 @@ namespace UniftUI
                 backgroundImage.color = backgroundColor;
             }
 
-            HorizontalLayoutGroup layout = container.AddComponent<HorizontalLayoutGroup>();
-            ContentSizeFitter buttonFitter = container.AddComponent<ContentSizeFitter>();
-            buttonFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            buttonFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            UniftUIStackLayoutGroup layout = container.AddComponent<UniftUIStackLayoutGroup>();
+            layout.padding = padding ?? new RectOffset(0, 0, 0, 0);
+            layout.Configure(UniftUIStackAxis.Horizontal, spacing, VStackAlignment.Center, alignment);
 
-            switch (alignment)
-            {
-                case HStackAlignment.Top:
-                    layout.childAlignment = TextAnchor.UpperCenter;
-                    break;
-                case HStackAlignment.Center:
-                    layout.childAlignment = TextAnchor.MiddleCenter;
-                    break;
-                case HStackAlignment.Bottom:
-                    layout.childAlignment = TextAnchor.LowerCenter;
-                    break;
-                case HStackAlignment.FirstTextBaseline:
-                case HStackAlignment.LastTextBaseline:
-                    layout.childAlignment = TextAnchor.MiddleCenter;
-                    break;
-            }
-
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = false;
-
-            layout.spacing = spacing;
-            layout.padding = padding ?? new RectOffset(0,0,0,0);
-
-            LayoutElement layoutElement = container.AddComponent<LayoutElement>();
-
-            if (infiniteWidth)
-            {
-                layoutElement.flexibleWidth = 1;
-                buttonFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            }
-            else if (preferredWidth >= 0)
-            {
-                layoutElement.preferredWidth = preferredWidth;
-                layoutElement.minWidth = preferredWidth;
-            }
-
-            if (infiniteHeight)
-            {
-                layoutElement.flexibleHeight = 1;
-                buttonFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
-            }
-            else if (preferredHeight >= 0)
-            {
-                layoutElement.preferredHeight = preferredHeight;
-                layoutElement.minHeight = preferredHeight;
-            }
+            LayoutElementUtility.Configure(container, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight);
 
             foreach (var child in children)
             {
+                ApplyInheritedFont(child);
                 child.Build(container.transform);
             }
 
@@ -172,29 +126,31 @@ namespace UniftUI
                     foreach (Transform child in container.transform)
                     {
                         if (child != null && child.gameObject != null)
-                            UnityEngine.Object.Destroy(child.gameObject);
+                            DestroyGameObject(child.gameObject);
                     }
 
                     children.Clear();
 
                     var parentContext = UIContext.Current;
-                    UIContext.Current = this;
-
-                    if (content != null)
-                        content.Invoke();
-
-                    UIContext.Current = parentContext;
+                    try
+                    {
+                        UIContext.Current = this;
+                        content?.Invoke();
+                    }
+                    finally
+                    {
+                        UIContext.Current = parentContext;
+                    }
 
                     foreach (var child in children)
                     {
                         if (child == null) continue;
 
-                        if (UIContext.DefaultFont != null)
-                            child.Font(UIContext.DefaultFont);
-
+                        ApplyInheritedFont(child);
                         child.Build(container.transform);
                     }
 
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(container.GetComponent<RectTransform>());
                     Canvas.ForceUpdateCanvases();
 
                     BaselineRowAligner.AlignIfNeeded(container, alignment);

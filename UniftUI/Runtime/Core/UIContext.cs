@@ -1,4 +1,3 @@
-using UnityEngine;
 using TMPro;
 
 namespace UniftUI
@@ -15,14 +14,7 @@ namespace UniftUI
         
         public static void Add(UIElement element)
         {
-            if (Current != null)
-            {
-                Current.AddChild(element);
-            }
-            else
-            {
-                Debug.LogWarning("UIContext.Current is null. Element cannot be added to the hierarchy.");
-            }
+            Current?.AddChild(element);
         }
     }
 }

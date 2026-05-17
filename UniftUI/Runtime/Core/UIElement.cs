@@ -3,6 +3,8 @@ using UnityEngine.UI;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TMPro;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -16,6 +18,11 @@ namespace UniftUI
         internal bool infiniteHeight;
         internal float preferredWidth = -1;
         internal float preferredHeight = -1;
+        internal float minimumWidth = -1;
+        internal float minimumHeight = -1;
+        internal float? layoutPriority;
+        internal State<float> frameWidthState;
+        internal State<float> frameHeightState;
         internal RectOffset padding = new RectOffset(0, 0, 0, 0);
         internal bool useCustomPosition;
         internal Vector2 customPosition;
@@ -26,19 +33,27 @@ namespace UniftUI
 
         internal Vector3 rotationEffectEuler = Vector3.zero;
         internal Vector3 scaleEffect = Vector3.one;
+        internal bool disabled;
+        internal bool hidden;
+        internal bool allowsHitTesting = true;
 
         internal float animationDuration;
         internal bool useAnimation;
         internal AnimationEasing animationEasing = AnimationEasing.Linear;
 
         internal Dictionary<State, Animation> stateAnimationMap;
-        internal Animation? pendingAnimation;
+        internal readonly HashSet<State> animatedStates = new HashSet<State>();
+        internal TMP_FontAsset inheritedFontAsset;
 
         protected Action onAppearAction;
         protected Func<Task> onAppearAsyncAction;
         protected Action updateAction;
 
         internal readonly BindingRegistry bindingRegistry = new BindingRegistry();
+
+        protected UIElement()
+        {
+        }
 
         /// <summary>Backward-compatible read-only view of observed states (register via <see cref="ObserveState"/>).</summary>
         protected List<State> observedStates
@@ -84,71 +99,137 @@ namespace UniftUI
         protected void ObserveState(State state)
         {
             if (state != null)
-                bindingRegistry.Register("__observe__" + state.GetHashCode(), state, () => { });
+                bindingRegistry.Register("__observe__" + state.GetHashCode(), state, () => { }, BindingKind.ObserveOnly);
         }
 
         /// <summary>Registers a state-driven property update and returns a legacy <see cref="PropertyBinding"/> handle.</summary>
         public PropertyBinding AddPropertyBinding(State state, Action updateAction, string propertyName)
+            => AddPropertyBinding(state, updateAction, propertyName, BindingKind.Visual);
+
+        internal PropertyBinding AddPropertyBinding(State state, Action updateAction, string propertyName, BindingKind kind)
         {
             if (state == null || updateAction == null) return null;
 
-            bindingRegistry.Register(propertyName, state, updateAction);
+            bindingRegistry.Register(propertyName, state, updateAction, kind);
 
             return new PropertyBinding(state, updateAction, propertyName);
         }
 
         protected void SetupDynamicEffects(GameObject gameObject)
         {
-            if (gameObject == null || bindingRegistry.ObservedStates.Count == 0) return;
+            if (gameObject == null)
+                return;
 
             builtGameObject = gameObject;
 
-            var observer = gameObject.GetComponent<DynamicEffectObserver>();
-            if (observer == null)
-                observer = gameObject.AddComponent<DynamicEffectObserver>();
+            var lifecycle = gameObject.GetComponent<ElementLifecycleHost>();
+            if (lifecycle == null)
+                lifecycle = gameObject.AddComponent<ElementLifecycleHost>();
+            lifecycle.Registry = bindingRegistry;
 
-            observer.Attach(this, bindingRegistry);
+            var animationHost = gameObject.GetComponent<ElementAnimationHost>();
+            if (animationHost == null)
+                animationHost = gameObject.AddComponent<ElementAnimationHost>();
+            animationHost.Attach(this);
         }
 
-        /// <summary>Applies all registered property bindings, honoring any pending animation.</summary>
-        public virtual void ApplyDynamicEffects()
+        internal IEnumerable<State> GetWatchedStates()
         {
-            if (builtGameObject == null) return;
+            foreach (State state in bindingRegistry.ObservedStates)
+                yield return state;
 
-            var anim = pendingAnimation;
-            pendingAnimation = null;
+            foreach (State state in animatedStates)
+                yield return state;
+        }
 
-            if (anim.HasValue)
-            {
-                bool prevUse = useAnimation;
-                float prevDur = animationDuration;
-                AnimationEasing prevEase = animationEasing;
+        /// <summary>Applies registered property bindings, optionally animating with <paramref name="explicitAnimation"/>.</summary>
+        public virtual void ApplyDynamicEffects(State changedState = null, Animation? explicitAnimation = null)
+        {
+            if (builtGameObject == null)
+                return;
 
-                useAnimation = true;
-                animationDuration = anim.Value.effectiveDuration;
-                animationEasing = anim.Value.easing;
+            Animation? anim = explicitAnimation;
+            if (!anim.HasValue && changedState != null)
+                anim = ResolveAnimationForState(changedState);
 
-                bindingRegistry.ApplyAll();
+            using (AnimationScope.TryCreate(this, anim))
+                ApplyBindings(changedState);
+        }
 
-                useAnimation = prevUse;
-                animationDuration = prevDur;
-                animationEasing = prevEase;
-            }
+        internal virtual void HandleStateChange(State changedState)
+        {
+            if (builtGameObject == null)
+                return;
+
+            ApplyDynamicEffects(changedState);
+        }
+
+        private void ApplyBindings(State changedState)
+        {
+            if (changedState != null)
+                bindingRegistry.ApplyForState(changedState);
             else
-            {
                 bindingRegistry.ApplyAll();
+        }
+
+        internal Animation? ResolveAnimationForState(State changedState)
+        {
+            if (changedState != null)
+            {
+                if (stateAnimationMap != null &&
+                    stateAnimationMap.TryGetValue(changedState, out var stateAnim))
+                    return stateAnim;
+
+                Animation? registryAnimation = bindingRegistry.AnimationFor(changedState);
+                if (registryAnimation.HasValue)
+                    return registryAnimation;
             }
+
+            return AnimationContext.Current;
         }
 
         /// <summary>Animates this element when <paramref name="value"/> changes.</summary>
         public UIElement Animation(Animation anim, State value)
         {
-            if (value == null) return this;
+            RegisterAnimationForBoundStateInSubtree(anim, value);
+            return this;
+        }
+
+        internal bool RegisterAnimationForBoundState(Animation anim, State value)
+        {
+            if (value == null)
+                return false;
+
+            animatedStates.Add(value);
             if (stateAnimationMap == null) stateAnimationMap = new Dictionary<State, Animation>();
             stateAnimationMap[value] = anim;
             bindingRegistry.SetStateAnimation(value, anim);
-            ObserveState(value);
-            return this;
+            return true;
+        }
+
+        internal bool RegisterAnimationForBoundStateInSubtree(Animation anim, State value)
+        {
+            bool applied = RegisterAnimationForBoundState(anim, value);
+
+            if (this is ILayoutContainer container)
+            {
+                foreach (var child in container.GetChildren())
+                {
+                    if (child == null) continue;
+                    applied |= child.RegisterAnimationForBoundStateInSubtree(anim, value);
+                }
+            }
+
+            return applied;
+        }
+
+        protected void ApplyVisualBinding(State state, Action apply)
+        {
+            if (apply == null)
+                return;
+
+            using (AnimationScope.TryCreate(this, ResolveAnimationForState(state)))
+                apply.Invoke();
         }
 
         /// <summary>Animates this element when <paramref name="value"/> changes using <see cref="global::UniftUI.Animation.Default"/>.</summary>
@@ -209,6 +290,35 @@ namespace UniftUI
 
         protected void CleanupActions() { }
 
+        internal void SetInheritedFont(TMP_FontAsset font)
+        {
+            inheritedFontAsset = font;
+        }
+
+        protected TMP_FontAsset ResolveFont(TMP_FontAsset explicitFont)
+        {
+            return explicitFont ?? inheritedFontAsset ?? UIContext.DefaultFont ?? ResolveDefaultTMPFont();
+        }
+
+        private static TMP_FontAsset ResolveDefaultTMPFont()
+        {
+            try
+            {
+                return TMP_Settings.defaultFontAsset;
+            }
+            catch (NullReferenceException)
+            {
+                return null;
+            }
+        }
+
+        protected void ApplyInheritedFont(UIElement child)
+        {
+            TMP_FontAsset font = inheritedFontAsset ?? UIContext.DefaultFont;
+            if (font != null)
+                child?.Font(font);
+        }
+
         /// <summary>Enables implicit linear animation for subsequent property changes.</summary>
         public UIElement WithAnimation(float duration)
         {
@@ -234,90 +344,220 @@ namespace UniftUI
             return null;
         }
 
+        /// <summary>Enables or disables interaction for this element subtree.</summary>
+        public virtual UIElement WithDisabled(bool isDisabled)
+        {
+            disabled = isDisabled;
+            if (builtGameObject != null)
+                ApplyInteraction(builtGameObject);
+            return this;
+        }
+
+        /// <summary>Reactively enables or disables interaction for this element subtree.</summary>
+        public virtual UIElement WithDisabled(State<bool> isDisabled)
+        {
+            if (isDisabled == null)
+                return this;
+
+            disabled = isDisabled.Value;
+            AddPropertyBinding(isDisabled, () =>
+            {
+                disabled = isDisabled.Value;
+                if (builtGameObject != null)
+                    ApplyInteraction(builtGameObject);
+            }, "disabled", BindingKind.Visual);
+            return this;
+        }
+
+        /// <summary>Controls whether this element subtree receives pointer events.</summary>
+        public virtual UIElement WithAllowsHitTesting(bool allowsHitTesting)
+        {
+            this.allowsHitTesting = allowsHitTesting;
+            if (builtGameObject != null)
+                ApplyInteraction(builtGameObject);
+            return this;
+        }
+
+        /// <summary>Reactively controls whether this element subtree receives pointer events.</summary>
+        public virtual UIElement WithAllowsHitTesting(State<bool> allowsHitTesting)
+        {
+            if (allowsHitTesting == null)
+                return this;
+
+            this.allowsHitTesting = allowsHitTesting.Value;
+            AddPropertyBinding(allowsHitTesting, () =>
+            {
+                this.allowsHitTesting = allowsHitTesting.Value;
+                if (builtGameObject != null)
+                    ApplyInteraction(builtGameObject);
+            }, "allowsHitTesting", BindingKind.Visual);
+            return this;
+        }
+
         /// <summary>
         /// Builds on a <see cref="Canvas"/> and stretches the root <see cref="RectTransform"/> to fill the canvas,
         /// similar to a root view receiving the maximum proposed size.
         /// </summary>
         public UIElement Build(Canvas canvas)
         {
-            GameObject obj = Build(canvas.transform);
-            if (obj != null)
-            {
-                var rect = obj.GetComponent<RectTransform>();
-                if (rect != null)
-                {
-                    rect.anchorMin = Vector2.zero;
-                    rect.anchorMax = Vector2.one;
-                    rect.pivot = new Vector2(0.5f, 0.5f);
-                    rect.offsetMin = Vector2.zero;
-                    rect.offsetMax = Vector2.zero;
-
-                    var fitter = obj.GetComponent<ContentSizeFitter>();
-                    if (fitter != null)
-                    {
-                        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-                        fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
-                    }
-
-                    var le = obj.GetComponent<LayoutElement>();
-                    if (le == null)
-                        le = obj.AddComponent<LayoutElement>();
-                    le.flexibleWidth = Mathf.Max(le.flexibleWidth, 1f);
-                    le.flexibleHeight = Mathf.Max(le.flexibleHeight, 1f);
-                }
-            }
+            ElementHost.BuildRoot(this, canvas);
             return this;
         }
 
         /// <summary>Allows the element to expand to the maximum proposed width.</summary>
         public virtual UIElement WithInfiniteWidth()
         {
+            frameWidthState = null;
             infiniteWidth = true;
             PropagateInfiniteWidthToContent();
+            if (builtGameObject != null) ApplySize(builtGameObject);
             return this;
         }
 
         /// <summary>Allows the element to expand to the maximum proposed height.</summary>
         public virtual UIElement WithInfiniteHeight()
         {
+            frameHeightState = null;
             infiniteHeight = true;
             PropagateInfiniteHeightToContent();
+            if (builtGameObject != null) ApplySize(builtGameObject);
             return this;
         }
 
         /// <summary>Sets a fixed preferred width.</summary>
         public virtual UIElement WithWidth(float width)
         {
+            frameWidthState = null;
+            if (useAnimation && builtGameObject != null && animationDuration > 0)
+            {
+                AnimateWidth(builtGameObject, width);
+                return this;
+            }
+
             preferredWidth = width;
+            infiniteWidth = false;
+            if (builtGameObject != null) ApplySize(builtGameObject);
             return this;
         }
 
         /// <summary>Sets a reactive preferred width.</summary>
         public virtual UIElement WithWidth(State<float> width)
         {
+            if (width == null)
+                return this;
+
+            frameWidthState = width;
             preferredWidth = width.Value;
+            infiniteWidth = false;
             AddPropertyBinding(width, () => {
-                preferredWidth = width.Value;
-                if (builtGameObject != null) ApplySize(builtGameObject);
-            }, "width");
+                if (!ReferenceEquals(frameWidthState, width))
+                    return;
+
+                float target = width.Value;
+                if (useAnimation && builtGameObject != null && animationDuration > 0)
+                {
+                    AnimateWidth(builtGameObject, target);
+                }
+                else
+                {
+                    preferredWidth = target;
+                    infiniteWidth = false;
+                    if (builtGameObject != null) ApplySize(builtGameObject);
+                }
+            }, "width", BindingKind.Layout);
             return this;
         }
 
         /// <summary>Sets a fixed preferred height.</summary>
         public virtual UIElement WithHeight(float height)
         {
+            frameHeightState = null;
+            if (useAnimation && builtGameObject != null && animationDuration > 0)
+            {
+                AnimateHeight(builtGameObject, height);
+                return this;
+            }
+
             preferredHeight = height;
+            infiniteHeight = false;
+            if (builtGameObject != null) ApplySize(builtGameObject);
             return this;
         }
 
         /// <summary>Sets a reactive preferred height.</summary>
         public virtual UIElement WithHeight(State<float> height)
         {
+            if (height == null)
+                return this;
+
+            frameHeightState = height;
             preferredHeight = height.Value;
+            infiniteHeight = false;
             AddPropertyBinding(height, () => {
-                preferredHeight = height.Value;
-                if (builtGameObject != null) ApplySize(builtGameObject);
-            }, "height");
+                if (!ReferenceEquals(frameHeightState, height))
+                    return;
+
+                float target = height.Value;
+                if (useAnimation && builtGameObject != null && animationDuration > 0)
+                {
+                    AnimateHeight(builtGameObject, target);
+                }
+                else
+                {
+                    preferredHeight = target;
+                    infiniteHeight = false;
+                    if (builtGameObject != null) ApplySize(builtGameObject);
+                }
+            }, "height", BindingKind.Layout);
+            return this;
+        }
+
+        internal virtual UIElement WithFrameConstraints(float? minWidth = null, float? maxWidth = null,
+            float? minHeight = null, float? maxHeight = null)
+        {
+            if (minWidth.HasValue)
+                minimumWidth = Mathf.Max(0f, minWidth.Value);
+            if (minHeight.HasValue)
+                minimumHeight = Mathf.Max(0f, minHeight.Value);
+
+            if (maxWidth.HasValue)
+            {
+                if (float.IsPositiveInfinity(maxWidth.Value))
+                    WithInfiniteWidth();
+                else if (preferredWidth < 0f)
+                    WithWidth(Mathf.Max(0f, maxWidth.Value));
+            }
+
+            if (maxHeight.HasValue)
+            {
+                if (float.IsPositiveInfinity(maxHeight.Value))
+                    WithInfiniteHeight();
+                else if (preferredHeight < 0f)
+                    WithHeight(Mathf.Max(0f, maxHeight.Value));
+            }
+
+            if (builtGameObject != null)
+                ApplyFrameConstraints(builtGameObject);
+
+            return this;
+        }
+
+        internal virtual UIElement WithLayoutPriority(float priority)
+        {
+            layoutPriority = priority;
+            if (builtGameObject != null)
+                ApplyFrameConstraints(builtGameObject);
+            return this;
+        }
+
+        internal virtual UIElement WithHidden(bool isHidden = true)
+        {
+            hidden = isHidden;
+            if (builtGameObject != null)
+            {
+                ApplyOpacity(builtGameObject);
+                ApplyInteraction(builtGameObject);
+            }
             return this;
         }
 
@@ -325,24 +565,29 @@ namespace UniftUI
         public virtual UIElement WithPadding(int pad)
         {
             padding = new RectOffset(pad, pad, pad, pad);
+            if (builtGameObject != null) ApplyPadding(builtGameObject);
             return this;
         }
 
         /// <summary>Sets reactive uniform padding.</summary>
         public virtual UIElement WithPadding(State<int> pad)
         {
+            if (pad == null)
+                return this;
+
             padding = new RectOffset(pad.Value, pad.Value, pad.Value, pad.Value);
             AddPropertyBinding(pad, () => {
                 padding = new RectOffset(pad.Value, pad.Value, pad.Value, pad.Value);
                 if (builtGameObject != null) ApplyPadding(builtGameObject);
-            }, "padding");
+            }, "padding", BindingKind.Layout);
             return this;
         }
 
         /// <summary>Sets explicit per-edge padding.</summary>
         public virtual UIElement WithPadding(RectOffset pad)
         {
-            padding = pad;
+            padding = pad ?? new RectOffset(0, 0, 0, 0);
+            if (builtGameObject != null) ApplyPadding(builtGameObject);
             return this;
         }
 
@@ -364,6 +609,9 @@ namespace UniftUI
         /// <summary>Sets reactive absolute position.</summary>
         public virtual UIElement WithPosition(State<Vector2> position)
         {
+            if (position == null)
+                return this;
+
             useCustomPosition = true;
             customPosition = position.Value;
             AddPropertyBinding(position, () => {
@@ -375,13 +623,16 @@ namespace UniftUI
                     customPosition = newPos;
                     if (builtGameObject != null) ApplyCustomPosition(builtGameObject);
                 }
-            }, "position");
+            }, "position", BindingKind.Layout);
             return this;
         }
 
         /// <summary>Sets reactive X with fixed Y.</summary>
         public virtual UIElement WithPosition(State<float> x, float y)
         {
+            if (x == null)
+                return this;
+
             useCustomPosition = true;
             customPosition = new Vector2(x.Value, y);
             AddPropertyBinding(x, () => {
@@ -393,13 +644,16 @@ namespace UniftUI
                     customPosition = newPos;
                     if (builtGameObject != null) ApplyCustomPosition(builtGameObject);
                 }
-            }, "positionX");
+            }, "positionX", BindingKind.Layout);
             return this;
         }
 
         /// <summary>Sets fixed X with reactive Y.</summary>
         public virtual UIElement WithPosition(float x, State<float> y)
         {
+            if (y == null)
+                return this;
+
             useCustomPosition = true;
             customPosition = new Vector2(x, y.Value);
             AddPropertyBinding(y, () => {
@@ -411,7 +665,7 @@ namespace UniftUI
                     customPosition = newPos;
                     if (builtGameObject != null) ApplyCustomPosition(builtGameObject);
                 }
-            }, "positionY");
+            }, "positionY", BindingKind.Layout);
             return this;
         }
 
@@ -421,13 +675,20 @@ namespace UniftUI
             if (useAnimation && builtGameObject != null && animationDuration > 0)
                 AnimateBackgroundColor(builtGameObject, color);
             else
+            {
                 backgroundColor = color;
+                if (builtGameObject != null)
+                    ApplyBackgroundColor(builtGameObject);
+            }
             return this;
         }
 
         /// <summary>Sets reactive background color.</summary>
         public virtual UIElement WithBackgroundColor(State<Color> color)
         {
+            if (color == null)
+                return this;
+
             backgroundColor = color.Value;
             AddPropertyBinding(color, () => {
                 var c = color.Value;
@@ -438,7 +699,7 @@ namespace UniftUI
                     backgroundColor = c;
                     if (builtGameObject != null) ApplyBackgroundColor(builtGameObject);
                 }
-            }, "backgroundColor");
+            }, "backgroundColor", BindingKind.Visual);
             return this;
         }
 
@@ -447,50 +708,65 @@ namespace UniftUI
         {
             value = Mathf.Clamp01(value);
             if (useAnimation && builtGameObject != null && animationDuration > 0)
+            {
                 AnimateOpacity(builtGameObject, value);
+            }
             else
+            {
                 opacity = value;
+                if (builtGameObject != null) ApplyOpacity(builtGameObject);
+            }
             return this;
         }
 
         /// <summary>Sets reactive opacity (0–1).</summary>
         public virtual UIElement WithOpacity(State<float> value)
         {
+            if (value == null)
+                return this;
+
             opacity = Mathf.Clamp01(value.Value);
             AddPropertyBinding(value, () => {
-                var v = Mathf.Clamp01(value.Value);
-                if (useAnimation && builtGameObject != null && animationDuration > 0)
+                if (builtGameObject == null)
+                    return;
+
+                float v = Mathf.Clamp01(value.Value);
+                opacity = v;
+                if (useAnimation && animationDuration > 0f)
                     AnimateOpacity(builtGameObject, v);
                 else
-                {
-                    opacity = v;
-                    if (builtGameObject != null) ApplyOpacity(builtGameObject);
-                }
-            }, "opacity");
+                    ApplyOpacity(builtGameObject, cancelAnimator: false);
+            }, "opacity", BindingKind.Visual);
             return this;
         }
 
-        /// <summary>Sets uniform corner radius (0–50, mapped to UiRoundedCorners scale).</summary>
+        /// <summary>Sets uniform corner radius.</summary>
         public virtual UIElement WithCornerRadius(float radius)
         {
             radius = Mathf.Clamp(radius, 0f, 50f);
-            float s = radius * (40f / 50f);
-            var newR = new Vector4(s, s, s, s);
+            var newR = new Vector4(radius, radius, radius, radius);
             if (useAnimation && builtGameObject != null && animationDuration > 0)
                 AnimateCornerRadius(builtGameObject, newR);
             else
+            {
                 cornerRadius = newR;
+                if (builtGameObject != null)
+                    ApplyRoundedCorners(builtGameObject);
+            }
             return this;
         }
 
         /// <summary>Sets reactive uniform corner radius.</summary>
         public virtual UIElement WithCornerRadius(State<float> radius)
         {
-            float s = Mathf.Clamp(radius.Value, 0f, 50f) * (40f / 50f);
-            cornerRadius = new Vector4(s, s, s, s);
+            if (radius == null)
+                return this;
+
+            float initialRadius = Mathf.Clamp(radius.Value, 0f, 50f);
+            cornerRadius = new Vector4(initialRadius, initialRadius, initialRadius, initialRadius);
             AddPropertyBinding(radius, () => {
-                float ns = Mathf.Clamp(radius.Value, 0f, 50f) * (40f / 50f);
-                var newR = new Vector4(ns, ns, ns, ns);
+                float nextRadius = Mathf.Clamp(radius.Value, 0f, 50f);
+                var newR = new Vector4(nextRadius, nextRadius, nextRadius, nextRadius);
                 if (useAnimation && builtGameObject != null && animationDuration > 0)
                     AnimateCornerRadius(builtGameObject, newR);
                 else
@@ -498,23 +774,26 @@ namespace UniftUI
                     cornerRadius = newR;
                     if (builtGameObject != null) ApplyRoundedCorners(builtGameObject);
                 }
-            }, "cornerRadius");
+            }, "cornerRadius", BindingKind.Visual);
             return this;
         }
 
         /// <summary>Sets per-corner radius values.</summary>
         public virtual UIElement WithCornerRadius(float topLeft, float topRight, float bottomRight, float bottomLeft)
         {
-            float f = 40f / 50f;
             var newR = new Vector4(
-                Mathf.Clamp(topLeft, 0f, 50f) * f,
-                Mathf.Clamp(topRight, 0f, 50f) * f,
-                Mathf.Clamp(bottomRight, 0f, 50f) * f,
-                Mathf.Clamp(bottomLeft, 0f, 50f) * f);
+                Mathf.Clamp(topLeft, 0f, 50f),
+                Mathf.Clamp(topRight, 0f, 50f),
+                Mathf.Clamp(bottomRight, 0f, 50f),
+                Mathf.Clamp(bottomLeft, 0f, 50f));
             if (useAnimation && builtGameObject != null && animationDuration > 0)
                 AnimateCornerRadius(builtGameObject, newR);
             else
+            {
                 cornerRadius = newR;
+                if (builtGameObject != null)
+                    ApplyRoundedCorners(builtGameObject);
+            }
             return this;
         }
 
@@ -522,13 +801,14 @@ namespace UniftUI
         public virtual UIElement WithCornerRadius(float radius, RectCorner corners)
         {
             radius = Mathf.Clamp(radius, 0f, 50f);
-            float s = radius * (40f / 50f);
             var r = cornerRadius;
-            if ((corners & RectCorner.TopLeft) != 0)    r.x = s;
-            if ((corners & RectCorner.TopRight) != 0)   r.y = s;
-            if ((corners & RectCorner.BottomRight) != 0) r.z = s;
-            if ((corners & RectCorner.BottomLeft) != 0)  r.w = s;
+            if ((corners & RectCorner.TopLeft) != 0)    r.x = radius;
+            if ((corners & RectCorner.TopRight) != 0)   r.y = radius;
+            if ((corners & RectCorner.BottomRight) != 0) r.z = radius;
+            if ((corners & RectCorner.BottomLeft) != 0)  r.w = radius;
             cornerRadius = r;
+            if (builtGameObject != null)
+                ApplyRoundedCorners(builtGameObject);
             return this;
         }
 
@@ -539,7 +819,11 @@ namespace UniftUI
             if (useAnimation && builtGameObject != null && animationDuration > 0)
                 AnimateRotation(builtGameObject, newRot);
             else
+            {
                 rotationEffectEuler = newRot;
+                if (builtGameObject != null)
+                    ApplyRotation(builtGameObject);
+            }
             return this;
         }
 
@@ -550,7 +834,11 @@ namespace UniftUI
             if (useAnimation && builtGameObject != null && animationDuration > 0)
                 AnimateRotation(builtGameObject, newRot);
             else
+            {
                 rotationEffectEuler = newRot;
+                if (builtGameObject != null)
+                    ApplyRotation(builtGameObject);
+            }
             return this;
         }
 
@@ -560,13 +848,20 @@ namespace UniftUI
             if (useAnimation && builtGameObject != null && animationDuration > 0)
                 AnimateRotation(builtGameObject, euler);
             else
+            {
                 rotationEffectEuler = euler;
+                if (builtGameObject != null)
+                    ApplyRotation(builtGameObject);
+            }
             return this;
         }
 
         /// <summary>Reactive Z-axis rotation in degrees.</summary>
         public virtual UIElement WithRotationEffect(State<float> degrees)
         {
+            if (degrees == null)
+                return this;
+
             rotationEffectEuler = new Vector3(0, 0, degrees.Value);
             AddPropertyBinding(degrees, () => {
                 var newRot = new Vector3(0, 0, degrees.Value);
@@ -577,13 +872,16 @@ namespace UniftUI
                     rotationEffectEuler = newRot;
                     if (builtGameObject != null) ApplyRotation(builtGameObject);
                 }
-            }, "rotation");
+            }, "rotation", BindingKind.Visual);
             return this;
         }
 
         /// <summary>Reactive rotation with bound X component.</summary>
         public virtual UIElement WithRotationEffect(State<float> x, float y, float z)
         {
+            if (x == null)
+                return this;
+
             rotationEffectEuler = new Vector3(x.Value, y, z);
             AddPropertyBinding(x, () => {
                 var newRot = new Vector3(x.Value, rotationEffectEuler.y, rotationEffectEuler.z);
@@ -594,13 +892,16 @@ namespace UniftUI
                     rotationEffectEuler.x = x.Value;
                     if (builtGameObject != null) ApplyRotation(builtGameObject);
                 }
-            }, "rotationX");
+            }, "rotationX", BindingKind.Visual);
             return this;
         }
 
         /// <summary>Reactive rotation with bound Y component.</summary>
         public virtual UIElement WithRotationEffect(float x, State<float> y, float z)
         {
+            if (y == null)
+                return this;
+
             rotationEffectEuler = new Vector3(x, y.Value, z);
             AddPropertyBinding(y, () => {
                 var newRot = new Vector3(rotationEffectEuler.x, y.Value, rotationEffectEuler.z);
@@ -611,13 +912,16 @@ namespace UniftUI
                     rotationEffectEuler.y = y.Value;
                     if (builtGameObject != null) ApplyRotation(builtGameObject);
                 }
-            }, "rotationY");
+            }, "rotationY", BindingKind.Visual);
             return this;
         }
 
         /// <summary>Reactive rotation with bound Z component.</summary>
         public virtual UIElement WithRotationEffect(float x, float y, State<float> z)
         {
+            if (z == null)
+                return this;
+
             rotationEffectEuler = new Vector3(x, y, z.Value);
             AddPropertyBinding(z, () => {
                 var newRot = new Vector3(rotationEffectEuler.x, rotationEffectEuler.y, z.Value);
@@ -628,18 +932,27 @@ namespace UniftUI
                     rotationEffectEuler.z = z.Value;
                     if (builtGameObject != null) ApplyRotation(builtGameObject);
                 }
-            }, "rotationZ");
+            }, "rotationZ", BindingKind.Visual);
             return this;
         }
 
         /// <summary>Reactive rotation with bound <see cref="Vector3"/> Euler angles.</summary>
         public virtual UIElement WithRotationEffect(State<Vector3> rotation)
         {
+            if (rotation == null)
+                return this;
+
             rotationEffectEuler = rotation.Value;
             AddPropertyBinding(rotation, () => {
-                rotationEffectEuler = rotation.Value;
-                if (builtGameObject != null) ApplyRotation(builtGameObject);
-            }, "rotation3d");
+                var newRot = rotation.Value;
+                if (useAnimation && builtGameObject != null && animationDuration > 0)
+                    AnimateRotation(builtGameObject, newRot);
+                else
+                {
+                    rotationEffectEuler = newRot;
+                    if (builtGameObject != null) ApplyRotation(builtGameObject);
+                }
+            }, "rotation3d", BindingKind.Visual);
             return this;
         }
 
@@ -650,7 +963,11 @@ namespace UniftUI
             if (useAnimation && builtGameObject != null && animationDuration > 0)
                 AnimateScale(builtGameObject, newScale);
             else
+            {
                 scaleEffect = newScale;
+                if (builtGameObject != null)
+                    ApplyScale(builtGameObject);
+            }
             return this;
         }
 
@@ -661,7 +978,11 @@ namespace UniftUI
             if (useAnimation && builtGameObject != null && animationDuration > 0)
                 AnimateScale(builtGameObject, newScale);
             else
+            {
                 scaleEffect = newScale;
+                if (builtGameObject != null)
+                    ApplyScale(builtGameObject);
+            }
             return this;
         }
 
@@ -672,7 +993,11 @@ namespace UniftUI
             if (useAnimation && builtGameObject != null && animationDuration > 0)
                 AnimateScale(builtGameObject, newScale);
             else
+            {
                 scaleEffect = newScale;
+                if (builtGameObject != null)
+                    ApplyScale(builtGameObject);
+            }
             return this;
         }
 
@@ -682,13 +1007,20 @@ namespace UniftUI
             if (useAnimation && builtGameObject != null && animationDuration > 0)
                 AnimateScale(builtGameObject, scale);
             else
+            {
                 scaleEffect = scale;
+                if (builtGameObject != null)
+                    ApplyScale(builtGameObject);
+            }
             return this;
         }
 
         /// <summary>Reactive uniform scale.</summary>
         public virtual UIElement WithScaleEffect(State<float> scale)
         {
+            if (scale == null)
+                return this;
+
             scaleEffect = new Vector3(scale.Value, scale.Value, scale.Value);
             AddPropertyBinding(scale, () => {
                 var newScale = new Vector3(scale.Value, scale.Value, scale.Value);
@@ -699,47 +1031,76 @@ namespace UniftUI
                     scaleEffect = newScale;
                     if (builtGameObject != null) ApplyScale(builtGameObject);
                 }
-            }, "scale");
+            }, "scale", BindingKind.Visual);
             return this;
         }
 
         /// <summary>Reactive scale with bound X component.</summary>
         public virtual UIElement WithScaleEffect(State<float> x, float y)
         {
+            if (x == null)
+                return this;
+
             scaleEffect = new Vector3(x.Value, y, 1f);
             AddPropertyBinding(x, () => {
-                scaleEffect.x = x.Value;
-                if (builtGameObject != null) ApplyScale(builtGameObject);
-            }, "scaleX");
+                var newScale = new Vector3(x.Value, y, 1f);
+                if (useAnimation && builtGameObject != null && animationDuration > 0)
+                    AnimateScale(builtGameObject, newScale);
+                else
+                {
+                    scaleEffect = newScale;
+                    if (builtGameObject != null) ApplyScale(builtGameObject);
+                }
+            }, "scaleX", BindingKind.Visual);
             return this;
         }
 
         /// <summary>Reactive scale with bound Y component.</summary>
         public virtual UIElement WithScaleEffect(float x, State<float> y)
         {
+            if (y == null)
+                return this;
+
             scaleEffect = new Vector3(x, y.Value, 1f);
             AddPropertyBinding(y, () => {
-                scaleEffect.y = y.Value;
-                if (builtGameObject != null) ApplyScale(builtGameObject);
-            }, "scaleY");
+                var newScale = new Vector3(x, y.Value, 1f);
+                if (useAnimation && builtGameObject != null && animationDuration > 0)
+                    AnimateScale(builtGameObject, newScale);
+                else
+                {
+                    scaleEffect = newScale;
+                    if (builtGameObject != null) ApplyScale(builtGameObject);
+                }
+            }, "scaleY", BindingKind.Visual);
             return this;
         }
 
         /// <summary>Reactive scale with bound <see cref="Vector3"/>.</summary>
         public virtual UIElement WithScaleEffect(State<Vector3> scale)
         {
+            if (scale == null)
+                return this;
+
             scaleEffect = scale.Value;
             AddPropertyBinding(scale, () => {
-                scaleEffect = scale.Value;
-                if (builtGameObject != null) ApplyScale(builtGameObject);
-            }, "scale3d");
+                var newScale = scale.Value;
+                if (useAnimation && builtGameObject != null && animationDuration > 0)
+                    AnimateScale(builtGameObject, newScale);
+                else
+                {
+                    scaleEffect = newScale;
+                    if (builtGameObject != null) ApplyScale(builtGameObject);
+                }
+            }, "scale3d", BindingKind.Visual);
             return this;
         }
 
         /// <summary>Applies opacity, corners, position, rotation, scale, callbacks, and dynamic effects.</summary>
         protected void ApplyAllEffects(GameObject gameObject, Image backgroundImage = null)
         {
+            ApplyFrameConstraints(gameObject);
             ApplyOpacity(gameObject);
+            ApplyInteraction(gameObject);
             if (backgroundImage != null)
                 ApplyRoundedCorners(gameObject, backgroundImage);
             ApplyCustomPosition(gameObject);
@@ -750,26 +1111,62 @@ namespace UniftUI
             SetupDynamicEffects(gameObject);
         }
 
-        protected CanvasGroup ApplyOpacity(GameObject gameObject)
+        protected CanvasGroup ApplyOpacity(GameObject gameObject, bool cancelAnimator = true)
         {
             if (gameObject == null) return null;
+
+            if (cancelAnimator)
+            {
+                var animator = gameObject.GetComponent<OpacityAnimator>();
+                if (animator != null)
+                    animator.CancelAnimation();
+            }
+
+            float targetAlpha = hidden ? 0f : Mathf.Clamp01(opacity);
             var cg = gameObject.GetComponent<CanvasGroup>();
-            if (opacity >= 1f)
+            if (targetAlpha >= 1f)
             {
                 if (cg != null) cg.alpha = 1f;
                 return cg;
             }
+
             if (cg == null) cg = gameObject.AddComponent<CanvasGroup>();
-            if (cg != null) cg.alpha = opacity;
+            cg.alpha = targetAlpha;
+            return cg;
+        }
+
+        protected CanvasGroup ApplyInteraction(GameObject gameObject)
+        {
+            if (gameObject == null) return null;
+
+            bool interactable = !disabled && !hidden;
+            bool blocksRaycasts = allowsHitTesting && !disabled && !hidden;
+            CanvasGroup cg = gameObject.GetComponent<CanvasGroup>();
+
+            if (!interactable || !blocksRaycasts || cg != null)
+            {
+                if (cg == null)
+                    cg = gameObject.AddComponent<CanvasGroup>();
+                cg.interactable = interactable;
+                cg.blocksRaycasts = blocksRaycasts;
+            }
+
+            foreach (Selectable selectable in gameObject.GetComponentsInChildren<Selectable>(true))
+                selectable.interactable = interactable;
+
             return cg;
         }
 
         protected void ApplyRoundedCorners(GameObject gameObject, Image imageComponent)
         {
             if (imageComponent == null) return;
-            var rc = gameObject.GetComponent<Nobi.UiRoundedCorners.ImageWithIndependentRoundedCorners>();
+            GameObject target = imageComponent.gameObject != null ? imageComponent.gameObject : gameObject;
+            var rc = target.GetComponent<Nobi.UiRoundedCorners.ImageWithIndependentRoundedCorners>();
+            if (cornerRadius == Vector4.zero && rc == null)
+                return;
+
             if (rc == null)
-                rc = gameObject.AddComponent<Nobi.UiRoundedCorners.ImageWithIndependentRoundedCorners>();
+                rc = target.AddComponent<Nobi.UiRoundedCorners.ImageWithIndependentRoundedCorners>();
             rc.r = cornerRadius;
             rc.Validate();
             rc.Refresh();
@@ -779,6 +1176,9 @@ namespace UniftUI
         {
             if (gameObject == null) return;
             var rc = gameObject.GetComponent<Nobi.UiRoundedCorners.ImageWithIndependentRoundedCorners>();
+            if (cornerRadius == Vector4.zero && rc == null)
+                return;
+
             if (rc == null)
                 rc = gameObject.AddComponent<Nobi.UiRoundedCorners.ImageWithIndependentRoundedCorners>();
             rc.r = cornerRadius;
@@ -788,7 +1188,7 @@ namespace UniftUI
 
         protected void ApplyBackgroundColor(GameObject gameObject)
         {
-            if (backgroundColor == Color.clear || gameObject == null) return;
+            if (gameObject == null) return;
             var img = gameObject.GetComponent<Image>();
             if (img != null) img.color = backgroundColor;
         }
@@ -813,18 +1213,56 @@ namespace UniftUI
             if (gameObject == null) return;
             var le = gameObject.GetComponent<LayoutElement>() ?? gameObject.AddComponent<LayoutElement>();
             bool changed = false;
-            if (preferredWidth >= 0 && le.preferredWidth != preferredWidth)
+            if (infiniteWidth)
             {
-                le.preferredWidth = preferredWidth;
-                le.minWidth = preferredWidth;
-                changed = true;
+                if (!Mathf.Approximately(le.minWidth, 0f) ||
+                    !Mathf.Approximately(le.preferredWidth, -1f) ||
+                    !Mathf.Approximately(le.flexibleWidth, 1f))
+                {
+                    le.minWidth = 0f;
+                    le.preferredWidth = -1f;
+                    le.flexibleWidth = 1f;
+                    changed = true;
+                }
             }
-            if (preferredHeight >= 0 && le.preferredHeight != preferredHeight)
+            else if (preferredWidth >= 0)
             {
-                le.preferredHeight = preferredHeight;
-                le.minHeight = preferredHeight;
-                changed = true;
+                if (!Mathf.Approximately(le.preferredWidth, preferredWidth) ||
+                    !Mathf.Approximately(le.minWidth, preferredWidth) ||
+                    !Mathf.Approximately(le.flexibleWidth, 0f))
+                {
+                    le.preferredWidth = preferredWidth;
+                    le.minWidth = preferredWidth;
+                    le.flexibleWidth = 0f;
+                    changed = true;
+                }
             }
+
+            if (infiniteHeight)
+            {
+                if (!Mathf.Approximately(le.minHeight, 0f) ||
+                    !Mathf.Approximately(le.preferredHeight, -1f) ||
+                    !Mathf.Approximately(le.flexibleHeight, 1f))
+                {
+                    le.minHeight = 0f;
+                    le.preferredHeight = -1f;
+                    le.flexibleHeight = 1f;
+                    changed = true;
+                }
+            }
+            else if (preferredHeight >= 0)
+            {
+                if (!Mathf.Approximately(le.preferredHeight, preferredHeight) ||
+                    !Mathf.Approximately(le.minHeight, preferredHeight) ||
+                    !Mathf.Approximately(le.flexibleHeight, 0f))
+                {
+                    le.preferredHeight = preferredHeight;
+                    le.minHeight = preferredHeight;
+                    le.flexibleHeight = 0f;
+                    changed = true;
+                }
+            }
+
             if (changed)
             {
                 var rect = gameObject.GetComponent<RectTransform>();
@@ -832,15 +1270,66 @@ namespace UniftUI
             }
         }
 
+        protected void ApplyFrameConstraints(GameObject gameObject)
+        {
+            if (gameObject == null) return;
+            var le = gameObject.GetComponent<LayoutElement>() ?? gameObject.AddComponent<LayoutElement>();
+
+            if (minimumWidth >= 0f && le.minWidth < minimumWidth)
+                le.minWidth = minimumWidth;
+            if (minimumHeight >= 0f && le.minHeight < minimumHeight)
+                le.minHeight = minimumHeight;
+            if (layoutPriority.HasValue)
+                le.layoutPriority = Mathf.RoundToInt(layoutPriority.Value);
+        }
+
         protected void ApplyPadding(GameObject gameObject)
         {
             if (padding == null || gameObject == null) return;
+
             var vlg = gameObject.GetComponent<VerticalLayoutGroup>();
-            if (vlg != null) { vlg.padding = padding; return; }
+            if (vlg != null)
+            {
+                vlg.padding = padding;
+                return;
+            }
+
             var hlg = gameObject.GetComponent<HorizontalLayoutGroup>();
-            if (hlg != null) { hlg.padding = padding; return; }
+            if (hlg != null)
+            {
+                hlg.padding = padding;
+                return;
+            }
+
             var glg = gameObject.GetComponent<GridLayoutGroup>();
-            if (glg != null) { glg.padding = padding; return; }
+            if (glg != null)
+            {
+                glg.padding = padding;
+                return;
+            }
+
+            var stack = gameObject.GetComponent<UniftUIStackLayoutGroup>();
+            if (stack != null)
+            {
+                stack.padding = padding;
+                LayoutRebuilder.MarkLayoutForRebuild(stack.GetComponent<RectTransform>());
+                return;
+            }
+
+            var zstack = gameObject.GetComponent<UniftUIZStackLayoutGroup>();
+            if (zstack != null)
+            {
+                zstack.padding = padding;
+                LayoutRebuilder.MarkLayoutForRebuild(zstack.GetComponent<RectTransform>());
+                return;
+            }
+
+            var single = gameObject.GetComponent<UniftUISingleChildLayoutGroup>();
+            if (single != null)
+            {
+                single.padding = padding;
+                LayoutRebuilder.MarkLayoutForRebuild(single.GetComponent<RectTransform>());
+            }
         }
 
         protected void ApplyRotation(GameObject gameObject)
@@ -875,15 +1364,34 @@ namespace UniftUI
             le.ignoreLayout = true;
             var rect = gameObject.GetComponent<RectTransform>();
             if (rect == null) return;
+            Vector2 from = rect.anchoredPosition;
             rect.anchorMin = new Vector2(0, 1);
             rect.anchorMax = new Vector2(0, 1);
             rect.pivot = new Vector2(0, 1);
             var animator = BaseAnimator<Vector2>.GetOrReplace<PositionAnimator>(gameObject);
-            animator.AnimateTo(new Vector2(customPosition.x, -customPosition.y),
-                               new Vector2(target.x, -target.y),
-                               animationDuration, animationEasing);
+            animator.AnimateTo(from, new Vector2(target.x, -target.y), animationDuration, animationEasing);
             useCustomPosition = true;
             customPosition = target;
+        }
+
+        protected void AnimateWidth(GameObject gameObject, float target)
+        {
+            if (gameObject == null) return;
+            float from = ReadCurrentLayoutSize(gameObject, 0, preferredWidth);
+            var animator = BaseAnimator<float>.GetOrReplace<LayoutWidthAnimator>(gameObject);
+            animator.AnimateTo(from, target, animationDuration, animationEasing);
+            preferredWidth = target;
+            infiniteWidth = false;
+        }
+
+        protected void AnimateHeight(GameObject gameObject, float target)
+        {
+            if (gameObject == null) return;
+            float from = ReadCurrentLayoutSize(gameObject, 1, preferredHeight);
+            var animator = BaseAnimator<float>.GetOrReplace<LayoutHeightAnimator>(gameObject);
+            animator.AnimateTo(from, target, animationDuration, animationEasing);
+            preferredHeight = target;
+            infiniteHeight = false;
         }
 
         protected void AnimateBackgroundColor(GameObject gameObject, Color target)
@@ -892,15 +1400,19 @@ namespace UniftUI
             var img = gameObject.GetComponent<Image>();
             if (img == null) return;
             var animator = BaseAnimator<Color>.GetOrReplace<BackgroundColorAnimator>(gameObject);
-            animator.AnimateTo(backgroundColor, target, animationDuration, animationEasing);
+            animator.AnimateTo(img.color, target, animationDuration, animationEasing);
             backgroundColor = target;
         }
 
         protected void AnimateOpacity(GameObject gameObject, float target)
         {
             if (gameObject == null) return;
+            float from = opacity;
+            var canvasGroup = gameObject.GetComponent<CanvasGroup>();
+            if (canvasGroup != null)
+                from = canvasGroup.alpha;
             var animator = BaseAnimator<float>.GetOrReplace<OpacityAnimator>(gameObject);
-            animator.AnimateTo(opacity, target, animationDuration, animationEasing);
+            animator.AnimateTo(from, target, animationDuration, animationEasing);
             opacity = target;
         }
 
@@ -909,27 +1421,87 @@ namespace UniftUI
             if (gameObject == null) return;
             var img = gameObject.GetComponent<Image>();
             if (img == null) return;
+            Vector4 from = cornerRadius;
+            var roundedCorners = gameObject.GetComponent<Nobi.UiRoundedCorners.ImageWithIndependentRoundedCorners>();
+            if (roundedCorners != null)
+                from = roundedCorners.r;
             var animator = BaseAnimator<Vector4>.GetOrReplace<CornerRadiusAnimator>(gameObject);
-            animator.AnimateTo(cornerRadius, target, animationDuration, animationEasing);
+            animator.AnimateTo(from, target, animationDuration, animationEasing);
             cornerRadius = target;
         }
 
         protected void AnimateRotation(GameObject gameObject, Vector3 target)
         {
             if (gameObject == null) return;
-            if (gameObject.GetComponent<RectTransform>() == null) return;
+            var rect = gameObject.GetComponent<RectTransform>();
+            if (rect == null) return;
+            Vector3 from = ReadCurrentEulerNearTarget(rect, target);
             var animator = BaseAnimator<Vector3>.GetOrReplace<RotationAnimator>(gameObject);
-            animator.AnimateTo(rotationEffectEuler, target, animationDuration, animationEasing);
+            animator.AnimateTo(from, target, animationDuration, animationEasing);
             rotationEffectEuler = target;
         }
 
         protected void AnimateScale(GameObject gameObject, Vector3 target)
         {
             if (gameObject == null) return;
-            if (gameObject.GetComponent<RectTransform>() == null) return;
+            var rect = gameObject.GetComponent<RectTransform>();
+            if (rect == null) return;
             var animator = BaseAnimator<Vector3>.GetOrReplace<ScaleAnimator>(gameObject);
-            animator.AnimateTo(scaleEffect, target, animationDuration, animationEasing);
+            animator.AnimateTo(rect.localScale, target, animationDuration, animationEasing);
             scaleEffect = target;
+        }
+
+        private static Vector3 ReadCurrentEulerNearTarget(RectTransform rect, Vector3 target)
+        {
+            Vector3 current = rect.localEulerAngles;
+            return new Vector3(
+                target.x + Mathf.DeltaAngle(target.x, current.x),
+                target.y + Mathf.DeltaAngle(target.y, current.y),
+                target.z + Mathf.DeltaAngle(target.z, current.z));
+        }
+
+        private static float ReadCurrentLayoutSize(GameObject gameObject, int axis, float fallback)
+        {
+            var layoutElement = gameObject.GetComponent<LayoutElement>();
+            if (layoutElement != null)
+            {
+                float preferred = axis == 0 ? layoutElement.preferredWidth : layoutElement.preferredHeight;
+                if (preferred >= 0f)
+                    return preferred;
+            }
+
+            var rect = gameObject.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                float size = rect.rect.size[axis];
+                if (size > 0f)
+                    return size;
+            }
+
+            return Mathf.Max(0f, fallback);
+        }
+
+        internal void CopyFrameFrom(UIElement source)
+        {
+            if (source == null) return;
+
+            preferredWidth = source.preferredWidth;
+            preferredHeight = source.preferredHeight;
+            minimumWidth = source.minimumWidth;
+            minimumHeight = source.minimumHeight;
+            layoutPriority = source.layoutPriority;
+            infiniteWidth = source.infiniteWidth;
+            infiniteHeight = source.infiniteHeight;
+
+            if (source.frameWidthState != null)
+                WithWidth(source.frameWidthState);
+            else
+                frameWidthState = null;
+
+            if (source.frameHeightState != null)
+                WithHeight(source.frameHeightState);
+            else
+                frameHeightState = null;
         }
 
         /// <summary>Propagates infinite width to child content (override in layout containers).</summary>
@@ -937,6 +1509,32 @@ namespace UniftUI
 
         /// <summary>Propagates infinite height to child content (override in layout containers).</summary>
         protected virtual void PropagateInfiniteHeightToContent() { }
+
+        protected static bool ChildMayFillWidth(UIElement child)
+        {
+            return child != null && child.preferredWidth < 0f;
+        }
+
+        protected static bool ChildMayFillHeight(UIElement child)
+        {
+            return child != null && child.preferredHeight < 0f;
+        }
+
+        protected static void DestroyUnityObject(UnityEngine.Object target)
+        {
+            if (target == null)
+                return;
+
+            if (Application.isPlaying)
+                UnityEngine.Object.Destroy(target);
+            else
+                UnityEngine.Object.DestroyImmediate(target);
+        }
+
+        protected static void DestroyGameObject(GameObject target)
+        {
+            DestroyUnityObject(target);
+        }
     }
 
     /// <summary>Horizontal alignment for vertical stacks.</summary>

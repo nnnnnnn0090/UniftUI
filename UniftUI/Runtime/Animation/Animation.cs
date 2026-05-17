@@ -62,7 +62,13 @@ namespace UniftUI
         public static void WithAnimation(Animation animation, Action changes)
         {
             Push(animation);
-            try { changes(); }
+            try
+            {
+                using (State.BatchUpdate())
+                {
+                    changes();
+                }
+            }
             finally { Pop(); }
         }
 

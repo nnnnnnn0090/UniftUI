@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -37,6 +38,14 @@ namespace UniftUI
             Transform t = parent;
             while (t != null)
             {
+                var uniftStack = t.GetComponent<UniftUIStackLayoutGroup>();
+                if (uniftStack != null)
+                {
+                    horizontalMain = uniftStack.Axis == UniftUIStackAxis.Horizontal;
+                    verticalMain = uniftStack.Axis == UniftUIStackAxis.Vertical;
+                    break;
+                }
+
                 bool hasH = t.GetComponent<HorizontalLayoutGroup>() != null;
                 bool hasV = t.GetComponent<VerticalLayoutGroup>() != null;
                 if (hasH)

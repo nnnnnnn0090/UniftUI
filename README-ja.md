@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./docs/assets/uniftui-docs-icon.png" alt="UniftUI" width="128">
+</p>
+
 # UniftUI
 
 [English](./README.md)
@@ -27,7 +31,8 @@ https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI#v0.1.0
 
 `UniftView` を継承し、`VStack` / `HStack` / `Text` / `Button` などで UI を記述。`using UniftUI;`  
 
-コード例: [Example.md](./Example.md) · [日本語](./Example-ja.md)
+Docs: https://nnnnnnn0090.github.io/UniftUI/docs/  
+ローカルドキュメント: [docs/index.html](./docs/index.html)
 
 ## ライセンス
 

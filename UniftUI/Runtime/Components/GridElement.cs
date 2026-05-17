@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Collections.Generic;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -79,44 +80,17 @@ namespace UniftUI
                 backgroundImage.color = backgroundColor;
             }
 
-            VerticalLayoutGroup layout = container.AddComponent<VerticalLayoutGroup>();
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            layout.spacing = VerticalSpacing;
+            UniftUIStackLayoutGroup layout = container.AddComponent<UniftUIStackLayoutGroup>();
             layout.padding = padding ?? new RectOffset(0, 0, 0, 0);
+            layout.Configure(UniftUIStackAxis.Vertical, VerticalSpacing, VStackAlignment.Center, HStackAlignment.Center);
 
-            LayoutElement layoutElement = container.AddComponent<LayoutElement>();
-            ContentSizeFitter fitter = container.AddComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            if (infiniteWidth)
-            {
-                layoutElement.flexibleWidth = 1;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            }
-            else if (preferredWidth >= 0)
-            {
-                layoutElement.preferredWidth = preferredWidth;
-                layoutElement.minWidth = preferredWidth;
-            }
-
-            if (infiniteHeight)
-            {
-                layoutElement.flexibleHeight = 1;
-                fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
-            }
-            else if (preferredHeight >= 0)
-            {
-                layoutElement.preferredHeight = preferredHeight;
-                layoutElement.minHeight = preferredHeight;
-            }
+            LayoutElementUtility.Configure(container, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight);
 
             foreach (var child in children)
+            {
+                ApplyInheritedFont(child);
                 child.Build(container.transform);
+            }
 
             if (states != null && states.Length > 0)
                 SetupStateObserver(container);
@@ -150,22 +124,29 @@ namespace UniftUI
                 {
                     foreach (Transform child in container.transform)
                         if (child != null && child.gameObject != null)
-                            UnityEngine.Object.Destroy(child.gameObject);
+                            DestroyGameObject(child.gameObject);
 
                     localChildren.Clear();
 
                     var parentContext = UIContext.Current;
-                    UIContext.Current = this;
-                    localContent?.Invoke();
-                    UIContext.Current = parentContext;
+                    try
+                    {
+                        UIContext.Current = this;
+                        localContent?.Invoke();
+                    }
+                    finally
+                    {
+                        UIContext.Current = parentContext;
+                    }
 
                     foreach (var child in localChildren)
                     {
                         if (child == null || container.transform == null) continue;
-                        if (UIContext.DefaultFont != null)
-                            child.Font(UIContext.DefaultFont);
+                        ApplyInheritedFont(child);
                         child.Build(container.transform);
                     }
+
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(container.GetComponent<RectTransform>());
 
                     RectTransform syncRt = container.GetComponent<RectTransform>();
                     if (syncRt != null)

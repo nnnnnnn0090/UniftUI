@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./docs/assets/uniftui-docs-icon.png" alt="UniftUI" width="128">
+</p>
+
 # UniftUI
 
 [日本語](./README-ja.md)
@@ -27,7 +31,8 @@ https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI#v0.1.0
 
 Subclass `UniftView`, build UI with `VStack`, `HStack`, `Text`, `Button`, etc. `using UniftUI;`  
 
-Code examples: [Example.md](./Example.md) · [日本語](./Example-ja.md)
+Docs: https://nnnnnnn0090.github.io/UniftUI/docs/  
+Local docs: [docs/index.html](./docs/index.html)
 
 ## License
 

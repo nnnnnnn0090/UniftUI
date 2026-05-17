@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -9,21 +10,13 @@ namespace UniftUI
     {
         private UIElement content;
         private RectOffset paddingValue;
-        private VerticalLayoutGroup layoutGroup;
+        private UniftUISingleChildLayoutGroup layoutGroup;
 
         public PaddingElement(UIElement content, RectOffset padding)
         {
             this.content = content;
-            this.paddingValue = padding;
-            this.padding = padding;
-
-            if (content != null)
-            {
-                this.useCustomPosition = content.useCustomPosition;
-                this.customPosition = content.customPosition;
-                this.rotationEffectEuler = content.rotationEffectEuler;
-                this.scaleEffect = content.scaleEffect;
-            }
+            this.paddingValue = padding ?? new RectOffset(0, 0, 0, 0);
+            this.padding = this.paddingValue;
         }
 
         /// <summary>Updates padding uniformly on all edges.</summary>
@@ -35,13 +28,24 @@ namespace UniftUI
         /// <summary>Updates padding and refreshes the built layout when already on screen.</summary>
         public void UpdatePadding(RectOffset newPadding)
         {
+            newPadding = newPadding ?? new RectOffset(0, 0, 0, 0);
             this.paddingValue = newPadding;
             this.padding = newPadding;
 
             if (layoutGroup != null && layoutGroup.gameObject != null)
             {
-                layoutGroup.padding = newPadding;
-                LayoutRebuilder.ForceRebuildLayoutImmediate(layoutGroup.GetComponent<RectTransform>());
+                if (useAnimation && animationDuration > 0f && builtGameObject != null)
+                {
+                    Vector4 from = PaddingToVector(layoutGroup.padding);
+                    Vector4 to = PaddingToVector(newPadding);
+                    var animator = BaseAnimator<Vector4>.GetOrReplace<PaddingAnimator>(builtGameObject);
+                    animator.AnimateTo(from, to, animationDuration, animationEasing);
+                }
+                else
+                {
+                    layoutGroup.padding = newPadding;
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(layoutGroup.GetComponent<RectTransform>());
+                }
             }
         }
 
@@ -61,27 +65,28 @@ namespace UniftUI
 
         public void AddChild(UIElement child)
         {
-            if (this.content == null) this.content = child;
-            else Debug.LogWarning("[UniftUI] PaddingElement can only contain one child.");
+            if (content == null)
+                content = child;
+            else
+                Debug.LogWarning("[UniftUI] PaddingElement can only contain one child.");
         }
 
         public void RemoveChild(UIElement child)
         {
-            if (this.content == child) this.content = null;
+            if (content == child)
+                content = null;
         }
 
         public void ReplaceChild(UIElement oldChild, UIElement newChild)
         {
-            if (this.content == oldChild) this.content = newChild;
+            if (content == oldChild)
+                content = newChild;
         }
 
         public IEnumerable<UIElement> GetChildren()
         {
             if (content != null)
-            {
-                return new List<UIElement> { content };
-            }
-            return new List<UIElement>();
+                yield return content;
         }
 
         public override GameObject Build(Transform parent)
@@ -96,67 +101,25 @@ namespace UniftUI
                 bgImage.color = base.backgroundColor;
             }
 
-            layoutGroup = paddingContainer.AddComponent<VerticalLayoutGroup>();
-            layoutGroup.padding = paddingValue;
-            layoutGroup.childControlWidth = true;
-            layoutGroup.childControlHeight = true;
-            layoutGroup.childForceExpandWidth = false;
-            layoutGroup.childForceExpandHeight = false;
-            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+            layoutGroup = paddingContainer.AddComponent<UniftUISingleChildLayoutGroup>();
+            layoutGroup.Configure(paddingValue, TextAnchor.MiddleCenter);
 
-            LayoutElement le = paddingContainer.AddComponent<LayoutElement>();
-            ContentSizeFitter fitter = paddingContainer.AddComponent<ContentSizeFitter>();
+            LayoutElementUtility.Configure(paddingContainer, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight);
 
-            if (infiniteWidth)
-            {
-                le.flexibleWidth = 1;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            }
-            else if (preferredWidth >= 0)
-            {
-                le.preferredWidth = preferredWidth;
-                le.minWidth = preferredWidth;
-                le.flexibleWidth = 0;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-            else
-            {
-                le.flexibleWidth = 0;
-                fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-
-            if (infiniteHeight)
-            {
-                le.flexibleHeight = 1;
-                fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
-            }
-            else if (preferredHeight >= 0)
-            {
-                le.preferredHeight = preferredHeight;
-                le.minHeight = preferredHeight;
-                le.flexibleHeight = 0;
-                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-            else
-            {
-                le.flexibleHeight = 0;
-                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-
-            if (this.preferredWidth >= 0 && !this.infiniteWidth)
+            if (preferredWidth >= 0 && !infiniteWidth && ChildMayFillWidth(content))
             {
                 content?.WithInfiniteWidth();
             }
-            if (this.preferredHeight >= 0 && !this.infiniteHeight)
+            if (preferredHeight >= 0 && !infiniteHeight && ChildMayFillHeight(content))
             {
                 content?.WithInfiniteHeight();
             }
 
-            if (this.infiniteWidth)
+            if (infiniteWidth)
             {
                 PropagateInfiniteWidthToContent();
             }
-            if (this.infiniteHeight)
+            if (infiniteHeight)
             {
                 PropagateInfiniteHeightToContent();
             }
@@ -165,6 +128,7 @@ namespace UniftUI
 
             builtGameObject = paddingContainer;
 
+            ApplyInheritedFont(content);
             content?.Build(paddingContainer.transform);
 
             return paddingContainer;
@@ -172,12 +136,21 @@ namespace UniftUI
 
         protected override void PropagateInfiniteWidthToContent()
         {
-            content?.WithInfiniteWidth();
+            if (ChildMayFillWidth(content))
+                content?.WithInfiniteWidth();
         }
 
         protected override void PropagateInfiniteHeightToContent()
         {
-            content?.WithInfiniteHeight();
+            if (ChildMayFillHeight(content))
+                content?.WithInfiniteHeight();
+        }
+
+        private static Vector4 PaddingToVector(RectOffset padding)
+        {
+            if (padding == null)
+                return Vector4.zero;
+            return new Vector4(padding.left, padding.right, padding.top, padding.bottom);
         }
     }
 }
