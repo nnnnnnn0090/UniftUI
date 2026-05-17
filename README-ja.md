@@ -31,8 +31,7 @@ https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI#v0.1.0
 
 `UniftView` を継承し、`VStack` / `HStack` / `Text` / `Button` などで UI を記述。`using UniftUI;`  
 
-Docs: https://nnnnnnn0090.github.io/UniftUI/docs/  
-ローカルドキュメント: [docs/index.html](./docs/index.html)
+Docs: https://nnnnnnn0090.github.io/UniftUI/
 
 ## ライセンス
 
