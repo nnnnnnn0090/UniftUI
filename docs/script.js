@@ -41,6 +41,14 @@ function callout(body) {
   return `<div class="callout"><p>${body}</p></div>`;
 }
 
+function sampleImage(alt) {
+  const escapedAlt = escapeHtml(alt);
+  return `<figure class="sample-shot">
+    <img src="./assets/counter-sample.svg" alt="${escapedAlt}" loading="lazy">
+    <figcaption>${escapedAlt}</figcaption>
+  </figure>`;
+}
+
 function referenceTable(lang, rows) {
   return table(
     lang === "ja" ? ["名前", "用途", "よく使う場面"] : ["Name", "Purpose", "Use it for"],
@@ -574,7 +582,7 @@ public sealed class CounterView : UniftView
         .padding(24)
         .Build(GetComponent<Canvas>());
     }
-}`)
+}`) + sampleImage("Count: 5 と Increment ボタンを表示した Counter サンプル。")
               },
               {
                 title: "読む順番",
@@ -1548,7 +1556,7 @@ public sealed class CounterView : UniftView
         .padding(24)
         .Build(GetComponent<Canvas>());
     }
-}`)
+}`) + sampleImage("Counter sample showing Count: 5 and an Increment button.")
               },
               {
                 title: "Recommended path",

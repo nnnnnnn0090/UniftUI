@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1000" viewBox="0 0 1800 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Counter sample</title>
+  <desc id="desc">A minimal UniftUI counter screen showing Count: 5 above a blue Increment button.</desc>
+  <rect width="1800" height="1000" fill="#ffffff"/>
+  <text x="900" y="475" text-anchor="middle" fill="#000000" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif" font-size="48" font-weight="700">Count: 5</text>
+  <rect x="823" y="508" width="157" height="72" rx="17" fill="#2f5fe7"/>
+  <text x="901.5" y="545" text-anchor="middle" dominant-baseline="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" font-size="27" font-weight="400">Increment</text>
+</svg>

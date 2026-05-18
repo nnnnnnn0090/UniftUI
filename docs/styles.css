@@ -450,6 +450,30 @@ h1 {
   margin-bottom: 0;
 }
 
+.sample-shot {
+  overflow: hidden;
+  margin: 16px 0 22px;
+  background: #fff;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  box-shadow: var(--shadow-soft);
+}
+
+.sample-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sample-shot figcaption {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-top: 1px solid var(--line-soft);
+  font-size: 13px;
+}
+
 .steps {
   counter-reset: step;
   display: grid;
@@ -848,6 +872,7 @@ pre[class*="language-"] code[class*="language-"] {
   }
 
   .callout,
+  .sample-shot,
   .step {
     border-radius: 9px;
   }
