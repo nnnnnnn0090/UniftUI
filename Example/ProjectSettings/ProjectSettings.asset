@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: DefaultCompany
-  productName: SwiftUI-Unity
+  productName: UniftUI
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -838,14 +838,14 @@ PlayerSettings:
   editorAssembliesCompatibilityLevel: 2
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
-  metroPackageName: SwiftUI-Unity
+  metroPackageName: UniftUI
   metroPackageVersion: 
   metroCertificatePath: 
   metroCertificatePassword: 
   metroCertificateSubject: 
   metroCertificateIssuer: 
   metroCertificateNotAfter: 0000000000000000
-  metroApplicationDescription: SwiftUI-Unity
+  metroApplicationDescription: UniftUI
   wsaImages: {}
   metroTileShortName: 
   metroTileShowName: 0
@@ -919,7 +919,7 @@ PlayerSettings:
   cloudProjectId: 69d38dea-25a6-40b3-abfb-6d271867b317
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: SwiftUI-Unity
+  projectName: UniftUI
   organizationId: ix0812m
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0

@@ -7,11 +7,11 @@ using UnityEngine.UI;
 namespace UniftUI
 {
     /// <summary>
-    /// SwiftUI-style lower-camel aliases for the main UniftUI modifiers.
-    /// The public examples use these methods so chains can stay close to SwiftUI,
+    /// Lower-camel aliases for the main UniftUI modifiers.
+    /// The public examples use these methods so chains can stay compact,
     /// for example <c>Text("Name").italic().foregroundColor(...)</c>.
     /// </summary>
-    public static class SwiftUIAliases
+    public static class FluentAliases
     {
         public static T frame<T>(this T element, float? width = null, float? height = null,
             bool? infiniteWidth = null, bool? infiniteHeight = null) where T : UIElement

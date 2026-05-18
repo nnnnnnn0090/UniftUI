@@ -37,27 +37,6 @@ namespace UniftUI
             attached = false;
         }
 
-        /// <summary>Legacy entry point used by some container elements.</summary>
-        public void Initialize(State[] states, UIElement element)
-        {
-            Detach();
-            target = element;
-            registry = element?.bindingRegistry;
-            attached = true;
-
-            if (states != null)
-            {
-                foreach (var state in states)
-                {
-                    if (state == null || subscriptions.ContainsKey(state)) continue;
-                    var captured = state;
-                    Action obs = () => OnStateChanged(captured);
-                    subscriptions[state] = obs;
-                    state.AddObserver(obs);
-                }
-            }
-        }
-
         private void Subscribe()
         {
             if (registry == null) return;

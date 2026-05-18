@@ -55,46 +55,7 @@ namespace UniftUI
         {
         }
 
-        /// <summary>Backward-compatible read-only view of observed states (register via <see cref="ObserveState"/>).</summary>
-        protected List<State> observedStates
-        {
-            get
-            {
-                var list = new List<State>(bindingRegistry.ObservedStates);
-                return list;
-            }
-        }
-
         protected GameObject builtGameObject;
-
-        /// <summary>Associates a <see cref="State"/> with a property name for dynamic effect updates.</summary>
-        protected class StateReference
-        {
-            public State state;
-            public string propertyType;
-            public int axis;
-            public bool isVector3;
-
-            public StateReference(State state, string propertyType, int axis = -1, bool isVector3 = false)
-            {
-                this.state = state;
-                this.propertyType = propertyType;
-                this.axis = axis;
-                this.isVector3 = isVector3;
-            }
-        }
-
-        protected List<StateReference> stateReferences = new List<StateReference>();
-
-        /// <summary>Backward-compatible accessor; bindings are managed by <see cref="bindingRegistry"/>.</summary>
-        protected List<PropertyBinding> propertyBindings
-        {
-            get
-            {
-                var list = new List<PropertyBinding>();
-                return list;
-            }
-        }
 
         protected void ObserveState(State state)
         {
@@ -102,17 +63,11 @@ namespace UniftUI
                 bindingRegistry.Register("__observe__" + state.GetHashCode(), state, () => { }, BindingKind.ObserveOnly);
         }
 
-        /// <summary>Registers a state-driven property update and returns a legacy <see cref="PropertyBinding"/> handle.</summary>
-        public PropertyBinding AddPropertyBinding(State state, Action updateAction, string propertyName)
-            => AddPropertyBinding(state, updateAction, propertyName, BindingKind.Visual);
-
-        internal PropertyBinding AddPropertyBinding(State state, Action updateAction, string propertyName, BindingKind kind)
+        internal void AddPropertyBinding(State state, Action updateAction, string propertyName, BindingKind kind)
         {
-            if (state == null || updateAction == null) return null;
+            if (state == null || updateAction == null) return;
 
             bindingRegistry.Register(propertyName, state, updateAction, kind);
-
-            return new PropertyBinding(state, updateAction, propertyName);
         }
 
         protected void SetupDynamicEffects(GameObject gameObject)
@@ -287,8 +242,6 @@ namespace UniftUI
             onAppearAsyncAction = null;
             updateAction = null;
         }
-
-        protected void CleanupActions() { }
 
         internal void SetInheritedFont(TMP_FontAsset font)
         {

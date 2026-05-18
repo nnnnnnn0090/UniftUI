@@ -371,7 +371,7 @@ public sealed class Example : UniftView
 
         Card("Text modifiers", () =>
         {
-            ApiRow("SwiftUI aliases: .italic().foregroundColor().padding()", () =>
+            ApiRow("Fluent aliases: .italic().foregroundColor().padding()", () =>
             {
                 Text("lower camel aliases")
                     .italic()

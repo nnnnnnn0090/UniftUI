@@ -20,9 +20,6 @@ namespace UniftUI
             isInitialized = true;
         }
 
-        /// <summary>Legacy overload; <paramref name="updateInterval"/> is ignored.</summary>
-        public void Initialize(Action callback, int updateInterval = 1) => Initialize(callback);
-
         private void Update()
         {
             if (!isInitialized || hasError || callback == null || !updatesEnabled)

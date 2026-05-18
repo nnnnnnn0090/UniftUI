@@ -54,21 +54,21 @@ namespace UniftUI
             return element;
         }
 
-        /// <summary>Wraps a button in a background layer, preserving SwiftUI-style modifier ordering.</summary>
+        /// <summary>Wraps a button in a background layer, preserving modifier ordering.</summary>
         public static BackgroundElement Background(this ButtonElement button, Color color)
         {
             button.SetBackgroundColor(Color.clear);
             return WrapBackground(button, color);
         }
 
-        /// <summary>Wraps a button in a reactive background layer, preserving SwiftUI-style modifier ordering.</summary>
+        /// <summary>Wraps a button in a reactive background layer, preserving modifier ordering.</summary>
         public static BackgroundElement Background(this ButtonElement button, State<Color> color)
         {
             button.SetBackgroundColor(Color.clear);
             return WrapBackground(button, color);
         }
 
-        /// <summary>Wraps text in a background layer, preserving SwiftUI-style modifier ordering.</summary>
+        /// <summary>Wraps text in a background layer, preserving modifier ordering.</summary>
         public static BackgroundElement Background(this TextElement text, Color color)
         {
             return WrapBackground(text, color);
@@ -81,7 +81,7 @@ namespace UniftUI
             return WrapBackground(textField, color);
         }
 
-        /// <summary>Wraps text in a reactive background layer, preserving SwiftUI-style modifier ordering.</summary>
+        /// <summary>Wraps text in a reactive background layer, preserving modifier ordering.</summary>
         public static BackgroundElement Background(this TextElement text, State<Color> color)
         {
             return WrapBackground(text, color);
@@ -94,7 +94,7 @@ namespace UniftUI
             return WrapBackground(textField, color);
         }
 
-        /// <summary>Wraps a toggle in a background layer, preserving SwiftUI-style modifier ordering.</summary>
+        /// <summary>Wraps a toggle in a background layer, preserving modifier ordering.</summary>
         public static BackgroundElement Background(this ToggleElement toggle, Color color)
         {
             return WrapBackground(toggle, color);
@@ -562,7 +562,7 @@ namespace UniftUI
             return clipped;
         }
 
-        /// <summary>Clips the element to a SwiftUI-style shape mask.</summary>
+        /// <summary>Clips the element to a shape mask.</summary>
         public static ClippedElement ClipShape<T>(this T element, UniftUIClipShape shape, float cornerRadius = 12f)
             where T : UIElement
         {

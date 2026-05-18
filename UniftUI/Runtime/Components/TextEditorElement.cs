@@ -3,7 +3,7 @@ using TMPro;
 
 namespace UniftUI
 {
-    /// <summary>Multiline text editor bound to <see cref="State{T}"/>, matching SwiftUI's TextEditor role.</summary>
+    /// <summary>Multiline text editor bound to <see cref="State{T}"/>.</summary>
     public class TextEditorElement : TextFieldElement
     {
         protected override string ElementName => "TextEditor";

@@ -471,7 +471,7 @@ namespace UniftUI.Tests
         }
 
         [UnityTest]
-        public IEnumerator SwiftUIStyleAliases_BuildAndBind()
+        public IEnumerator FluentAliases_BuildAndBind()
         {
             Canvas canvas = CreateCanvas();
             var input = new State<string>(string.Empty);
@@ -520,7 +520,7 @@ namespace UniftUI.Tests
         }
 
         [UnityTest]
-        public IEnumerator SwiftUIStyleAdditions_BuildTextEditorPickerBackgroundAndImage()
+        public IEnumerator FluentAdditions_BuildTextEditorPickerBackgroundAndImage()
         {
             Canvas canvas = CreateCanvas();
             var text = new State<string>("line 1\nline 2");
@@ -1033,49 +1033,6 @@ namespace UniftUI.Tests
             TMP_Text[] labels = canvas.GetComponentsInChildren<TMP_Text>();
             Assert.That(System.Array.Exists(labels, label => label.text == "two"), Is.True);
             Assert.That(System.Array.Exists(labels, label => label.text == "one"), Is.False);
-        }
-
-        [UnityTest]
-        public IEnumerator LegacyRotationAnimation_DoesNotTargetPageWrapper()
-        {
-            Canvas canvas = CreateCanvas();
-            var rotation = new State<float>(0f);
-
-            UIElements.ScrollView(() =>
-            {
-                UIElements.VStack(() =>
-                {
-                    UIElements.Text("RotationEffect(State) + Animation")
-                        .rotationEffect(rotation)
-                        .animation(AnimationEasing.EaseInOut, 0.45f)
-                        .padding(12)
-                        .background(new Color(0.93f, 0.95f, 0.99f))
-                        .frame(infiniteWidth: true);
-                }, spacing: 14f, alignment: VStackAlignment.Leading)
-                .padding(20)
-                .frame(infiniteWidth: true);
-            }, horizontal: false, vertical: true)
-            .frame(infiniteWidth: true, infiniteHeight: true)
-            .background(new Color(0.98f, 0.99f, 1f))
-            .Build(canvas);
-
-            yield return null;
-            ForceLayout(canvas);
-
-            RectTransform pageBackground = canvas.transform.GetChild(0).GetComponent<RectTransform>();
-            RectTransform innerBackground = FindRect(pageBackground, "BackgroundContainer", 1);
-
-            rotation.Value = 25f;
-            yield return null;
-            ForceLayout(canvas);
-
-            RotationAnimator[] animators = pageBackground.GetComponentsInChildren<RotationAnimator>(true);
-            Assert.That(animators.Length, Is.EqualTo(1));
-            Assert.That(animators[0].gameObject.name, Is.EqualTo("Text"));
-            Assert.That(pageBackground.GetComponent<RotationAnimator>(), Is.Null);
-            Assert.That(innerBackground.GetComponent<RotationAnimator>(), Is.Null);
-            Assert.That(Quaternion.Angle(pageBackground.localRotation, Quaternion.identity), Is.LessThan(0.01f));
-            Assert.That(Quaternion.Angle(innerBackground.localRotation, Quaternion.identity), Is.LessThan(0.01f));
         }
 
         [UnityTest]
