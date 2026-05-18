@@ -5,9 +5,9 @@
   "description": "Declarative UI layout for Unity uGUI (Canvas).",
   "unity": "2022.3",
   "license": "MIT",
-  "documentationUrl": "https://github.com/nnnnnnn0090/UniftUI/tree/main/docs",
+  "documentationUrl": "https://nnnnnnn0090.github.io/UniftUI/",
   "changelogUrl": "https://github.com/nnnnnnn0090/UniftUI/blob/main/UniftUI/CHANGELOG.md",
-  "licensesUrl": "https://github.com/nnnnnnn0090/UniftUI/blob/main/UniftUI/LICENSE.md",
+  "licensesUrl": "https://github.com/nnnnnnn0090/UniftUI/blob/main/LICENSE",
   "author": {
     "name": "nnnnnnn0090"
   },
@@ -20,6 +20,13 @@
     "ugui",
     "canvas",
     "layout"
+  ],
+  "samples": [
+    {
+      "displayName": "Minimal Counter",
+      "description": "A tiny counter view showing State, Text, Button, and fluent modifiers.",
+      "path": "Samples~/MinimalCounter"
+    }
   ],
   "dependencies": {
     "com.unity.ugui": "1.0.0",

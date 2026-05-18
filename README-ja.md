@@ -21,11 +21,13 @@ Unity **2022.3** 以降（Unity 6 含む）。`com.unity.ugui` と `com.unity.te
 https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI
 ```
 
-タグやブランチを指定する場合:
+ブランチを指定する場合:
 
 ```text
-https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI#v0.1.0
+https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI#main
 ```
+
+リリース版は GitHub Releases に掲載された version tag を指定してください。
 
 ## 使い方
 
@@ -67,6 +69,6 @@ Docs: https://nnnnnnn0090.github.io/UniftUI/
 
 ## ライセンス
 
-[MIT License](./UniftUI/LICENSE.md).
+[MIT License](./LICENSE).
 
 **サードパーティ:** 角丸 UI は [Unity UI Rounded Corners](https://github.com/kirevdokimov/Unity-UI-Rounded-Corners)（MIT, © 2019 Kirill Evdokimov）由来。該当ファイルを再配布する際は上流の表示を残してください。

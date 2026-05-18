@@ -22,18 +22,20 @@ In Unity Package Manager, choose **Add package from git URL** and enter:
 https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI
 ```
 
-For a tagged release:
+With a branch:
 
 ```text
-https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI#v0.1.0
+https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI#main
 ```
+
+For released versions, use the version tag shown on GitHub Releases.
 
 ## Documentation
 
 Docs:
 
 ```text
-https://nnnnnnn0090.github.io/UniftUI/docs/
+https://nnnnnnn0090.github.io/UniftUI/
 ```
 
 Or open the documentation site from the repository root:

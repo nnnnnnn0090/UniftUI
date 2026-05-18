@@ -21,11 +21,13 @@ Unity **2022.3** or newer (including Unity 6). Pulls in `com.unity.ugui` and `co
 https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI
 ```
 
-With tag or branch:
+With a branch:
 
 ```text
-https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI#v0.1.0
+https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI#main
 ```
+
+For released versions, use the version tag shown on GitHub Releases.
 
 ## Usage
 
@@ -67,6 +69,6 @@ Docs: https://nnnnnnn0090.github.io/UniftUI/
 
 ## License
 
-[MIT License](./UniftUI/LICENSE.md).
+[MIT License](./LICENSE).
 
 **Third-party:** Rounded corners from [Unity UI Rounded Corners](https://github.com/kirevdokimov/Unity-UI-Rounded-Corners) (MIT, © 2019 Kirill Evdokimov). Retain that notice when redistributing those files.
