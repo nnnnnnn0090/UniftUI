@@ -45,7 +45,7 @@ namespace UniftUI
             if (index != -1)
                 children[index] = newChild;
             else
-                Debug.LogWarning($"[UniftUI] ReplaceChild: oldChild not found in ZStack. Old: {oldChild}, New: {newChild}. Children count: {children.Count}");
+                SingleChildContainerUtility.LogReplaceChildNotFound(nameof(ZStackElement), oldChild, newChild, children.Count);
         }
 
         /// <inheritdoc />

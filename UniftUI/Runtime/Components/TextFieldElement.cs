@@ -457,6 +457,12 @@ namespace UniftUI
             inputField.onSelect.AddListener(_ => HandleEditingChanged(true));
             inputField.onDeselect.AddListener(_ => HandleEditingChanged(false));
             inputField.onSubmit.AddListener(value => onSubmit?.Invoke(value));
+
+            var focusSync = inputField.GetComponent<TextFieldFocusSync>();
+            if (focusSync == null)
+                focusSync = inputField.gameObject.AddComponent<TextFieldFocusSync>();
+            focusSync.Initialize(inputField, HandleEditingChanged);
+
             if (hasLineLimit)
                 ApplyLineLimit(inputField);
         }
@@ -501,6 +507,9 @@ namespace UniftUI
 
         private void HandleEditingChanged(bool editing)
         {
+            if (!editing && builtInputField != null && builtInputField.isFocused)
+                builtInputField.DeactivateInputField();
+
             if (focusedState != null && focusedState.Value != editing)
             {
                 syncingFocusFromInput = true;
@@ -613,6 +622,29 @@ namespace UniftUI
         }
 
         private Color EffectiveBackgroundColor => hasBackgroundColor ? backgroundColor : Color.clear;
+
+        private sealed class TextFieldFocusSync : MonoBehaviour, ISelectHandler, IDeselectHandler
+        {
+            private TMP_InputField inputField;
+            private Action<bool> onEditingChanged;
+
+            public void Initialize(TMP_InputField field, Action<bool> callback)
+            {
+                inputField = field;
+                onEditingChanged = callback;
+            }
+
+            public void OnSelect(BaseEventData eventData)
+            {
+                onEditingChanged?.Invoke(true);
+            }
+
+            public void OnDeselect(BaseEventData eventData)
+            {
+                onEditingChanged?.Invoke(false);
+            }
+
+        }
 
         private void ConfigureLayout(GameObject fieldContainer)
         {

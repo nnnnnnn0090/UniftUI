@@ -50,7 +50,7 @@ namespace UniftUI
             if (index != -1)
                 children[index] = newChild;
             else
-                Debug.LogWarning($"[UniftUI] Grid ReplaceChild: oldChild not found. Children count: {children.Count}");
+                SingleChildContainerUtility.LogReplaceChildNotFound(nameof(GridElement), oldChild, newChild, children.Count);
         }
 
         public IEnumerable<UIElement> GetChildren() => children;

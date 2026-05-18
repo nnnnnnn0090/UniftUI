@@ -125,12 +125,12 @@ namespace UniftUI
             if (!string.IsNullOrEmpty(label))
             {
                 GameObject labelObj = CreateChildObject("Label", toggleContainer.transform);
-                
+
                 TextMeshProUGUI labelText = labelObj.AddComponent<TextMeshProUGUI>();
                 labelText.text = label;
                 ConfigureLabelText(labelText);
                 builtLabelText = labelText;
-                
+
                 TMP_FontAsset effectiveFont = ResolveFont(fontAsset);
                 if (effectiveFont != null)
                 {
@@ -143,7 +143,7 @@ namespace UniftUI
             }
 
             GameObject switchControl = CreateChildObject("SwitchControl", toggleContainer.transform);
-            
+
             LayoutElement switchLayout = switchControl.AddComponent<LayoutElement>();
             switchLayout.preferredWidth = SwitchWidth;
             switchLayout.minWidth = SwitchWidth;
@@ -182,7 +182,7 @@ namespace UniftUI
 
             EnsureControlHitArea(toggleContainer, ref hitAreaObject, "ToggleHitArea", CreateHitTarget());
             ApplyAllEffects(toggleContainer, toggleContainerBackgroundImage);
-            
+
             return toggleContainer;
         }
 

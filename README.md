@@ -6,7 +6,7 @@
 
 [日本語](./README-ja.md)
 
-SwiftUI-style declarative UI for Unity **uGUI** (Canvas).  
+SwiftUI-style declarative UI for Unity **uGUI** (Canvas).
 **Package:** `com.unift.ui` · **Author:** nnnnnnn0090
 
 ## Requirements
@@ -29,12 +29,44 @@ https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI#v0.1.0
 
 ## Usage
 
-Subclass `UniftView`, build UI with `VStack`, `HStack`, `Text`, `Button`, etc. `using UniftUI;`  
+Subclass `UniftView`, build UI with `VStack`, `HStack`, `Text`, `Button`, etc. `using UniftUI;`
+
+```csharp
+using UniftUI;
+using UnityEngine;
+
+public sealed class CounterView : UniftView
+{
+    private readonly State<int> count = new State<int>(0);
+
+    private void Start()
+    {
+        VStack(() =>
+        {
+            Text(() => $"Count: {count.Value}", new State[] { count })
+                .fontSize(28)
+                .bold();
+
+            Button("Increment", () => count.Value++)
+                .padding(12)
+                .background(new Color(0.15f, 0.38f, 0.9f))
+                .foregroundColor(Color.white)
+                .cornerRadius(10);
+        }, spacing: 12f)
+        .padding(24)
+        .Build(GetComponent<Canvas>());
+    }
+}
+```
+
+## Compatibility & Tests
+
+UniftUI keeps the public factories and fluent modifier aliases compatible across patch releases. Runtime tests live under `UniftUI/Tests/Runtime` and can be run with Unity Test Runner after opening the `Example` project.
 
 Docs: https://nnnnnnn0090.github.io/UniftUI/
 
 ## License
 
-[MIT License](./UniftUI/LICENSE.md).  
+[MIT License](./UniftUI/LICENSE.md).
 
 **Third-party:** Rounded corners from [Unity UI Rounded Corners](https://github.com/kirevdokimov/Unity-UI-Rounded-Corners) (MIT, © 2019 Kirill Evdokimov). Retain that notice when redistributing those files.

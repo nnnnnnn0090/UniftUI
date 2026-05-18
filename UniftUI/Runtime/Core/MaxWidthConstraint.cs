@@ -24,7 +24,7 @@ namespace UniftUI
             layoutElement.preferredWidth = -1;
             layoutElement.flexibleWidth = 1;
             layoutElement.minWidth = -1;
-            
+
             if (maxWidth > 0)
             {
                 layoutElement.preferredWidth = maxWidth;

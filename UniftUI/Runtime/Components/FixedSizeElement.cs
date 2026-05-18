@@ -27,28 +27,22 @@ namespace UniftUI
 
         public void AddChild(UIElement child)
         {
-            if (content == null)
-                content = child;
-            else
-                Debug.LogWarning("[UniftUI] FixedSizeElement supports only one child.");
+            SingleChildContainerUtility.Add(ref content, child, nameof(FixedSizeElement));
         }
 
         public void RemoveChild(UIElement child)
         {
-            if (content == child)
-                content = null;
+            SingleChildContainerUtility.Remove(ref content, child);
         }
 
         public void ReplaceChild(UIElement oldChild, UIElement newChild)
         {
-            if (content == oldChild)
-                content = newChild;
+            SingleChildContainerUtility.Replace(ref content, oldChild, newChild);
         }
 
         public IEnumerable<UIElement> GetChildren()
         {
-            if (content != null)
-                yield return content;
+            return SingleChildContainerUtility.Children(content);
         }
 
         public override GameObject Build(Transform parent)

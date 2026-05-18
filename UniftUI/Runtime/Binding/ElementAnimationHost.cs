@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,8 +10,7 @@ namespace UniftUI
     internal sealed class ElementAnimationHost : MonoBehaviour
     {
         private UIElement element;
-        private readonly Dictionary<State, Action> observers = new Dictionary<State, Action>();
-        private readonly List<IDisposable> subscriptions = new List<IDisposable>();
+        private readonly StateSubscriptionGroup subscriptions = new StateSubscriptionGroup();
 
         internal void Attach(UIElement target)
         {
@@ -27,10 +25,7 @@ namespace UniftUI
 
         internal void Detach()
         {
-            foreach (var subscription in subscriptions)
-                subscription?.Dispose();
             subscriptions.Clear();
-            observers.Clear();
             element = null;
         }
 
@@ -51,18 +46,19 @@ namespace UniftUI
 
         private void Subscribe(State state)
         {
-            if (state == null || observers.ContainsKey(state))
-                return;
-
             State captured = state;
-            Action observer = () => OnStateChanged(captured);
-            observers[state] = observer;
-            subscriptions.Add(state.AddObserver(observer));
+            subscriptions.Subscribe(state, () => OnStateChanged(captured));
         }
 
         private void OnStateChanged(State changedState)
         {
-            if (element == null)
+            if (!this)
+            {
+                Detach();
+                return;
+            }
+
+            if (element == null || !isActiveAndEnabled)
                 return;
 
             element.HandleStateChange(changedState);
@@ -70,8 +66,18 @@ namespace UniftUI
 
         private void OnEnable()
         {
-            if (element != null && subscriptions.Count == 0)
+            if (element == null)
+                return;
+
+            if (subscriptions.Count == 0)
                 SubscribeAll();
+
+            element.ApplyDynamicEffects();
+        }
+
+        private void OnDisable()
+        {
+            subscriptions.Clear();
         }
 
         private void OnDestroy() => Detach();

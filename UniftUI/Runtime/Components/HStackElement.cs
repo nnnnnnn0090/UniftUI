@@ -50,7 +50,7 @@ namespace UniftUI
             }
             else
             {
-                Debug.LogWarning($"[UniftUI] HStack ReplaceChild: oldChild not found. Children count: {children.Count}");
+                SingleChildContainerUtility.LogReplaceChildNotFound(nameof(HStackElement), oldChild, newChild, children.Count);
             }
         }
 

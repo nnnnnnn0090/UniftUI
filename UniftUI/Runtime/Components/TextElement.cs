@@ -543,38 +543,41 @@ namespace UniftUI
             if (layoutElement == null)
                 layoutElement = builtTextObject.AddComponent<LayoutElement>();
 
-            if (infiniteWidth)
+            bool widthAnimating = IsLayoutAxisAnimating<LayoutWidthAnimator>();
+            bool heightAnimating = IsLayoutAxisAnimating<LayoutHeightAnimator>();
+
+            if (!widthAnimating && infiniteWidth)
             {
                 layoutElement.minWidth = 0f;
                 layoutElement.preferredWidth = -1f;
                 layoutElement.flexibleWidth = 1f;
             }
-            else if (preferredWidth > 0f)
+            else if (!widthAnimating && preferredWidth > 0f)
             {
                 layoutElement.minWidth = preferredWidth;
                 layoutElement.preferredWidth = preferredWidth;
                 layoutElement.flexibleWidth = 0f;
             }
-            else
+            else if (!widthAnimating)
             {
                 layoutElement.minWidth = 0f;
                 layoutElement.preferredWidth = Mathf.Max(0f, preferred.x);
                 layoutElement.flexibleWidth = 0f;
             }
 
-            if (infiniteHeight)
+            if (!heightAnimating && infiniteHeight)
             {
                 layoutElement.minHeight = 0f;
                 layoutElement.preferredHeight = -1f;
                 layoutElement.flexibleHeight = 1f;
             }
-            else if (preferredHeight > 0f)
+            else if (!heightAnimating && preferredHeight > 0f)
             {
                 layoutElement.minHeight = preferredHeight;
                 layoutElement.preferredHeight = preferredHeight;
                 layoutElement.flexibleHeight = 0f;
             }
-            else
+            else if (!heightAnimating)
             {
                 layoutElement.minHeight = 0f;
                 layoutElement.preferredHeight = Mathf.Max(0f, preferred.y);
@@ -582,6 +585,12 @@ namespace UniftUI
             }
 
             LayoutCore.MarkLayoutDirty(builtTextObject);
+        }
+
+        private bool IsLayoutAxisAnimating<TAnimator>() where TAnimator : BaseAnimator<float>
+        {
+            TAnimator animator = builtTextObject != null ? builtTextObject.GetComponent<TAnimator>() : null;
+            return animator != null && animator.IsAnimating;
         }
     }
 

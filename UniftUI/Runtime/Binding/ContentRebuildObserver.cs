@@ -1,6 +1,5 @@
 using UnityEngine;
 using System;
-using System.Collections.Generic;
 
 namespace UniftUI
 {
@@ -9,7 +8,7 @@ namespace UniftUI
     {
         private Action rebuildAction;
         private State[] states;
-        private readonly List<IDisposable> subscriptions = new List<IDisposable>();
+        private readonly StateSubscriptionGroup subscriptions = new StateSubscriptionGroup();
         private bool isDestroyed = false;
         private bool isObserving = false;
         private bool isDirty = false;
@@ -31,13 +30,9 @@ namespace UniftUI
             if (isObserving || states == null)
                 return;
 
-            var seen = new HashSet<State>();
             foreach (var state in states)
             {
-                if (state == null || !seen.Add(state))
-                    continue;
-
-                subscriptions.Add(state.AddObserver(OnStateChanged));
+                subscriptions.Subscribe(state, OnStateChanged);
             }
 
             isObserving = true;
@@ -102,10 +97,7 @@ namespace UniftUI
             if (!isObserving)
                 return;
 
-            foreach (var subscription in subscriptions)
-                subscription?.Dispose();
             subscriptions.Clear();
-
             isObserving = false;
         }
     }

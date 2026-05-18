@@ -42,6 +42,12 @@ Or open the documentation site from the repository root:
 docs/index.html
 ```
 
+## Compatibility & Tests
+
+Public factories (`Text`, `Button`, `VStack`, etc.) and fluent modifier aliases (`.frame`, `.background`, `.foregroundColor`, etc.) are kept source-compatible across patch releases.
+
+Runtime tests are under `Tests/Runtime`. Open the repository's `Example` project in Unity and run them from Test Runner.
+
 ## Quick Start
 
 ```csharp

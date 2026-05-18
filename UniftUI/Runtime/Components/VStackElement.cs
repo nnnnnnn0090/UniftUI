@@ -48,7 +48,7 @@ namespace UniftUI
             if (index != -1)
                 children[index] = newChild;
             else
-                Debug.LogWarning($"[UniftUI] VStack ReplaceChild: oldChild not found. Children count: {children.Count}");
+                SingleChildContainerUtility.LogReplaceChildNotFound(nameof(VStackElement), oldChild, newChild, children.Count);
         }
 
         public IEnumerable<UIElement> GetChildren()

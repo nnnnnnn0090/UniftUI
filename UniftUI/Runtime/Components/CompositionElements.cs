@@ -37,25 +37,22 @@ namespace UniftUI
 
         public void AddChild(UIElement child)
         {
-            this.child = child;
+            SingleChildContainerUtility.Add(ref this.child, child, nameof(AspectRatioElement));
         }
 
         public void RemoveChild(UIElement child)
         {
-            if (ReferenceEquals(this.child, child))
-                this.child = null;
+            SingleChildContainerUtility.Remove(ref this.child, child);
         }
 
         public void ReplaceChild(UIElement oldChild, UIElement newChild)
         {
-            if (ReferenceEquals(child, oldChild))
-                child = newChild;
+            SingleChildContainerUtility.Replace(ref child, oldChild, newChild);
         }
 
         public IEnumerable<UIElement> GetChildren()
         {
-            if (child != null)
-                yield return child;
+            return SingleChildContainerUtility.Children(child);
         }
 
         public override GameObject Build(Transform parent)
@@ -138,25 +135,22 @@ namespace UniftUI
 
         public void AddChild(UIElement child)
         {
-            this.child = child;
+            SingleChildContainerUtility.Add(ref this.child, child, nameof(ClippedElement));
         }
 
         public void RemoveChild(UIElement child)
         {
-            if (ReferenceEquals(this.child, child))
-                this.child = null;
+            SingleChildContainerUtility.Remove(ref this.child, child);
         }
 
         public void ReplaceChild(UIElement oldChild, UIElement newChild)
         {
-            if (ReferenceEquals(child, oldChild))
-                child = newChild;
+            SingleChildContainerUtility.Replace(ref child, oldChild, newChild);
         }
 
         public IEnumerable<UIElement> GetChildren()
         {
-            if (child != null)
-                yield return child;
+            return SingleChildContainerUtility.Children(child);
         }
 
         public override GameObject Build(Transform parent)
