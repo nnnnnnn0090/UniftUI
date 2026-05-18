@@ -126,8 +126,14 @@ namespace UniftUI
         protected AnimationEasing easing = AnimationEasing.Linear;
 
         private int generation;
+        private RectTransform cachedRectTransform;
         internal int CurrentGeneration => generation;
         internal bool IsAnimating => isAnimating;
+
+        protected RectTransform TargetRectTransform
+            => cachedRectTransform != null
+                ? cachedRectTransform
+                : cachedRectTransform = LayoutCore.EnsureRectTransform(gameObject);
 
         public static TAnimator GetOrReplace<TAnimator>(GameObject go)
             where TAnimator : BaseAnimator<T>
@@ -229,12 +235,12 @@ namespace UniftUI
 
         protected override void SetInitialValue(Vector3 v)
         {
-            var r = GetComponent<RectTransform>();
+            var r = TargetRectTransform;
             if (r) r.localRotation = Quaternion.Euler(v);
         }
         protected override void UpdateValue(float t)
         {
-            var r = GetComponent<RectTransform>();
+            var r = TargetRectTransform;
             if (r) r.localRotation = Quaternion.Euler(Vector3.Lerp(startValue, targetValue, t));
         }
     }
@@ -245,12 +251,12 @@ namespace UniftUI
 
         protected override void SetInitialValue(Vector3 v)
         {
-            var r = GetComponent<RectTransform>();
+            var r = TargetRectTransform;
             if (r) r.localScale = v;
         }
         protected override void UpdateValue(float t)
         {
-            var r = GetComponent<RectTransform>();
+            var r = TargetRectTransform;
             if (r) r.localScale = Vector3.Lerp(startValue, targetValue, t);
         }
     }
@@ -261,12 +267,12 @@ namespace UniftUI
 
         protected override void SetInitialValue(Vector2 v)
         {
-            var r = GetComponent<RectTransform>();
+            var r = TargetRectTransform;
             if (r) r.anchoredPosition = v;
         }
         protected override void UpdateValue(float t)
         {
-            var r = GetComponent<RectTransform>();
+            var r = TargetRectTransform;
             if (r) r.anchoredPosition = Vector2.Lerp(startValue, targetValue, t);
         }
     }
@@ -293,14 +299,13 @@ namespace UniftUI
             if (layoutGroup == null)
                 layoutGroup = GetComponent<UniftUISingleChildLayoutGroup>();
             if (rectTransform == null)
-                rectTransform = GetComponent<RectTransform>();
+                rectTransform = TargetRectTransform;
 
             if (layoutGroup == null)
                 return;
 
             layoutGroup.SetVisualOffset(value);
-            if (rectTransform != null)
-                LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+            LayoutCore.MarkLayoutDirty(rectTransform);
         }
     }
 
@@ -325,7 +330,7 @@ namespace UniftUI
             if (layoutElement == null)
                 layoutElement = GetComponent<LayoutElement>() ?? gameObject.AddComponent<LayoutElement>();
             if (rectTransform == null)
-                rectTransform = GetComponent<RectTransform>();
+                rectTransform = TargetRectTransform;
 
             value = Mathf.Max(0f, value);
             if (Axis == 0)
@@ -349,9 +354,9 @@ namespace UniftUI
             if (rectTransform == null)
                 return;
 
-            LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+            LayoutCore.MarkLayoutDirty(rectTransform);
             if (rectTransform.parent is RectTransform parent)
-                LayoutRebuilder.MarkLayoutForRebuild(parent);
+                LayoutCore.MarkLayoutDirty(parent);
         }
     }
 
@@ -391,7 +396,7 @@ namespace UniftUI
             if (layoutGroup == null)
                 layoutGroup = GetComponent<UniftUISingleChildLayoutGroup>();
             if (rectTransform == null)
-                rectTransform = GetComponent<RectTransform>();
+                rectTransform = TargetRectTransform;
             if (layoutGroup == null)
                 return;
 
@@ -401,8 +406,7 @@ namespace UniftUI
                 Mathf.RoundToInt(Mathf.Max(0f, value.z)),
                 Mathf.RoundToInt(Mathf.Max(0f, value.w)));
 
-            if (rectTransform != null)
-                LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+            LayoutCore.MarkLayoutDirty(rectTransform);
         }
     }
 
@@ -447,8 +451,7 @@ namespace UniftUI
 
         private CanvasGroup GetOrAddCanvasGroup()
         {
-            if (gameObject.GetComponent<RectTransform>() == null)
-                gameObject.AddComponent<RectTransform>();
+            LayoutCore.EnsureRectTransform(gameObject);
 
             return GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
         }

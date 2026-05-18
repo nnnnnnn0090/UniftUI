@@ -48,8 +48,7 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject shadowContainer = new GameObject("ShadowContainer");
-            shadowContainer.transform.SetParent(parent, false);
+            GameObject shadowContainer = CreateElementRoot("ShadowContainer", parent);
 
             var layoutGroup = shadowContainer.AddComponent<UniftUISingleChildLayoutGroup>();
             layoutGroup.Configure(new RectOffset(0, 0, 0, 0), TextAnchor.MiddleCenter);

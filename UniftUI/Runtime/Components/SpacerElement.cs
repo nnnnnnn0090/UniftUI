@@ -21,15 +21,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject spacerObj = new GameObject("Spacer");
-            spacerObj.transform.SetParent(parent, false);
-
-            Image background = null;
-            if (backgroundColor != Color.clear)
-            {
-                background = spacerObj.AddComponent<Image>();
-                background.color = backgroundColor;
-            }
+            GameObject spacerObj = CreateElementRoot("Spacer", parent);
+            Image background = AddBackgroundImageIfNeeded(spacerObj);
 
             LayoutElement layoutElement = spacerObj.AddComponent<LayoutElement>();
 

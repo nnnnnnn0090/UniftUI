@@ -6,7 +6,7 @@ using UniftUI.Internal;
 
 namespace UniftUI
 {
-    public class ToggleElement : UIElement
+    public class ToggleElement : UIElement, IControlHitTargetSource
     {
         private State<bool> isOn;
         private string label;
@@ -16,6 +16,9 @@ namespace UniftUI
         private Color textColor = Color.black;
         private TextMeshProUGUI builtLabelText;
         private Image builtTrackImage;
+        private Button builtSwitchButton;
+        private RectTransform builtKnobRect;
+        private GameObject hitAreaObject;
 
         private const float SwitchWidth = 51f;
         private const float SwitchHeight = 31f;
@@ -31,7 +34,34 @@ namespace UniftUI
             this.isOn = isOn;
             this.label = label;
             this.onValueChanged = onValueChanged;
+            AddPropertyBinding(isOn, ApplyValue, "toggleValue", BindingKind.Visual);
             UIContext.Add(this);
+        }
+
+        bool IControlHitTargetSource.TryGetControlHitTarget(out ControlHitTarget target)
+        {
+            if (isOn == null)
+            {
+                target = default(ControlHitTarget);
+                return false;
+            }
+
+            target = CreateHitTarget();
+            return true;
+        }
+
+        private ControlHitTarget CreateHitTarget()
+        {
+            return new ControlHitTarget(ToggleValue, canReceiveInput: IsInputAllowed);
+        }
+
+        private void ToggleValue()
+        {
+            if (!IsInputAllowed() || isOn == null)
+                return;
+
+            isOn.Value = !isOn.Value;
+            onValueChanged?.Invoke(isOn.Value);
         }
 
         public ToggleElement SetFont(TMP_FontAsset font)
@@ -67,22 +97,16 @@ namespace UniftUI
         public ToggleElement SetTintColor(Color color)
         {
             activeTrackColor = color;
-            if (builtTrackImage != null && isOn != null && isOn.Value)
-                builtTrackImage.color = activeTrackColor;
+            ApplyValue();
             return this;
         }
 
         public override GameObject Build(Transform parent)
         {
-            GameObject toggleContainer = new GameObject(string.IsNullOrEmpty(label) ? "ToggleSwitch" : "ToggleElement_" + label);
-            toggleContainer.transform.SetParent(parent, false);
-
-            Image toggleContainerBackgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                toggleContainerBackgroundImage = toggleContainer.AddComponent<Image>();
-                toggleContainerBackgroundImage.color = backgroundColor;
-            }
+            GameObject toggleContainer = CreateElementRoot(
+                string.IsNullOrEmpty(label) ? "ToggleSwitch" : "ToggleElement_" + label,
+                parent);
+            Image toggleContainerBackgroundImage = AddBackgroundImageIfNeeded(toggleContainer);
 
             LayoutElement containerLayout = LayoutElementUtility.Configure(
                 toggleContainer,
@@ -100,8 +124,7 @@ namespace UniftUI
 
             if (!string.IsNullOrEmpty(label))
             {
-                GameObject labelObj = new GameObject("Label");
-                labelObj.transform.SetParent(toggleContainer.transform, false);
+                GameObject labelObj = CreateChildObject("Label", toggleContainer.transform);
                 
                 TextMeshProUGUI labelText = labelObj.AddComponent<TextMeshProUGUI>();
                 labelText.text = label;
@@ -119,8 +142,7 @@ namespace UniftUI
                 labelLayout.minHeight = SwitchHeight;
             }
 
-            GameObject switchControl = new GameObject("SwitchControl");
-            switchControl.transform.SetParent(toggleContainer.transform, false);
+            GameObject switchControl = CreateChildObject("SwitchControl", toggleContainer.transform);
             
             LayoutElement switchLayout = switchControl.AddComponent<LayoutElement>();
             switchLayout.preferredWidth = SwitchWidth;
@@ -129,24 +151,22 @@ namespace UniftUI
             switchLayout.minHeight = SwitchHeight;
             switchLayout.flexibleWidth = 0;
 
-            GameObject trackObj = new GameObject("Track");
-            trackObj.transform.SetParent(switchControl.transform, false);
-            Image trackImage = trackObj.AddComponent<Image>();
+            GameObject trackObj = CreateChildObject("Track", switchControl.transform);
+            Image trackImage = AddImage(trackObj, Color.white);
             trackImage.type = Image.Type.Sliced;
             builtTrackImage = trackImage;
 
-            RectTransform trackRect = trackObj.GetComponent<RectTransform>();
+            RectTransform trackRect = EnsureRectTransform(trackObj);
             trackRect.anchorMin = Vector2.zero;
             trackRect.anchorMax = Vector2.one;
             trackRect.sizeDelta = Vector2.zero;
 
-            GameObject knobObj = new GameObject("Knob");
-            knobObj.transform.SetParent(switchControl.transform, false);
-            Image knobImage = knobObj.AddComponent<Image>();
-            knobImage.color = KnobColor;
+            GameObject knobObj = CreateChildObject("Knob", switchControl.transform);
+            Image knobImage = AddImage(knobObj, KnobColor);
             knobImage.type = Image.Type.Simple;
 
-            RectTransform knobRect = knobObj.GetComponent<RectTransform>();
+            RectTransform knobRect = EnsureRectTransform(knobObj);
+            builtKnobRect = knobRect;
             knobRect.sizeDelta = new Vector2(KnobDiameter, KnobDiameter);
             knobRect.pivot = new Vector2(0.5f, 0.5f);
             knobRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -154,63 +174,41 @@ namespace UniftUI
 
             Button switchButton = switchControl.AddComponent<Button>();
             switchButton.targetGraphic = trackImage;
-            var colors = switchButton.colors;
-            colors.highlightedColor = colors.normalColor; 
-            colors.pressedColor = colors.normalColor;     
-            colors.selectedColor = colors.normalColor;
-            switchButton.colors = colors;
+            builtSwitchButton = switchButton;
 
-            switchButton.onClick.AddListener(() => {
-                if (isOn == null)
-                    return;
+            switchButton.onClick.AddListener(ToggleValue);
 
-                isOn.Value = !isOn.Value;
-                onValueChanged?.Invoke(isOn.Value);
-            });
-            
-            Action updateVisuals = () => {
-                bool currentValue = isOn != null && isOn.Value;
+            ApplyValue();
 
-                if (trackImage != null)
-                {
-                    trackImage.color = currentValue ? activeTrackColor : inactiveTrackColor;
-                }
-                if (knobRect != null && knobRect.gameObject.activeInHierarchy)
-                {
-                    float movableRange = SwitchWidth - KnobDiameter - (KnobPaddingFromEdge * 2);
-                    float targetKnobXPosition = currentValue ? 
-                        (movableRange / 2) : 
-                        -(movableRange / 2);
-                    
-                    UIAnimator.SlideHorizontal(knobRect, targetKnobXPosition, AnimationDuration);
-                }
-                else if (knobRect != null)
-                {
-                    float movableRange = SwitchWidth - KnobDiameter - (KnobPaddingFromEdge * 2);
-                    float targetKnobXPosition = currentValue ? 
-                        (movableRange / 2) : 
-                        -(movableRange / 2);
-                    
-                    knobRect.anchoredPosition = new Vector2(targetKnobXPosition, 0);
-                }
-            };
-
-            updateVisuals();
-
-            StateObserver observer = toggleContainer.AddComponent<StateObserver>();
-            if (isOn != null)
-            {
-                observer.Initialize(new State[] { isOn }, () => {
-                    if (toggleContainer != null && toggleContainer.activeInHierarchy)
-                    {
-                        updateVisuals();
-                    }
-                });
-            }
-
+            EnsureControlHitArea(toggleContainer, ref hitAreaObject, "ToggleHitArea", CreateHitTarget());
             ApplyAllEffects(toggleContainer, toggleContainerBackgroundImage);
             
             return toggleContainer;
+        }
+
+        private void ApplyValue()
+        {
+            bool currentValue = isOn != null && isOn.Value;
+
+            if (builtTrackImage != null)
+            {
+                Color trackColor = currentValue ? activeTrackColor : inactiveTrackColor;
+                builtTrackImage.color = trackColor;
+                ConfigureSelectableColors(builtSwitchButton, trackColor, trackColor, trackColor, trackColor);
+            }
+
+            if (builtKnobRect == null)
+                return;
+
+            float movableRange = SwitchWidth - KnobDiameter - (KnobPaddingFromEdge * 2);
+            float targetKnobXPosition = currentValue
+                ? movableRange / 2f
+                : -movableRange / 2f;
+
+            if (builtKnobRect.gameObject.activeInHierarchy)
+                UIAnimator.SlideHorizontal(builtKnobRect, targetKnobXPosition, AnimationDuration);
+            else
+                builtKnobRect.anchoredPosition = new Vector2(targetKnobXPosition, 0f);
         }
 
         private void ConfigureLabelText(TextMeshProUGUI labelText)
@@ -224,6 +222,7 @@ namespace UniftUI
             labelText.color = textColor;
             labelText.alignment = TextAlignmentOptions.Left;
             labelText.verticalAlignment = VerticalAlignmentOptions.Middle;
+            labelText.raycastTarget = false;
         }
     }
 }

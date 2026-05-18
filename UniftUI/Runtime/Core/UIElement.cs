@@ -8,6 +8,30 @@ using UniftUI.Internal;
 
 namespace UniftUI
 {
+    internal interface IControlHitTargetSource
+    {
+        bool TryGetControlHitTarget(out ControlHitTarget target);
+    }
+
+    internal struct ControlHitTarget
+    {
+        public ControlHitTarget(Action click, Action<bool> setPressed = null, Action<bool> setHovered = null,
+            Func<bool> canReceiveInput = null)
+        {
+            Click = click;
+            SetPressed = setPressed;
+            SetHovered = setHovered;
+            CanReceiveInput = canReceiveInput;
+        }
+
+        public Action Click { get; }
+        public Action<bool> SetPressed { get; }
+        public Action<bool> SetHovered { get; }
+        public Func<bool> CanReceiveInput { get; }
+
+        public bool IsEnabled => CanReceiveInput == null || CanReceiveInput.Invoke();
+    }
+
     /// <summary>
     /// Base class for all declarative UniftUI elements. Subclasses implement <see cref="Build"/>
     /// to produce Unity UI <see cref="GameObject"/> hierarchies.
@@ -48,6 +72,7 @@ namespace UniftUI
         protected Action onAppearAction;
         protected Func<Task> onAppearAsyncAction;
         protected Action updateAction;
+        protected Action<bool> onHoverAction;
 
         internal readonly BindingRegistry bindingRegistry = new BindingRegistry();
 
@@ -56,6 +81,170 @@ namespace UniftUI
         }
 
         protected GameObject builtGameObject;
+
+        protected static GameObject CreateChildObject(string name, Transform parent)
+        {
+            GameObject gameObject = new GameObject(name);
+            gameObject.transform.SetParent(parent, false);
+            return gameObject;
+        }
+
+        protected static RectTransform EnsureRectTransform(GameObject gameObject)
+        {
+            return LayoutCore.EnsureRectTransform(gameObject);
+        }
+
+        protected static RectTransform AddFullStretchRect(GameObject gameObject)
+        {
+            if (gameObject == null)
+                return null;
+
+            RectTransform rect = EnsureRectTransform(gameObject);
+            LayoutCore.Stretch(rect);
+            return rect;
+        }
+
+        protected static GameObject CreateFullStretchChild(string name, Transform parent)
+        {
+            GameObject gameObject = CreateChildObject(name, parent);
+            AddFullStretchRect(gameObject);
+            return gameObject;
+        }
+
+        protected GameObject CreateElementRoot(string name, Transform parent)
+        {
+            GameObject gameObject = CreateChildObject(name, parent);
+            EnsureRectTransform(gameObject);
+            return gameObject;
+        }
+
+        protected static Image AddImage(GameObject gameObject, Color color, bool raycastTarget = true)
+        {
+            if (gameObject == null)
+                return null;
+
+            Image image = gameObject.AddComponent<Image>();
+            image.color = color;
+            image.raycastTarget = raycastTarget;
+            return image;
+        }
+
+        protected Image AddBackgroundImageIfNeeded(GameObject gameObject, bool raycastTarget = true)
+        {
+            return backgroundColor != Color.clear
+                ? AddImage(gameObject, backgroundColor, raycastTarget)
+                : null;
+        }
+
+        protected void MaterializeContent(Action content, IList<UIElement> children)
+        {
+            if (children == null)
+                return;
+
+            children.Clear();
+            if (content == null)
+                return;
+
+            ILayoutContainer parentContext = UIContext.Current;
+            try
+            {
+                UIContext.Current = this as ILayoutContainer;
+                content.Invoke();
+            }
+            finally
+            {
+                UIContext.Current = parentContext;
+            }
+        }
+
+        protected void BuildContentChildren(IList<UIElement> children, Transform parent,
+            Action<UIElement> configureChild = null)
+        {
+            if (children == null || parent == null)
+                return;
+
+            foreach (UIElement child in children)
+            {
+                if (child == null)
+                    continue;
+
+                ApplyInheritedFont(child);
+                configureChild?.Invoke(child);
+                child.Build(parent);
+            }
+        }
+
+        protected void SetupContentRebuildObserver(
+            State[] states,
+            GameObject observerObject,
+            Transform contentParent,
+            IList<UIElement> children,
+            Action content,
+            string ownerName,
+            Action<UIElement> configureChild = null,
+            Action afterRebuild = null)
+        {
+            if (states == null || states.Length == 0 || observerObject == null || contentParent == null)
+                return;
+
+            ContentRebuildObserver observer = observerObject.AddComponent<ContentRebuildObserver>();
+            observer.Initialize(states, () => RebuildContent(
+                observerObject,
+                contentParent,
+                children,
+                content,
+                ownerName,
+                configureChild,
+                afterRebuild));
+        }
+
+        protected void RebuildContent(
+            GameObject observerObject,
+            Transform contentParent,
+            IList<UIElement> children,
+            Action content,
+            string ownerName,
+            Action<UIElement> configureChild = null,
+            Action afterRebuild = null)
+        {
+            if (observerObject == null || !observerObject || contentParent == null || !contentParent)
+            {
+                Debug.LogWarning($"[UniftUI] {ownerName} rebuild skipped: container was destroyed.");
+                return;
+            }
+
+            try
+            {
+                ClearBuiltChildren(contentParent);
+                MaterializeContent(content, children);
+                BuildContentChildren(children, contentParent, configureChild);
+
+                LayoutCore.ForceRebuildLayout(contentParent.gameObject);
+                if (observerObject != contentParent.gameObject)
+                    LayoutCore.ForceRebuildLayout(observerObject);
+
+                Canvas.ForceUpdateCanvases();
+                afterRebuild?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[UniftUI] {ownerName} rebuild error: {e.Message}\n{e.StackTrace}");
+            }
+        }
+
+        protected void ClearBuiltChildren(Transform parent)
+        {
+            if (parent == null)
+                return;
+
+            List<GameObject> oldChildren = new List<GameObject>();
+            foreach (Transform child in parent)
+                if (child != null && child.gameObject != null)
+                    oldChildren.Add(child.gameObject);
+
+            foreach (GameObject child in oldChildren)
+                DestroyGameObject(child);
+        }
 
         protected void ObserveState(State state)
         {
@@ -80,7 +269,7 @@ namespace UniftUI
             var lifecycle = gameObject.GetComponent<ElementLifecycleHost>();
             if (lifecycle == null)
                 lifecycle = gameObject.AddComponent<ElementLifecycleHost>();
-            lifecycle.Registry = bindingRegistry;
+            lifecycle.Attach(this, bindingRegistry);
 
             var animationHost = gameObject.GetComponent<ElementAnimationHost>();
             if (animationHost == null)
@@ -117,6 +306,11 @@ namespace UniftUI
                 return;
 
             ApplyDynamicEffects(changedState);
+        }
+
+        internal bool IsCurrentBuiltGameObject(GameObject gameObject)
+        {
+            return builtGameObject == gameObject;
         }
 
         private void ApplyBindings(State changedState)
@@ -213,6 +407,13 @@ namespace UniftUI
             return this;
         }
 
+        /// <summary>Registers a callback for pointer enter and exit.</summary>
+        public UIElement WithOnHover(Action<bool> action)
+        {
+            onHoverAction = action;
+            return this;
+        }
+
         protected void ApplyOnAppearCallback(GameObject gameObject)
         {
             if (gameObject == null) return;
@@ -235,12 +436,22 @@ namespace UniftUI
             callback.Initialize(updateAction);
         }
 
+        protected void ApplyHoverCallback(GameObject gameObject)
+        {
+            if (gameObject == null || onHoverAction == null) return;
+            var callback = gameObject.GetComponent<HoverCallback>();
+            if (callback == null)
+                callback = gameObject.AddComponent<HoverCallback>();
+            callback.Initialize(onHoverAction);
+        }
+
         protected void CleanupAllResources()
         {
             bindingRegistry.Dispose();
             onAppearAction = null;
             onAppearAsyncAction = null;
             updateAction = null;
+            onHoverAction = null;
         }
 
         internal void SetInheritedFont(TMP_FontAsset font)
@@ -345,6 +556,11 @@ namespace UniftUI
                     ApplyInteraction(builtGameObject);
             }, "allowsHitTesting", BindingKind.Visual);
             return this;
+        }
+
+        protected bool IsInputAllowed()
+        {
+            return !disabled && !hidden && allowsHitTesting;
         }
 
         /// <summary>
@@ -1061,6 +1277,7 @@ namespace UniftUI
             ApplyScale(gameObject);
             ApplyOnAppearCallback(gameObject);
             ApplyUpdateCallback(gameObject);
+            ApplyHoverCallback(gameObject);
             SetupDynamicEffects(gameObject);
         }
 
@@ -1093,7 +1310,7 @@ namespace UniftUI
             if (gameObject == null) return null;
 
             bool interactable = !disabled && !hidden;
-            bool blocksRaycasts = allowsHitTesting && !disabled && !hidden;
+            bool blocksRaycasts = IsInputAllowed();
             CanvasGroup cg = gameObject.GetComponent<CanvasGroup>();
 
             if (!interactable || !blocksRaycasts || cg != null)
@@ -1143,7 +1360,13 @@ namespace UniftUI
         {
             if (gameObject == null) return;
             var img = gameObject.GetComponent<Image>();
-            if (img != null) img.color = backgroundColor;
+            if (img == null && backgroundColor != Color.clear)
+                img = AddImage(gameObject, backgroundColor);
+            if (img != null)
+            {
+                img.color = backgroundColor;
+                ApplyRoundedCorners(gameObject, img);
+            }
         }
 
         protected void ApplyCustomPosition(GameObject gameObject)
@@ -1217,10 +1440,105 @@ namespace UniftUI
             }
 
             if (changed)
+                LayoutCore.ForceRebuildLayout(gameObject);
+        }
+
+        protected static void ConfigureSelectableColors(Selectable selectable, Color normalColor,
+            Color? highlightedColor = null, Color? pressedColor = null, Color? selectedColor = null,
+            Color? disabledColor = null)
+        {
+            if (selectable == null)
+                return;
+
+            ColorBlock colors = selectable.colors;
+            colors.normalColor = normalColor;
+            colors.highlightedColor = highlightedColor ?? AdjustSelectableColor(normalColor, 1.08f);
+            colors.pressedColor = pressedColor ?? AdjustSelectableColor(normalColor, 0.88f);
+            colors.selectedColor = selectedColor ?? colors.highlightedColor;
+            colors.disabledColor = disabledColor ?? new Color(normalColor.r, normalColor.g, normalColor.b, normalColor.a * 0.5f);
+            colors.colorMultiplier = 1f;
+            selectable.colors = colors;
+        }
+
+        protected static Color AdjustSelectableColor(Color color, float multiplier)
+        {
+            return UniftUIColors.ScaleRgb(color, multiplier);
+        }
+
+        internal static GameObject EnsureControlHitArea(GameObject parent, ref GameObject hitAreaObject,
+            string name, ControlHitTarget target)
+        {
+            if (parent == null)
+                return hitAreaObject;
+
+            if (hitAreaObject == null)
             {
-                var rect = gameObject.GetComponent<RectTransform>();
-                if (rect != null) LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+                hitAreaObject = CreateFullStretchChild(
+                    string.IsNullOrEmpty(name) ? "ControlHitArea" : name,
+                    parent.transform);
+
+                LayoutElement layoutElement = hitAreaObject.AddComponent<LayoutElement>();
+                layoutElement.ignoreLayout = true;
+
+                AddImage(hitAreaObject, new Color(1f, 1f, 1f, 0f));
             }
+
+            ControlHitProxy proxy = hitAreaObject.GetComponent<ControlHitProxy>();
+            if (proxy == null)
+                proxy = hitAreaObject.AddComponent<ControlHitProxy>();
+            proxy.Initialize(target);
+
+            hitAreaObject.transform.SetAsLastSibling();
+            return hitAreaObject;
+        }
+
+        protected static Image EnsureControlHitProxy(GameObject gameObject, Image hitImage, UIElement content)
+        {
+            if (gameObject == null || !TryGetSingleControlHitTarget(content, out ControlHitTarget target))
+                return hitImage;
+
+            if (hitImage == null)
+            {
+                hitImage = gameObject.GetComponent<Image>();
+                if (hitImage == null)
+                    hitImage = AddImage(gameObject, new Color(1f, 1f, 1f, 0f));
+                else
+                    hitImage.color = new Color(1f, 1f, 1f, 0f);
+            }
+
+            hitImage.raycastTarget = true;
+
+            ControlHitProxy proxy = gameObject.GetComponent<ControlHitProxy>();
+            if (proxy == null)
+                proxy = gameObject.AddComponent<ControlHitProxy>();
+            proxy.Initialize(target);
+
+            return hitImage;
+        }
+
+        private static bool TryGetSingleControlHitTarget(UIElement element, out ControlHitTarget target)
+        {
+            target = default(ControlHitTarget);
+            if (element == null)
+                return false;
+
+            if (element is IControlHitTargetSource source)
+                return source.TryGetControlHitTarget(out target);
+
+            if (!(element is ILayoutContainer container))
+                return false;
+
+            UIElement onlyChild = null;
+            foreach (UIElement child in container.GetChildren())
+            {
+                if (child == null)
+                    continue;
+                if (onlyChild != null)
+                    return false;
+                onlyChild = child;
+            }
+
+            return onlyChild != null && TryGetSingleControlHitTarget(onlyChild, out target);
         }
 
         protected void ApplyFrameConstraints(GameObject gameObject)
@@ -1265,7 +1583,7 @@ namespace UniftUI
             if (stack != null)
             {
                 stack.padding = padding;
-                LayoutRebuilder.MarkLayoutForRebuild(stack.GetComponent<RectTransform>());
+                LayoutCore.MarkLayoutDirty(stack.gameObject);
                 return;
             }
 
@@ -1273,7 +1591,7 @@ namespace UniftUI
             if (zstack != null)
             {
                 zstack.padding = padding;
-                LayoutRebuilder.MarkLayoutForRebuild(zstack.GetComponent<RectTransform>());
+                LayoutCore.MarkLayoutDirty(zstack.gameObject);
                 return;
             }
 
@@ -1281,7 +1599,7 @@ namespace UniftUI
             if (single != null)
             {
                 single.padding = padding;
-                LayoutRebuilder.MarkLayoutForRebuild(single.GetComponent<RectTransform>());
+                LayoutCore.MarkLayoutDirty(single.gameObject);
             }
         }
 

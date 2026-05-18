@@ -1,13 +1,15 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 namespace UniftUI
 {
-    /// <summary>Subscribes to <see cref="State"/> changes and triggers a UI rebuild callback.</summary>
-    public class StateObserver : MonoBehaviour
+    /// <summary>Subscribes to <see cref="State"/> changes and schedules a content rebuild callback.</summary>
+    internal sealed class ContentRebuildObserver : MonoBehaviour
     {
         private Action rebuildAction;
         private State[] states;
+        private readonly List<IDisposable> subscriptions = new List<IDisposable>();
         private bool isDestroyed = false;
         private bool isObserving = false;
         private bool isDirty = false;
@@ -29,12 +31,13 @@ namespace UniftUI
             if (isObserving || states == null)
                 return;
 
+            var seen = new HashSet<State>();
             foreach (var state in states)
             {
-                if (state != null)
-                {
-                    state.AddObserver(OnStateChanged);
-                }
+                if (state == null || !seen.Add(state))
+                    continue;
+
+                subscriptions.Add(state.AddObserver(OnStateChanged));
             }
 
             isObserving = true;
@@ -71,7 +74,7 @@ namespace UniftUI
             }
             catch (Exception e)
             {
-                Debug.LogError($"[UniftUI] StateObserver rebuild error: {e.Message}\n{e.StackTrace}");
+                Debug.LogError($"[UniftUI] ContentRebuildObserver rebuild error: {e.Message}\n{e.StackTrace}");
                 RemoveObservers();
             }
         }
@@ -96,16 +99,12 @@ namespace UniftUI
 
         private void RemoveObservers()
         {
-            if (!isObserving || states == null)
+            if (!isObserving)
                 return;
 
-            foreach (var state in states)
-            {
-                if (state != null)
-                {
-                    state.RemoveObserver(OnStateChanged);
-                }
-            }
+            foreach (var subscription in subscriptions)
+                subscription?.Dispose();
+            subscriptions.Clear();
 
             isObserving = false;
         }

@@ -4,7 +4,36 @@ namespace UniftUI
 {
     public interface IButtonStyle
     {
-        void Apply(ButtonElement button);
+        UIElement MakeBody(ButtonStyleConfiguration configuration);
+    }
+
+    public sealed class ButtonStyleConfiguration
+    {
+        public ButtonStyleConfiguration(UIElement label, bool isPressed, bool isHovered)
+        {
+            Label = label;
+            IsPressed = isPressed;
+            IsHovered = isHovered;
+        }
+
+        public UIElement Label { get; }
+        public bool IsPressed { get; }
+        public bool IsHovered { get; }
+        public UIElement label => Label;
+        public bool isPressed => IsPressed;
+        public bool isHovered => IsHovered;
+    }
+
+    public sealed class DefaultButtonStyle : IButtonStyle
+    {
+        public UIElement MakeBody(ButtonStyleConfiguration configuration)
+        {
+            if (configuration == null)
+                return null;
+
+            UIElement label = configuration.Label;
+            return configuration.IsPressed ? label.Opacity(0.45f) : label;
+        }
     }
 
     public interface ITextFieldStyle
@@ -25,34 +54,42 @@ namespace UniftUI
             this.cornerRadius = cornerRadius;
         }
 
-        public void Apply(ButtonElement button)
+        public UIElement MakeBody(ButtonStyleConfiguration configuration)
         {
-            if (button == null)
-                return;
+            if (configuration == null)
+                return null;
 
-            button.SetBackgroundColor(backgroundColor);
-            button.SetTextColor(foregroundColor);
-            button.WithCornerRadius(cornerRadius);
+            Color fill = configuration.IsPressed ? UniftUIColors.ScaleRgb(backgroundColor, 0.88f) : backgroundColor;
+            return configuration.Label
+                .ForegroundColor(foregroundColor)
+                .Padding(top: 5f, bottom: 5f, left: 10f, right: 10f)
+                .Background(fill)
+                .CornerRadius(cornerRadius);
         }
     }
 
     public sealed class PlainButtonStyle : IButtonStyle
     {
-        private readonly Color foregroundColor;
+        private readonly Color? foregroundColor;
+
+        public PlainButtonStyle()
+        {
+        }
 
         public PlainButtonStyle(Color foregroundColor)
         {
             this.foregroundColor = foregroundColor;
         }
 
-        public void Apply(ButtonElement button)
+        public UIElement MakeBody(ButtonStyleConfiguration configuration)
         {
-            if (button == null)
-                return;
+            if (configuration == null)
+                return null;
 
-            button.SetBackgroundColor(Color.clear);
-            button.SetTextColor(foregroundColor);
-            button.WithCornerRadius(0f);
+            UIElement label = configuration.Label;
+            if (foregroundColor.HasValue)
+                label = label.ForegroundColor(foregroundColor.Value);
+            return configuration.IsPressed ? label.Opacity(0.45f) : label;
         }
     }
 
@@ -91,7 +128,7 @@ namespace UniftUI
             textField.SetFocusedBackgroundColor(focusedBackgroundColor);
             textField.SetTextColor(textColor);
             textField.SetCaretColor(tintColor);
-            textField.SetSelectionColor(new Color(tintColor.r, tintColor.g, tintColor.b, Mathf.Min(tintColor.a, 0.35f)));
+            textField.SetSelectionColor(UniftUIColors.SelectionTint(tintColor));
             textField.SetTextFieldPadding(margins.x, margins.y, margins.z, margins.w);
             textField.WithCornerRadius(cornerRadius);
         }
@@ -117,7 +154,7 @@ namespace UniftUI
             textField.SetFocusedBackgroundColor(Color.clear);
             textField.SetTextColor(textColor);
             textField.SetCaretColor(tintColor);
-            textField.SetSelectionColor(new Color(tintColor.r, tintColor.g, tintColor.b, Mathf.Min(tintColor.a, 0.35f)));
+            textField.SetSelectionColor(UniftUIColors.SelectionTint(tintColor));
             textField.SetTextFieldPadding(0f, 0f, 0f, 0f);
             textField.WithCornerRadius(0f);
         }
@@ -172,7 +209,7 @@ namespace UniftUI
             {
                 Color tint = tintColor.Value;
                 textField.SetCaretColor(tint);
-                textField.SetSelectionColor(new Color(tint.r, tint.g, tint.b, Mathf.Min(tint.a, 0.35f)));
+                textField.SetSelectionColor(UniftUIColors.SelectionTint(tint));
             }
             if (textSelectionColor.HasValue)
                 textField.SetSelectionColor(textSelectionColor.Value);
@@ -192,8 +229,14 @@ namespace UniftUI
 
     public static class ButtonStyles
     {
+        public static IButtonStyle Automatic()
+            => new DefaultButtonStyle();
+
         public static IButtonStyle Filled(Color backgroundColor, Color foregroundColor, float cornerRadius = 8f)
             => new FilledButtonStyle(backgroundColor, foregroundColor, cornerRadius);
+
+        public static IButtonStyle Plain()
+            => new PlainButtonStyle();
 
         public static IButtonStyle Plain(Color foregroundColor)
             => new PlainButtonStyle(foregroundColor);

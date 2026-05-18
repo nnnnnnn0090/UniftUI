@@ -219,6 +219,9 @@ namespace UniftUI
         public static T update<T>(this T element, Action action) where T : UIElement
             => element.Update(action);
 
+        public static T onHover<T>(this T element, Action<bool> action) where T : UIElement
+            => element.OnHover(action);
+
         public static T animation<T>(this T element, float duration) where T : UIElement
             => element.Animation(duration);
 

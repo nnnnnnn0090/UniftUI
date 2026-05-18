@@ -46,8 +46,7 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject backgroundContainer = new GameObject("BackgroundContainer");
-            backgroundContainer.transform.SetParent(parent, false);
+            GameObject backgroundContainer = CreateElementRoot("BackgroundContainer", parent);
 
             var layoutGroup = backgroundContainer.AddComponent<UniftUISingleChildLayoutGroup>();
             layoutGroup.Configure(new RectOffset(0, 0, 0, 0), TextAnchor.MiddleCenter);
@@ -59,23 +58,15 @@ namespace UniftUI
             if (infiniteHeight)
                 PropagateInfiniteHeightToContent();
 
-            Image bgImage = backgroundContainer.AddComponent<Image>();
-            bgImage.color = elementBackgroundColor;
+            Image bgImage = AddImage(backgroundContainer, elementBackgroundColor);
+            bgImage = EnsureControlHitProxy(backgroundContainer, bgImage, content);
 
             if (base.backgroundColor != Color.clear && base.backgroundColor != elementBackgroundColor)
             {
-                GameObject additionalBg = new GameObject("AdditionalBackground");
-                additionalBg.transform.SetParent(backgroundContainer.transform, false);
+                GameObject additionalBg = CreateFullStretchChild("AdditionalBackground", backgroundContainer.transform);
                 additionalBg.transform.SetAsFirstSibling();
 
-                RectTransform rectTransform = additionalBg.AddComponent<RectTransform>();
-                rectTransform.anchorMin = Vector2.zero;
-                rectTransform.anchorMax = Vector2.one;
-                rectTransform.offsetMin = Vector2.zero;
-                rectTransform.offsetMax = Vector2.zero;
-
-                Image additionalImage = additionalBg.AddComponent<Image>();
-                additionalImage.color = base.backgroundColor;
+                Image additionalImage = AddImage(additionalBg, base.backgroundColor);
 
                 ApplyRoundedCorners(additionalBg, additionalImage);
             }

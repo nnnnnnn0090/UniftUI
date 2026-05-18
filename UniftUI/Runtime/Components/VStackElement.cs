@@ -22,21 +22,7 @@ namespace UniftUI
             this.states = states;
             this.spacing = spacing;
             this.alignment = alignment;
-
-            if (content != null)
-            {
-                var parentContext = UIContext.Current;
-
-                try
-                {
-                    UIContext.Current = this;
-                    content.Invoke();
-                }
-                finally
-                {
-                    UIContext.Current = parentContext;
-                }
-            }
+            MaterializeContent(content, children);
         }
 
         public void AddChild(UIElement child)
@@ -72,15 +58,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject container = new GameObject("VStack");
-            container.transform.SetParent(parent, false);
-
-            Image backgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                backgroundImage = container.AddComponent<Image>();
-                backgroundImage.color = backgroundColor;
-            }
+            GameObject container = CreateElementRoot("VStack", parent);
+            Image backgroundImage = AddBackgroundImageIfNeeded(container);
 
             UniftUIStackLayoutGroup layout = container.AddComponent<UniftUIStackLayoutGroup>();
             layout.padding = padding ?? new RectOffset(0, 0, 0, 0);
@@ -88,77 +67,13 @@ namespace UniftUI
 
             LayoutElementUtility.Configure(container, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight);
 
-            foreach (var child in children)
-            {
-                ApplyInheritedFont(child);
-                child.Build(container.transform);
-            }
+            BuildContentChildren(children, container.transform);
 
-            if (states != null && states.Length > 0)
-            {
-                SetupStateObserver(container);
-            }
+            SetupContentRebuildObserver(states, container, container.transform, children, content, "VStack");
 
             ApplyAllEffects(container, backgroundImage);
 
             return container;
-        }
-
-        private void SetupStateObserver(GameObject container)
-        {
-            if (container == null) return;
-
-            StateObserver observer = container.AddComponent<StateObserver>();
-
-            var localContent = content;
-            var localChildren = children;
-
-            observer.Initialize(states, () => {
-                if (container == null || !container)
-                {
-                    Debug.LogWarning("[UniftUI] VStack rebuild skipped: container was destroyed.");
-                    return;
-                }
-
-                try
-                {
-                    foreach (Transform child in container.transform)
-                        if (child != null && child.gameObject != null)
-                            DestroyGameObject(child.gameObject);
-
-                    localChildren.Clear();
-
-                    var parentContext = UIContext.Current;
-                    try
-                    {
-                        UIContext.Current = this;
-                        localContent?.Invoke();
-                    }
-                    finally
-                    {
-                        UIContext.Current = parentContext;
-                    }
-
-                    foreach (var child in localChildren)
-                    {
-                        if (child != null && container != null && container.transform != null)
-                        {
-                            ApplyInheritedFont(child);
-                            child.Build(container.transform);
-                        }
-                    }
-
-                    if (container != null)
-                    {
-                        LayoutRebuilder.ForceRebuildLayoutImmediate(container.GetComponent<RectTransform>());
-                        Canvas.ForceUpdateCanvases();
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[UniftUI] VStack rebuild error: {e.Message}\n{e.StackTrace}");
-                }
-            });
         }
     }
 }

@@ -26,12 +26,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject divider = new GameObject("Divider");
-            divider.transform.SetParent(parent, false);
-
-            Image image = divider.AddComponent<Image>();
-            image.color = color;
-            image.raycastTarget = false;
+            GameObject divider = CreateElementRoot("Divider", parent);
+            Image image = AddImage(divider, color, false);
 
             LayoutElementUtility.Configure(divider, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight, 0f, thickness);
             ApplyAllEffects(divider, image);

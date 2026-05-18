@@ -66,15 +66,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject container = new GameObject("GridRow");
-            container.transform.SetParent(parent, false);
-
-            Image backgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                backgroundImage = container.AddComponent<Image>();
-                backgroundImage.color = backgroundColor;
-            }
+            GameObject container = CreateElementRoot("GridRow", parent);
+            Image backgroundImage = AddBackgroundImageIfNeeded(container);
 
             UniftUIStackLayoutGroup layout = container.AddComponent<UniftUIStackLayoutGroup>();
             layout.padding = padding ?? new RectOffset(0, 0, 0, 0);

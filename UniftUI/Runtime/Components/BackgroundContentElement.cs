@@ -86,16 +86,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject container = new GameObject("BackgroundContentContainer");
-            container.transform.SetParent(parent, false);
-
-            Image backgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                backgroundImage = container.AddComponent<Image>();
-                backgroundImage.color = backgroundColor;
-                backgroundImage.raycastTarget = false;
-            }
+            GameObject container = CreateElementRoot("BackgroundContentContainer", parent);
+            Image backgroundImage = AddBackgroundImageIfNeeded(container, false);
 
             var layoutGroup = container.AddComponent<UniftUISingleChildLayoutGroup>();
             layoutGroup.Configure(new RectOffset(0, 0, 0, 0), TextAnchor.MiddleCenter);
@@ -151,15 +143,8 @@ namespace UniftUI
 
         private void BuildBackgroundLayer(Transform parent)
         {
-            GameObject layer = new GameObject("BackgroundLayer");
-            layer.transform.SetParent(parent, false);
+            GameObject layer = CreateFullStretchChild("BackgroundLayer", parent);
             layer.transform.SetAsFirstSibling();
-
-            RectTransform rect = layer.AddComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
 
             var layoutElement = layer.AddComponent<LayoutElement>();
             layoutElement.ignoreLayout = true;

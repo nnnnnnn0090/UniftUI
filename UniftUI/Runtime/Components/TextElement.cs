@@ -429,15 +429,8 @@ namespace UniftUI
         /// <inheritdoc />
         public override GameObject Build(Transform parent)
         {
-            GameObject textObj = new GameObject("Text");
-            textObj.transform.SetParent(parent, false);
-
-            Image background = null;
-            if (backgroundColor != Color.clear)
-            {
-                background = textObj.AddComponent<Image>();
-                background.color = backgroundColor;
-            }
+            GameObject textObj = CreateElementRoot("Text", parent);
+            Image background = AddBackgroundImageIfNeeded(textObj);
 
             TextMeshProUGUI textComponent = textObj.AddComponent<TextMeshProUGUI>();
             textComponent.text = text;
@@ -507,7 +500,7 @@ namespace UniftUI
                 if (infiniteWidth)
                 {
                     RectTransform rect = builtTextObject != null
-                        ? builtTextObject.GetComponent<RectTransform>()
+                        ? EnsureRectTransform(builtTextObject)
                         : null;
                     float width = rect != null ? rect.rect.width : 0f;
                     if (width > 0.5f)
@@ -588,7 +581,7 @@ namespace UniftUI
                 layoutElement.flexibleHeight = 0f;
             }
 
-            ElementHost.MarkLayoutDirty(builtTextObject);
+            LayoutCore.MarkLayoutDirty(builtTextObject);
         }
     }
 

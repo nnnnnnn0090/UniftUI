@@ -79,22 +79,15 @@ namespace UniftUI
         }
 
         /// <summary>Applies offset as a Unity <c>anchoredPosition</c> delta.</summary>
-        public static Vector2 SwiftOffsetToAnchoredDelta(Vector2 swift)
+        public static Vector2 VisualOffsetToAnchoredDelta(Vector2 visualOffset)
         {
-            return new Vector2(swift.x, -swift.y);
+            return new Vector2(visualOffset.x, -visualOffset.y);
         }
 
         public override GameObject Build(Transform parent)
         {
-            GameObject outer = new GameObject("Offset");
-            outer.transform.SetParent(parent, false);
-
-            Image bg = null;
-            if (backgroundColor != Color.clear)
-            {
-                bg = outer.AddComponent<Image>();
-                bg.color = backgroundColor;
-            }
+            GameObject outer = CreateElementRoot("Offset", parent);
+            Image bg = AddBackgroundImageIfNeeded(outer);
 
             layoutGroup = outer.AddComponent<UniftUISingleChildLayoutGroup>();
             layoutGroup.Configure(new RectOffset(0, 0, 0, 0), TextAnchor.MiddleCenter);
@@ -145,21 +138,21 @@ namespace UniftUI
             return offset;
         }
 
-        private void ApplyVisualOffsetFromBinding(Vector2 swiftOffset)
+        private void ApplyVisualOffsetFromBinding(Vector2 visualOffset)
         {
             if (builtGameObject == null || layoutGroup == null) return;
             if (useAnimation && animationDuration > 0f)
             {
                 var animator = BaseAnimator<Vector2>.GetOrReplace<VisualOffsetAnimator>(builtGameObject);
-                animator.AnimateTo(layoutGroup.VisualOffset, swiftOffset, animationDuration, animationEasing);
+                animator.AnimateTo(layoutGroup.VisualOffset, visualOffset, animationDuration, animationEasing);
             }
             else
             {
-                layoutGroup.SetVisualOffset(swiftOffset);
+                layoutGroup.SetVisualOffset(visualOffset);
             }
 
-            offset = swiftOffset;
-            LayoutRebuilder.MarkLayoutForRebuild(builtGameObject.GetComponent<RectTransform>());
+            offset = visualOffset;
+            LayoutCore.MarkLayoutDirty(builtGameObject);
         }
 
         public override UIElement WithCornerRadius(float radius)

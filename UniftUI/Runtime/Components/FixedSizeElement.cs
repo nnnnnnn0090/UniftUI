@@ -53,15 +53,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject outer = new GameObject("FixedSize");
-            outer.transform.SetParent(parent, false);
-
-            Image bg = null;
-            if (backgroundColor != Color.clear)
-            {
-                bg = outer.AddComponent<Image>();
-                bg.color = backgroundColor;
-            }
+            GameObject outer = CreateElementRoot("FixedSize", parent);
+            Image bg = AddBackgroundImageIfNeeded(outer);
 
             outer.AddComponent<UniftUISingleChildLayoutGroup>()
                 .Configure(new RectOffset(0, 0, 0, 0), TextAnchor.MiddleCenter);

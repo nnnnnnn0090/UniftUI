@@ -8,7 +8,7 @@ using UniftUI.Internal;
 namespace UniftUI
 {
     /// <summary>Text input bound to <see cref="State{T}"/> with optional placeholder and styling.</summary>
-    public class TextFieldElement : UIElement
+    public class TextFieldElement : UIElement, IControlHitTargetSource
     {
         private State<string> text;
         private string placeholder;
@@ -60,6 +60,21 @@ namespace UniftUI
             this.placeholder = placeholder;
             this.onTextChanged = onTextChanged;
             UIContext.Add(this);
+        }
+
+        bool IControlHitTargetSource.TryGetControlHitTarget(out ControlHitTarget target)
+        {
+            target = new ControlHitTarget(FocusInputField, canReceiveInput: IsInputAllowed);
+            return true;
+        }
+
+        private void FocusInputField()
+        {
+            if (!IsInputAllowed() || builtInputField == null)
+                return;
+
+            builtInputField.Select();
+            builtInputField.ActivateInputField();
         }
 
         public TextFieldElement(string title, State<string> text, TextElement prompt = null, Action<string> onTextChanged = null)
@@ -244,6 +259,7 @@ namespace UniftUI
         {
             focusedBackgroundColor = color;
             hasFocusedBackgroundColor = true;
+            ConfigureInputFieldTransition();
             ConfigureFocusHighlight(builtInputField != null ? builtInputField.gameObject : null, builtBackgroundImage);
             return this;
         }
@@ -253,7 +269,10 @@ namespace UniftUI
             backgroundColor = color;
             hasBackgroundColor = true;
             if (builtBackgroundImage != null)
+            {
                 builtBackgroundImage.color = color;
+                ConfigureInputFieldTransition();
+            }
             return this;
         }
 
@@ -325,6 +344,7 @@ namespace UniftUI
             builtInputField = inputField;
             builtBackgroundImage = backgroundImage;
             ConfigureInputField(inputField, textComponent, placeholderComponent);
+            ConfigureInputFieldTransition();
             ConfigureLayout(fieldContainer);
             BindState(inputField, fieldContainer);
             ConfigureFocusHighlight(fieldContainer, backgroundImage);
@@ -339,18 +359,14 @@ namespace UniftUI
         private GameObject CreateInputFieldRoot(Transform parent, out TMP_InputField inputField, out Image backgroundImage,
             out TMP_Text textComponent, out TMP_Text placeholderComponent)
         {
-            var root = new GameObject(ElementName);
+            var root = CreateElementRoot(ElementName, parent);
             root.SetActive(false);
-            root.transform.SetParent(parent, false);
-            root.AddComponent<RectTransform>();
+            EnsureRectTransform(root);
 
-            backgroundImage = root.AddComponent<Image>();
-            backgroundImage.color = EffectiveBackgroundColor;
-            backgroundImage.raycastTarget = true;
+            backgroundImage = AddImage(root, EffectiveBackgroundColor);
 
-            var textArea = new GameObject("Text Area");
-            textArea.transform.SetParent(root.transform, false);
-            var textAreaRect = textArea.AddComponent<RectTransform>();
+            var textArea = CreateChildObject("Text Area", root.transform);
+            var textAreaRect = EnsureRectTransform(textArea);
             builtTextViewport = textAreaRect;
             StretchToParent(textAreaRect, textInsets);
             var textMask = textArea.AddComponent<RectMask2D>();
@@ -360,9 +376,8 @@ namespace UniftUI
                 ? BuildPromptElement(textArea.transform)
                 : BuildStringPlaceholder(textArea.transform);
 
-            var textGo = new GameObject("Text");
-            textGo.transform.SetParent(textArea.transform, false);
-            var textRect = textGo.AddComponent<RectTransform>();
+            var textGo = CreateChildObject("Text", textArea.transform);
+            var textRect = EnsureRectTransform(textGo);
             StretchToParent(textRect);
             textComponent = textGo.AddComponent<TextMeshProUGUI>();
             textComponent.raycastTarget = false;
@@ -382,9 +397,8 @@ namespace UniftUI
 
         private TMP_Text BuildStringPlaceholder(Transform parent)
         {
-            var placeholderGo = new GameObject("Placeholder");
-            placeholderGo.transform.SetParent(parent, false);
-            var placeholderRect = placeholderGo.AddComponent<RectTransform>();
+            var placeholderGo = CreateChildObject("Placeholder", parent);
+            var placeholderRect = EnsureRectTransform(placeholderGo);
             StretchToParent(placeholderRect);
             var placeholderComponent = placeholderGo.AddComponent<TextMeshProUGUI>();
             ConfigurePlaceholderComponent(placeholderComponent);
@@ -397,9 +411,7 @@ namespace UniftUI
             GameObject promptObject = promptElement.Build(parent);
             promptObject.name = "Placeholder";
 
-            var promptRect = promptObject.GetComponent<RectTransform>();
-            if (promptRect != null)
-                StretchToParent(promptRect);
+            StretchToParent(EnsureRectTransform(promptObject));
 
             TMP_Text promptText = promptObject.GetComponent<TMP_Text>();
             ConfigurePlaceholderComponent(promptText);
@@ -516,8 +528,7 @@ namespace UniftUI
 
             if (focusedState.Value)
             {
-                builtInputField.Select();
-                builtInputField.ActivateInputField();
+                FocusInputField();
                 return;
             }
 
@@ -562,12 +573,11 @@ namespace UniftUI
             if (text == null)
                 return;
 
-            var observer = fieldContainer.AddComponent<StateObserver>();
-            observer.Initialize(new[] { text }, () =>
+            AddPropertyBinding(text, () =>
             {
                 if (inputField != null && inputField.text != text.Value)
                     inputField.text = text.Value ?? string.Empty;
-            });
+            }, "textFieldText", BindingKind.Content);
         }
 
         private void ConfigureFocusHighlight(GameObject fieldContainer, Image backgroundImage)
@@ -592,7 +602,17 @@ namespace UniftUI
             trigger.triggers.Add(deselectEntry);
         }
 
-        private Color EffectiveBackgroundColor => hasBackgroundColor ? backgroundColor : Color.white;
+        private void ConfigureInputFieldTransition()
+        {
+            if (builtInputField == null)
+                return;
+
+            Color normal = EffectiveBackgroundColor;
+            Color highlighted = hasFocusedBackgroundColor ? focusedBackgroundColor : normal;
+            ConfigureSelectableColors(builtInputField, normal, highlighted, highlighted, highlighted);
+        }
+
+        private Color EffectiveBackgroundColor => hasBackgroundColor ? backgroundColor : Color.clear;
 
         private void ConfigureLayout(GameObject fieldContainer)
         {

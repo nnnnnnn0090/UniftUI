@@ -67,6 +67,63 @@ namespace UniftUI.Internal
         }
     }
 
+    internal static class LayoutCore
+    {
+        public static RectTransform EnsureRectTransform(GameObject gameObject)
+        {
+            RectTransform rect = gameObject.GetComponent<RectTransform>();
+            if (rect == null)
+                rect = gameObject.AddComponent<RectTransform>();
+            return rect;
+        }
+
+        public static void Stretch(RectTransform rect)
+        {
+            if (rect == null)
+                return;
+
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+        }
+
+        public static void MarkLayoutDirty(GameObject gameObject)
+        {
+            if (gameObject == null)
+                return;
+
+            RectTransform rect = gameObject.GetComponent<RectTransform>();
+            MarkLayoutDirty(rect);
+        }
+
+        public static void MarkLayoutDirty(RectTransform rect)
+        {
+            if (rect == null)
+                return;
+
+            LayoutRebuilder.MarkLayoutForRebuild(rect);
+        }
+
+        public static void ForceRebuildLayout(GameObject gameObject)
+        {
+            if (gameObject == null)
+                return;
+
+            RectTransform rect = gameObject.GetComponent<RectTransform>();
+            ForceRebuildLayout(rect);
+        }
+
+        public static void ForceRebuildLayout(RectTransform rect)
+        {
+            if (rect == null)
+                return;
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+        }
+    }
+
     internal static class ElementHost
     {
         public static GameObject BuildRoot(UIElement element, Canvas canvas)
@@ -113,7 +170,7 @@ namespace UniftUI.Internal
 
             if (fillWidth && fillHeight)
             {
-                Stretch(rect);
+                LayoutCore.Stretch(rect);
                 return;
             }
 
@@ -139,38 +196,6 @@ namespace UniftUI.Internal
             }
             rect.offsetMin = offsetMin;
             rect.offsetMax = offsetMax;
-        }
-
-        public static RectTransform EnsureRectTransform(GameObject gameObject)
-        {
-            RectTransform rect = gameObject.GetComponent<RectTransform>();
-            if (rect == null)
-                rect = gameObject.AddComponent<RectTransform>();
-            return rect;
-        }
-
-        public static void Stretch(RectTransform rect)
-        {
-            if (rect == null)
-                return;
-
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-        }
-
-        public static void MarkLayoutDirty(GameObject gameObject)
-        {
-            if (gameObject == null)
-                return;
-
-            RectTransform rect = gameObject.GetComponent<RectTransform>();
-            if (rect == null)
-                return;
-
-            LayoutRebuilder.MarkLayoutForRebuild(rect);
         }
     }
 

@@ -84,6 +84,31 @@ namespace UniftUI.Tests
         }
 
         [UnityTest]
+        public IEnumerator RootVStackWithPadding_CentersContentOnCanvas()
+        {
+            Canvas canvas = CreateCanvas();
+
+            UIElements.VStack(() =>
+            {
+                UIElements.Text("Count: 0").frame(width: 100f, height: 20f);
+                UIElements.Text("Increment").frame(width: 100f, height: 20f);
+            }, spacing: 12f)
+            .padding(24)
+            .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform vstack = FindRect(canvas.transform, "VStack");
+            Rect first = GetLocalRect(vstack, FindRect(vstack, "Text", 0));
+            Rect second = GetLocalRect(vstack, FindRect(vstack, "Text", 1));
+            float combinedCenterY = (Mathf.Min(first.yMin, second.yMin) + Mathf.Max(first.yMax, second.yMax)) * 0.5f;
+
+            Assert.That(vstack.rect.height, Is.GreaterThan(500f));
+            Assert.That(combinedCenterY, Is.EqualTo(0f).Within(1f));
+        }
+
+        [UnityTest]
         public IEnumerator HStack_FrameCentersContentOnMainAxis()
         {
             Canvas canvas = CreateCanvas();
@@ -489,7 +514,7 @@ namespace UniftUI.Tests
         }
 
         [UnityTest]
-        public IEnumerator TextField_SwiftStylePromptUsesTextStyling()
+        public IEnumerator TextField_PromptElementUsesTextStyling()
         {
             Canvas canvas = CreateCanvas();
             var input = new State<string>(string.Empty);
@@ -655,7 +680,7 @@ namespace UniftUI.Tests
         }
 
         [UnityTest]
-        public IEnumerator TextField_SwiftLikeModifiersConfigureFocusSubmitAndSelection()
+        public IEnumerator TextField_ModifiersConfigureFocusSubmitAndSelection()
         {
             Canvas canvas = CreateCanvas();
             var input = new State<string>("select me");
@@ -773,6 +798,469 @@ namespace UniftUI.Tests
             Assert.That(wrapperImage.color.r, Is.EqualTo(fill.r).Within(0.001f));
             Assert.That(wrapperImage.color.g, Is.EqualTo(fill.g).Within(0.001f));
             Assert.That(wrapperImage.color.b, Is.EqualTo(fill.b).Within(0.001f));
+        }
+
+        [UnityTest]
+        public IEnumerator TextField_PaddingThenBackgroundDoesNotShowDefaultChrome()
+        {
+            Canvas canvas = CreateCanvas();
+            var input = new State<string>(string.Empty);
+            var fill = new Color(0.08f, 0.1f, 0.14f, 1f);
+
+            UIElements.TextField("Username", text: input, prompt: UIElements.Text("username"))
+                .padding(8)
+                .background(fill)
+                .frame(width: 280, height: 44)
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            TMP_InputField field = canvas.GetComponentInChildren<TMP_InputField>();
+            Assert.That(field, Is.Not.Null);
+
+            Image fieldImage = field.GetComponent<Image>();
+            Assert.That(fieldImage.color.a, Is.EqualTo(0f).Within(0.001f));
+
+            Image wrapperImage = field.transform.parent.parent.GetComponent<Image>();
+            Assert.That(wrapperImage, Is.Not.Null);
+            Assert.That(wrapperImage.color.r, Is.EqualTo(fill.r).Within(0.001f));
+            Assert.That(wrapperImage.color.g, Is.EqualTo(fill.g).Within(0.001f));
+            Assert.That(wrapperImage.color.b, Is.EqualTo(fill.b).Within(0.001f));
+        }
+
+        [UnityTest]
+        public IEnumerator Button_PaddingThenBackgroundDoesNotShowDefaultChrome()
+        {
+            Canvas canvas = CreateCanvas();
+            var fill = new Color(0.15f, 0.38f, 0.9f, 1f);
+
+            UIElements.Button("Increment", () => { })
+                .padding(12)
+                .background(fill)
+                .foregroundColor(Color.white)
+                .cornerRadius(10)
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            Button button = canvas.GetComponentInChildren<Button>();
+            Assert.That(button, Is.Not.Null);
+
+            Image buttonImage = button.GetComponent<Image>();
+            Assert.That(buttonImage.color.a, Is.EqualTo(0f).Within(0.001f));
+
+            Image wrapperImage = button.transform.parent.parent.GetComponent<Image>();
+            Assert.That(wrapperImage, Is.Not.Null);
+            Assert.That(wrapperImage.color.r, Is.EqualTo(fill.r).Within(0.001f));
+            Assert.That(wrapperImage.color.g, Is.EqualTo(fill.g).Within(0.001f));
+            Assert.That(wrapperImage.color.b, Is.EqualTo(fill.b).Within(0.001f));
+        }
+
+        [UnityTest]
+        public IEnumerator Button_PaddingThenBackgroundRespondsAcrossPaddedArea()
+        {
+            Canvas canvas = CreateCanvas();
+            EventSystem eventSystem = CreateTestEventSystem();
+            int clicks = 0;
+            var fill = new Color(0.15f, 0.38f, 0.9f, 1f);
+
+            UIElements.Button("Increment", () => clicks++)
+                .padding(12)
+                .background(fill)
+                .foregroundColor(Color.white)
+                .cornerRadius(10)
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform paddingRect = FindRect(canvas.transform, "PaddingContainer");
+            RectTransform buttonRect = FindRect(paddingRect, "Button");
+            Assert.That(paddingRect, Is.Not.Null);
+            Assert.That(buttonRect, Is.Not.Null);
+
+            Vector3[] paddingCorners = new Vector3[4];
+            Vector3[] buttonCorners = new Vector3[4];
+            paddingRect.GetWorldCorners(paddingCorners);
+            buttonRect.GetWorldCorners(buttonCorners);
+
+            Vector3 worldPoint = new Vector3(
+                (paddingCorners[0].x + buttonCorners[0].x) * 0.5f,
+                (paddingCorners[0].y + paddingCorners[1].y) * 0.5f,
+                paddingCorners[0].z);
+
+            var pointer = new PointerEventData(eventSystem)
+            {
+                position = RectTransformUtility.WorldToScreenPoint(null, worldPoint)
+            };
+
+            var results = new System.Collections.Generic.List<RaycastResult>();
+            canvas.GetComponent<GraphicRaycaster>().Raycast(pointer, results);
+            Assert.That(results.Count, Is.GreaterThan(0));
+
+            GameObject handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(results[0].gameObject);
+            Assert.That(handler, Is.Not.Null);
+            Assert.That(handler, Is.Not.EqualTo(buttonRect.gameObject));
+
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
+
+            Assert.That(clicks, Is.EqualTo(1));
+        }
+
+        [UnityTest]
+        public IEnumerator Button_CenterHitAreaInvokesClick()
+        {
+            Canvas canvas = CreateCanvas();
+            EventSystem eventSystem = CreateTestEventSystem();
+            int clicks = 0;
+            var fill = new Color(0.15f, 0.38f, 0.9f, 1f);
+
+            UIElements.Button("Increment", () => clicks++)
+                .padding(12)
+                .background(fill)
+                .foregroundColor(Color.white)
+                .cornerRadius(10)
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform hitArea = FindRect(canvas.transform, "ButtonHitArea");
+            Vector3 worldPoint = hitArea.TransformPoint(hitArea.rect.center);
+            var pointer = new PointerEventData(eventSystem)
+            {
+                button = PointerEventData.InputButton.Left,
+                position = RectTransformUtility.WorldToScreenPoint(null, worldPoint)
+            };
+
+            var results = new System.Collections.Generic.List<RaycastResult>();
+            canvas.GetComponent<GraphicRaycaster>().Raycast(pointer, results);
+            Assert.That(results.Count, Is.GreaterThan(0));
+            Assert.That(results[0].gameObject.name, Is.EqualTo("ButtonHitArea"));
+
+            GameObject handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(results[0].gameObject);
+            Assert.That(handler, Is.Not.Null);
+
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerDownHandler);
+            yield return null;
+            ForceLayout(canvas);
+
+            Assert.That(FindRect(canvas.transform, "ButtonHitArea").gameObject, Is.SameAs(handler));
+
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerUpHandler);
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
+
+            Assert.That(clicks, Is.EqualTo(1));
+        }
+
+        [UnityTest]
+        public IEnumerator Button_CustomContentStateBindingSurvivesPressedRebuild()
+        {
+            Canvas canvas = CreateCanvas();
+            EventSystem eventSystem = CreateTestEventSystem();
+            var count = new State<int>(0);
+            var accent = new Color(0.15f, 0.38f, 0.9f, 1f);
+
+            UIElements.Button(
+                UIElements.HStack(() =>
+                {
+                    UIElements.Text("Count").bold().fontSize(13);
+                    UIElements.Text(() => count.Value.ToString(), new State[] { count })
+                        .fontSize(12)
+                        .foregroundColor(Color.white)
+                        .padding(6)
+                        .background(accent)
+                        .cornerRadius(12f);
+                }, spacing: 6f),
+                () => count.Value++)
+                .padding(8)
+                .background(new Color(244 / 255f, 247 / 255f, 255 / 255f))
+                .cornerRadius(8f)
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            Assert.That(ContainsText(canvas.transform, "0"), Is.True);
+
+            RectTransform hitArea = FindRect(canvas.transform, "ButtonHitArea");
+            var pointer = new PointerEventData(eventSystem)
+            {
+                button = PointerEventData.InputButton.Left
+            };
+
+            GameObject handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(hitArea.gameObject);
+            Assert.That(handler, Is.Not.Null);
+
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerDownHandler);
+            yield return null;
+            ForceLayout(canvas);
+
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerUpHandler);
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            Assert.That(count.Value, Is.EqualTo(1));
+            Assert.That(ContainsText(canvas.transform, "1"), Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator ButtonStyle_UsesPressedConfiguration()
+        {
+            Canvas canvas = CreateCanvas();
+            EventSystem eventSystem = CreateTestEventSystem();
+
+            UIElements.Button("Tap", () => { })
+                .buttonStyle(new PressedProbeButtonStyle())
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform button = FindRect(canvas.transform, "Button");
+            Image normalBackground = FindRect(button, "BackgroundContainer").GetComponent<Image>();
+            AssertColor(normalBackground.color, PressedProbeButtonStyle.Normal);
+
+            var pointer = new PointerEventData(eventSystem)
+            {
+                button = PointerEventData.InputButton.Left
+            };
+
+            ExecuteEvents.Execute(button.gameObject, pointer, ExecuteEvents.pointerDownHandler);
+            yield return null;
+            ForceLayout(canvas);
+
+            Image pressedBackground = FindRect(button, "BackgroundContainer").GetComponent<Image>();
+            AssertColor(pressedBackground.color, PressedProbeButtonStyle.Pressed);
+
+            ExecuteEvents.Execute(button.gameObject, pointer, ExecuteEvents.pointerUpHandler);
+            yield return null;
+            ForceLayout(canvas);
+
+            Image releasedBackground = FindRect(button, "BackgroundContainer").GetComponent<Image>();
+            AssertColor(releasedBackground.color, PressedProbeButtonStyle.Normal);
+        }
+
+        [UnityTest]
+        public IEnumerator ButtonStyle_PressedConfigurationAppliesFromStyledPaddingArea()
+        {
+            Canvas canvas = CreateCanvas();
+            EventSystem eventSystem = CreateTestEventSystem();
+
+            UIElements.Button("Tap", () => { })
+                .buttonStyle(new PressedProbeButtonStyle())
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform button = FindRect(canvas.transform, "Button");
+            RectTransform background = FindRect(button, "BackgroundContainer");
+            RectTransform text = FindRect(button, "Text");
+
+            Vector3[] backgroundCorners = new Vector3[4];
+            Vector3[] textCorners = new Vector3[4];
+            background.GetWorldCorners(backgroundCorners);
+            text.GetWorldCorners(textCorners);
+
+            Vector3 worldPoint = new Vector3(
+                (backgroundCorners[0].x + textCorners[0].x) * 0.5f,
+                (backgroundCorners[0].y + backgroundCorners[1].y) * 0.5f,
+                backgroundCorners[0].z);
+
+            var pointer = new PointerEventData(eventSystem)
+            {
+                button = PointerEventData.InputButton.Left,
+                position = RectTransformUtility.WorldToScreenPoint(null, worldPoint)
+            };
+
+            var results = new System.Collections.Generic.List<RaycastResult>();
+            canvas.GetComponent<GraphicRaycaster>().Raycast(pointer, results);
+            Assert.That(results.Count, Is.GreaterThan(0));
+
+            GameObject handler = ExecuteEvents.GetEventHandler<IPointerDownHandler>(results[0].gameObject);
+            Assert.That(handler, Is.Not.Null);
+
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerDownHandler);
+            yield return null;
+            ForceLayout(canvas);
+
+            Image pressedBackground = FindRect(button, "BackgroundContainer").GetComponent<Image>();
+            AssertColor(pressedBackground.color, PressedProbeButtonStyle.Pressed);
+        }
+
+        [UnityTest]
+        public IEnumerator Button_DefaultStyleUsesClearChromeAndAccentText()
+        {
+            Canvas canvas = CreateCanvas();
+
+            UIElements.Button("Tap", () => { })
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            Button button = canvas.GetComponentInChildren<Button>();
+            Assert.That(button, Is.Not.Null);
+
+            Image buttonImage = button.GetComponent<Image>();
+            Assert.That(buttonImage.color.a, Is.EqualTo(0f).Within(0.001f));
+
+            TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>();
+            Assert.That(label, Is.Not.Null);
+            AssertColor(label.color, new Color(0f, 0.4784314f, 1f, 1f));
+        }
+
+        [UnityTest]
+        public IEnumerator Toggle_LabelAreaInvokesToggle()
+        {
+            Canvas canvas = CreateCanvas();
+            EventSystem eventSystem = CreateTestEventSystem();
+            var isOn = new State<bool>(false);
+
+            UIElements.Toggle(isOn, "Enabled")
+                .frame(width: 220f, height: 40f)
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform label = FindRect(canvas.transform, "Label");
+            Vector3 worldPoint = label.TransformPoint(label.rect.center);
+            var pointer = new PointerEventData(eventSystem)
+            {
+                button = PointerEventData.InputButton.Left,
+                position = RectTransformUtility.WorldToScreenPoint(null, worldPoint)
+            };
+
+            var results = new System.Collections.Generic.List<RaycastResult>();
+            canvas.GetComponent<GraphicRaycaster>().Raycast(pointer, results);
+            Assert.That(results.Count, Is.GreaterThan(0));
+            Assert.That(results[0].gameObject.name, Is.EqualTo("ToggleHitArea"));
+
+            GameObject handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(results[0].gameObject);
+            Assert.That(handler, Is.Not.Null);
+
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
+
+            Assert.That(isOn.Value, Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator Toggle_PaddingThenBackgroundRespondsAcrossPaddedArea()
+        {
+            Canvas canvas = CreateCanvas();
+            EventSystem eventSystem = CreateTestEventSystem();
+            var isOn = new State<bool>(false);
+
+            UIElements.Toggle(isOn, "Enabled")
+                .padding(12)
+                .background(new Color(0.9f, 0.92f, 0.96f, 1f))
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform paddingRect = FindRect(canvas.transform, "PaddingContainer");
+            RectTransform toggleRect = FindRect(paddingRect, "ToggleElement_Enabled");
+            Vector3[] paddingCorners = new Vector3[4];
+            Vector3[] toggleCorners = new Vector3[4];
+            paddingRect.GetWorldCorners(paddingCorners);
+            toggleRect.GetWorldCorners(toggleCorners);
+
+            Vector3 worldPoint = new Vector3(
+                (paddingCorners[0].x + toggleCorners[0].x) * 0.5f,
+                (paddingCorners[0].y + paddingCorners[1].y) * 0.5f,
+                paddingCorners[0].z);
+            var pointer = new PointerEventData(eventSystem)
+            {
+                button = PointerEventData.InputButton.Left,
+                position = RectTransformUtility.WorldToScreenPoint(null, worldPoint)
+            };
+
+            var results = new System.Collections.Generic.List<RaycastResult>();
+            canvas.GetComponent<GraphicRaycaster>().Raycast(pointer, results);
+            Assert.That(results.Count, Is.GreaterThan(0));
+
+            GameObject handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(results[0].gameObject);
+            Assert.That(handler, Is.Not.Null);
+
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
+
+            Assert.That(isOn.Value, Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator TextField_PaddingThenBackgroundFocusesFromPaddedArea()
+        {
+            Canvas canvas = CreateCanvas();
+            EventSystem eventSystem = CreateTestEventSystem();
+            var input = new State<string>(string.Empty);
+
+            UIElements.TextField("Username", text: input, prompt: UIElements.Text("username"))
+                .padding(8)
+                .background(new Color(0.08f, 0.1f, 0.14f, 1f))
+                .frame(width: 280f, height: 44f)
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform paddingRect = FindRect(canvas.transform, "PaddingContainer");
+            RectTransform textFieldRect = FindRect(paddingRect, "TextField");
+            Vector3[] paddingCorners = new Vector3[4];
+            Vector3[] fieldCorners = new Vector3[4];
+            paddingRect.GetWorldCorners(paddingCorners);
+            textFieldRect.GetWorldCorners(fieldCorners);
+
+            Vector3 worldPoint = new Vector3(
+                (paddingCorners[0].x + fieldCorners[0].x) * 0.5f,
+                (paddingCorners[0].y + paddingCorners[1].y) * 0.5f,
+                paddingCorners[0].z);
+            var pointer = new PointerEventData(eventSystem)
+            {
+                button = PointerEventData.InputButton.Left,
+                position = RectTransformUtility.WorldToScreenPoint(null, worldPoint)
+            };
+
+            var results = new System.Collections.Generic.List<RaycastResult>();
+            canvas.GetComponent<GraphicRaycaster>().Raycast(pointer, results);
+            Assert.That(results.Count, Is.GreaterThan(0));
+
+            GameObject handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(results[0].gameObject);
+            Assert.That(handler, Is.Not.Null);
+
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
+
+            TMP_InputField field = FindRect(canvas.transform, "TextField").GetComponent<TMP_InputField>();
+            Assert.That(EventSystem.current.currentSelectedGameObject, Is.EqualTo(field.gameObject));
+        }
+
+        [UnityTest]
+        public IEnumerator OnHover_ReceivesEnterAndExit()
+        {
+            Canvas canvas = CreateCanvas();
+            bool isHovered = false;
+
+            UIElements.Text("Hover")
+                .onHover(value => isHovered = value)
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform text = FindRect(canvas.transform, "Text");
+            var pointer = new PointerEventData(CreateTestEventSystem());
+
+            ExecuteEvents.Execute(text.gameObject, pointer, ExecuteEvents.pointerEnterHandler);
+            Assert.That(isHovered, Is.True);
+
+            ExecuteEvents.Execute(text.gameObject, pointer, ExecuteEvents.pointerExitHandler);
+            Assert.That(isHovered, Is.False);
         }
 
         [Test]
@@ -1074,6 +1562,61 @@ namespace UniftUI.Tests
             Assert.That(buttons.Length, Is.GreaterThanOrEqualTo(2));
 
             buttons[1].onClick.Invoke();
+            yield return null;
+            ForceLayout(canvas);
+
+            Assert.That(selected.Value, Is.EqualTo(1));
+            TMP_Text[] labels = canvas.GetComponentsInChildren<TMP_Text>();
+            Assert.That(System.Array.Exists(labels, label => label.text == "two"), Is.True);
+            Assert.That(System.Array.Exists(labels, label => label.text == "one"), Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator TabView_HeaderHitAreaSwitchesContent()
+        {
+            Canvas canvas = CreateCanvas();
+            EventSystem eventSystem = CreateTestEventSystem();
+            var selected = new State<int>(0);
+
+            UIElements.VStack(() =>
+            {
+                TabView tabView = new TabView(() =>
+                {
+                    new TabItem("One", () =>
+                    {
+                        UIElements.Text("one").frame(infiniteWidth: true, infiniteHeight: true);
+                    });
+                    new TabItem("Two", () =>
+                    {
+                        UIElements.Text("two").frame(infiniteWidth: true, infiniteHeight: true);
+                    });
+                }, selected)
+                .WithTransitionDuration(0f);
+
+                UIContext.Current.AddChild(tabView.frame(width: 320, height: 240));
+            }, spacing: 0f)
+            .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform hitArea = FindRect(canvas.transform, "TabHitArea", 1);
+            Vector3 worldPoint = hitArea.TransformPoint(hitArea.rect.center);
+            var pointer = new PointerEventData(eventSystem)
+            {
+                button = PointerEventData.InputButton.Left,
+                position = RectTransformUtility.WorldToScreenPoint(null, worldPoint)
+            };
+
+            var results = new System.Collections.Generic.List<RaycastResult>();
+            canvas.GetComponent<GraphicRaycaster>().Raycast(pointer, results);
+            Assert.That(results.Count, Is.GreaterThan(0));
+            Assert.That(results[0].gameObject.name, Is.EqualTo("TabHitArea"));
+
+            GameObject handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(results[0].gameObject);
+            Assert.That(handler, Is.Not.Null);
+
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
             yield return null;
             ForceLayout(canvas);
 
@@ -1837,12 +2380,36 @@ namespace UniftUI.Tests
             }
         }
 
+        private sealed class PressedProbeButtonStyle : IButtonStyle
+        {
+            public static readonly Color Normal = new Color(0.1f, 0.35f, 0.95f, 1f);
+            public static readonly Color Pressed = new Color(0.05f, 0.16f, 0.45f, 1f);
+
+            public UIElement MakeBody(ButtonStyleConfiguration configuration)
+            {
+                return configuration.Label
+                    .padding(8)
+                    .background(configuration.IsPressed ? Pressed : Normal)
+                    .foregroundColor(Color.white)
+                    .cornerRadius(8f);
+            }
+        }
+
         private static void ForceLayout(Canvas canvas)
         {
             Canvas.ForceUpdateCanvases();
             foreach (RectTransform rect in canvas.GetComponentsInChildren<RectTransform>(true))
                 LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
             Canvas.ForceUpdateCanvases();
+        }
+
+        private static bool ContainsText(Transform root, string value)
+        {
+            foreach (TMP_Text text in root.GetComponentsInChildren<TMP_Text>(true))
+                if (text.text == value)
+                    return true;
+
+            return false;
         }
 
         private static RectTransform FindRect(Transform root, string name, int skip = 0)

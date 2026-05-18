@@ -81,15 +81,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject root = new GameObject("Label");
-            root.transform.SetParent(parent, false);
-
-            Image backgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                backgroundImage = root.AddComponent<Image>();
-                backgroundImage.color = backgroundColor;
-            }
+            GameObject root = CreateElementRoot("Label", parent);
+            Image backgroundImage = AddBackgroundImageIfNeeded(root);
 
             var layout = root.AddComponent<UniftUIStackLayoutGroup>();
             layout.padding = padding ?? new RectOffset(0, 0, 0, 0);
@@ -102,19 +95,15 @@ namespace UniftUI
             }
             else if (sprite != null)
             {
-                GameObject iconObj = new GameObject("Icon");
-                iconObj.transform.SetParent(root.transform, false);
-                Image iconImage = iconObj.AddComponent<Image>();
+                GameObject iconObj = CreateChildObject("Icon", root.transform);
+                Image iconImage = AddImage(iconObj, tintColor, false);
                 iconImage.sprite = sprite;
-                iconImage.color = tintColor;
                 iconImage.preserveAspect = true;
-                iconImage.raycastTarget = false;
                 builtIconImage = iconImage;
                 LayoutElementUtility.Configure(iconObj, 16f, 16f, false, false, 16f, 16f);
             }
 
-            GameObject textObj = new GameObject("Title");
-            textObj.transform.SetParent(root.transform, false);
+            GameObject textObj = CreateChildObject("Title", root.transform);
             builtText = textObj.AddComponent<TextMeshProUGUI>();
             builtText.text = title ?? string.Empty;
             ConfigureText(builtText);

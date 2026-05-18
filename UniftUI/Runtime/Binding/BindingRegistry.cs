@@ -36,6 +36,12 @@ namespace UniftUI
         {
             if (state == null || updateAction == null || string.IsNullOrEmpty(propertyName)) return;
 
+            if (bindings.TryGetValue(propertyName, out var existing) &&
+                !ReferenceEquals(existing.State, state))
+            {
+                RemoveStateProperty(existing.State, propertyName);
+            }
+
             bindings[propertyName] = new LiveBinding
             {
                 State = state,
@@ -50,6 +56,19 @@ namespace UniftUI
             }
             if (!list.Contains(propertyName))
                 list.Add(propertyName);
+        }
+
+        private void RemoveStateProperty(State state, string propertyName)
+        {
+            if (state == null || string.IsNullOrEmpty(propertyName))
+                return;
+
+            if (!stateToProps.TryGetValue(state, out var properties))
+                return;
+
+            properties.Remove(propertyName);
+            if (properties.Count == 0)
+                stateToProps.Remove(state);
         }
 
         public void SetStateAnimation(State state, Animation anim)

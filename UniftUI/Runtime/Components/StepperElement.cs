@@ -84,15 +84,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject root = new GameObject("Stepper");
-            root.transform.SetParent(parent, false);
-
-            Image backgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                backgroundImage = root.AddComponent<Image>();
-                backgroundImage.color = backgroundColor;
-            }
+            GameObject root = CreateElementRoot("Stepper", parent);
+            Image backgroundImage = AddBackgroundImageIfNeeded(root);
 
             var layout = root.AddComponent<UniftUIStackLayoutGroup>();
             layout.padding = padding ?? new RectOffset(0, 0, 0, 0);
@@ -125,14 +118,12 @@ namespace UniftUI
 
         private Button CreateButton(Transform parent, string name, string text, UnityEngine.Events.UnityAction action, out Image image)
         {
-            GameObject buttonObj = new GameObject(name);
-            buttonObj.transform.SetParent(parent, false);
-
-            image = buttonObj.AddComponent<Image>();
-            image.color = tintColor;
+            GameObject buttonObj = CreateChildObject(name, parent);
+            image = AddImage(buttonObj, tintColor);
 
             Button button = buttonObj.AddComponent<Button>();
             button.targetGraphic = image;
+            ConfigureSelectableColors(button, tintColor);
             button.onClick.AddListener(action);
 
             var layout = buttonObj.AddComponent<UniftUISingleChildLayoutGroup>();
@@ -148,8 +139,7 @@ namespace UniftUI
 
         private TextMeshProUGUI CreateText(Transform parent, string name, string text)
         {
-            GameObject textObj = new GameObject(name);
-            textObj.transform.SetParent(parent, false);
+            GameObject textObj = CreateChildObject(name, parent);
             TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
             tmp.text = text;
             ConfigureText(tmp);
@@ -200,10 +190,14 @@ namespace UniftUI
 
         private void ApplyButtonState(Button button, Image image, bool enabled)
         {
+            Color disabledTint = UniftUIColors.MultiplyAlpha(tintColor, UniftUIColors.SelectionAlpha);
             if (button != null)
+            {
+                ConfigureSelectableColors(button, tintColor, disabledColor: disabledTint);
                 button.interactable = enabled;
+            }
             if (image != null)
-                image.color = enabled ? tintColor : new Color(tintColor.r, tintColor.g, tintColor.b, tintColor.a * 0.35f);
+                image.color = enabled ? tintColor : disabledTint;
         }
 
         private string CurrentText()

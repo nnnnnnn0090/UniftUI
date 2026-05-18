@@ -12,6 +12,7 @@ namespace UniftUI
         private readonly State<int> selection;
         private readonly List<string> options = new List<string>();
         private readonly List<Image> segmentImages = new List<Image>();
+        private readonly List<Button> segmentButtons = new List<Button>();
         private readonly List<TextMeshProUGUI> segmentTexts = new List<TextMeshProUGUI>();
 
         private Color tintColor = new Color(0.2f, 0.55f, 1f, 1f);
@@ -95,13 +96,11 @@ namespace UniftUI
         public override GameObject Build(Transform parent)
         {
             segmentImages.Clear();
+            segmentButtons.Clear();
             segmentTexts.Clear();
 
-            GameObject root = new GameObject(style == PickerStyle.Segmented ? "PickerSegmented" : "Picker");
-            root.transform.SetParent(parent, false);
-
-            Image backgroundImage = root.AddComponent<Image>();
-            backgroundImage.color = trackColor;
+            GameObject root = CreateElementRoot(style == PickerStyle.Segmented ? "PickerSegmented" : "Picker", parent);
+            Image backgroundImage = AddImage(root, trackColor);
 
             var layout = root.AddComponent<UniftUIStackLayoutGroup>();
             layout.padding = padding ?? new RectOffset(2, 2, 2, 2);
@@ -110,15 +109,15 @@ namespace UniftUI
             for (int i = 0; i < options.Count; i++)
             {
                 int capturedIndex = i;
-                GameObject segment = new GameObject("Segment_" + options[i]);
-                segment.transform.SetParent(root.transform, false);
+                GameObject segment = CreateChildObject("Segment_" + options[i], root.transform);
 
-                Image image = segment.AddComponent<Image>();
-                image.color = trackColor;
+                Image image = AddImage(segment, trackColor);
                 segmentImages.Add(image);
 
                 Button button = segment.AddComponent<Button>();
                 button.targetGraphic = image;
+                ConfigureSelectableColors(button, trackColor);
+                segmentButtons.Add(button);
                 button.onClick.AddListener(() =>
                 {
                     if (selection != null)
@@ -129,8 +128,7 @@ namespace UniftUI
                 var single = segment.AddComponent<UniftUISingleChildLayoutGroup>();
                 single.Configure(new RectOffset(10, 10, 4, 4), TextAnchor.MiddleCenter);
 
-                GameObject textObj = new GameObject("Text");
-                textObj.transform.SetParent(segment.transform, false);
+                GameObject textObj = CreateChildObject("Text", segment.transform);
                 TextMeshProUGUI text = textObj.AddComponent<TextMeshProUGUI>();
                 text.text = options[i];
                 ConfigureText(text);
@@ -174,8 +172,11 @@ namespace UniftUI
             for (int i = 0; i < segmentImages.Count; i++)
             {
                 bool selected = i == selectedIndex;
+                Color segmentColor = selected ? tintColor : trackColor;
                 if (segmentImages[i] != null)
-                    segmentImages[i].color = selected ? tintColor : trackColor;
+                    segmentImages[i].color = segmentColor;
+                if (i < segmentButtons.Count)
+                    ConfigureSelectableColors(segmentButtons[i], segmentColor);
                 if (segmentTexts[i] != null)
                     segmentTexts[i].color = selected ? Color.white : textColor;
             }

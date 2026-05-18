@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -11,7 +12,7 @@ namespace UniftUI
                 return;
 
             Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(gridContainerRt);
+            LayoutCore.ForceRebuildLayout(gridContainerRt);
 
             int maxCols = 0;
             foreach (Transform rowT in gridContainerRt)
@@ -60,7 +61,7 @@ namespace UniftUI
             }
 
             Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(gridContainerRt);
+            LayoutCore.ForceRebuildLayout(gridContainerRt);
         }
     }
 }

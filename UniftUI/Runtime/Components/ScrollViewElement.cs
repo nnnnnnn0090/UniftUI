@@ -33,20 +33,7 @@ namespace UniftUI
             this.states = states;
             this.horizontal = horizontal;
             this.vertical = vertical;
-
-            if (content != null)
-            {
-                var parentContext = UIContext.Current;
-                try
-                {
-                    UIContext.Current = this;
-                    content.Invoke();
-                }
-                finally
-                {
-                    UIContext.Current = parentContext;
-                }
-            }
+            MaterializeContent(content, children);
         }
 
         internal ScrollViewElement ShowScrollbars(bool horizontal = true, bool vertical = true)
@@ -167,15 +154,8 @@ namespace UniftUI
         /// <inheritdoc />
         public override GameObject Build(Transform parent)
         {
-            GameObject container = new GameObject("ScrollView");
-            container.transform.SetParent(parent, false);
-
-            Image backgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                backgroundImage = container.AddComponent<Image>();
-                backgroundImage.color = backgroundColor;
-            }
+            GameObject container = CreateElementRoot("ScrollView", parent);
+            Image backgroundImage = AddBackgroundImageIfNeeded(container);
 
             ScrollRect scrollRect = container.AddComponent<ScrollRect>();
             scrollRect.horizontal = horizontal;
@@ -185,10 +165,8 @@ namespace UniftUI
             scrollRect.inertia = true;
             scrollRect.decelerationRate = 0.135f;
 
-            GameObject contentContainer = new GameObject("Content");
-            contentContainer.transform.SetParent(container.transform, false);
-
-            RectTransform contentRect = contentContainer.AddComponent<RectTransform>();
+            GameObject contentContainer = CreateChildObject("Content", container.transform);
+            RectTransform contentRect = EnsureRectTransform(contentContainer);
             ConfigureContentRect(contentRect);
 
             scrollRect.content = contentRect;
@@ -246,15 +224,7 @@ namespace UniftUI
                 layoutElement.flexibleHeight = 1f;
             }
 
-            foreach (var child in children)
-            {
-                ApplyInheritedFont(child);
-                if (vertical && !horizontal && ChildMayFillWidth(child))
-                    child.WithInfiniteWidth();
-                if (horizontal && !vertical && ChildMayFillHeight(child))
-                    child.WithInfiniteHeight();
-                child.Build(contentContainer.transform);
-            }
+            BuildContentChildren(children, contentContainer.transform, ConfigureScrollChild);
 
             ApplyAllEffects(container, backgroundImage);
 
@@ -264,143 +234,87 @@ namespace UniftUI
                 bridge.Initialize(scrollRect, bindVerticalNormalized, bindHorizontalNormalized, twoWayVertical, twoWayHorizontal);
             }
 
-            if (states != null && states.Length > 0)
-            {
-                SetupStateObserver(container, contentContainer);
-            }
+            SetupContentRebuildObserver(
+                states,
+                container,
+                contentContainer.transform,
+                children,
+                content,
+                "ScrollView",
+                ConfigureScrollChild);
 
             return container;
         }
 
         private GameObject CreateVerticalScrollbar(GameObject parent)
         {
-            GameObject scrollbar = new GameObject("VerticalScrollbar");
-            scrollbar.transform.SetParent(parent.transform, false);
+            GameObject scrollbar = CreateChildObject("VerticalScrollbar", parent.transform);
 
-            RectTransform rectTransform = scrollbar.AddComponent<RectTransform>();
+            RectTransform rectTransform = EnsureRectTransform(scrollbar);
             rectTransform.anchorMin = new Vector2(1, 0);
             rectTransform.anchorMax = new Vector2(1, 1);
             rectTransform.pivot = new Vector2(1, 0.5f);
             rectTransform.sizeDelta = new Vector2(10, 0);
 
-            Image scrollbarImage = scrollbar.AddComponent<Image>();
-            scrollbarImage.color = new Color(0.7f, 0.7f, 0.7f, 0.7f);
+            AddImage(scrollbar, new Color(0.7f, 0.7f, 0.7f, 0.7f));
 
             Scrollbar scrollbarComp = scrollbar.AddComponent<Scrollbar>();
             scrollbarComp.direction = Scrollbar.Direction.BottomToTop;
 
-            GameObject slidingArea = new GameObject("SlidingArea");
-            slidingArea.transform.SetParent(scrollbar.transform, false);
+            GameObject slidingArea = CreateFullStretchChild("SlidingArea", scrollbar.transform);
 
-            RectTransform slidingRect = slidingArea.AddComponent<RectTransform>();
-            slidingRect.anchorMin = Vector2.zero;
-            slidingRect.anchorMax = Vector2.one;
-            slidingRect.sizeDelta = Vector2.zero;
+            GameObject handle = CreateFullStretchChild("Handle", slidingArea.transform);
+            RectTransform handleRect = EnsureRectTransform(handle);
 
-            GameObject handle = new GameObject("Handle");
-            handle.transform.SetParent(slidingArea.transform, false);
-
-            RectTransform handleRect = handle.AddComponent<RectTransform>();
-            handleRect.anchorMin = Vector2.zero;
-            handleRect.anchorMax = Vector2.one;
-            handleRect.sizeDelta = Vector2.zero;
-
-            Image handleImage = handle.AddComponent<Image>();
-            handleImage.color = new Color(0.4f, 0.4f, 0.4f, 0.7f);
+            Color handleColor = new Color(0.4f, 0.4f, 0.4f, 0.7f);
+            Image handleImage = AddImage(handle, handleColor);
 
             scrollbarComp.handleRect = handleRect;
             scrollbarComp.targetGraphic = handleImage;
+            ConfigureSelectableColors(scrollbarComp, handleColor);
 
             return scrollbar;
         }
 
         private GameObject CreateHorizontalScrollbar(GameObject parent)
         {
-            GameObject scrollbar = new GameObject("HorizontalScrollbar");
-            scrollbar.transform.SetParent(parent.transform, false);
+            GameObject scrollbar = CreateChildObject("HorizontalScrollbar", parent.transform);
 
-            RectTransform rectTransform = scrollbar.AddComponent<RectTransform>();
+            RectTransform rectTransform = EnsureRectTransform(scrollbar);
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(1, 0);
             rectTransform.pivot = new Vector2(0.5f, 0);
             rectTransform.sizeDelta = new Vector2(0, 10);
 
-            Image scrollbarImage = scrollbar.AddComponent<Image>();
-            scrollbarImage.color = new Color(0.7f, 0.7f, 0.7f, 0.7f);
+            AddImage(scrollbar, new Color(0.7f, 0.7f, 0.7f, 0.7f));
 
             Scrollbar scrollbarComp = scrollbar.AddComponent<Scrollbar>();
             scrollbarComp.direction = Scrollbar.Direction.LeftToRight;
 
-            GameObject slidingArea = new GameObject("SlidingArea");
-            slidingArea.transform.SetParent(scrollbar.transform, false);
+            GameObject slidingArea = CreateFullStretchChild("SlidingArea", scrollbar.transform);
 
-            RectTransform slidingRect = slidingArea.AddComponent<RectTransform>();
-            slidingRect.anchorMin = Vector2.zero;
-            slidingRect.anchorMax = Vector2.one;
-            slidingRect.sizeDelta = Vector2.zero;
+            GameObject handle = CreateFullStretchChild("Handle", slidingArea.transform);
+            RectTransform handleRect = EnsureRectTransform(handle);
 
-            GameObject handle = new GameObject("Handle");
-            handle.transform.SetParent(slidingArea.transform, false);
-
-            RectTransform handleRect = handle.AddComponent<RectTransform>();
-            handleRect.anchorMin = Vector2.zero;
-            handleRect.anchorMax = Vector2.one;
-            handleRect.sizeDelta = Vector2.zero;
-
-            Image handleImage = handle.AddComponent<Image>();
-            handleImage.color = new Color(0.4f, 0.4f, 0.4f, 0.7f);
+            Color handleColor = new Color(0.4f, 0.4f, 0.4f, 0.7f);
+            Image handleImage = AddImage(handle, handleColor);
 
             scrollbarComp.handleRect = handleRect;
             scrollbarComp.targetGraphic = handleImage;
+            ConfigureSelectableColors(scrollbarComp, handleColor);
 
             return scrollbar;
         }
 
-        private void SetupStateObserver(GameObject container, GameObject contentContainer)
+        private void ConfigureScrollChild(UIElement child)
         {
-            StateObserver observer = container.AddComponent<StateObserver>();
-            observer.Initialize(states, () => {
-                if (container == null || !container || contentContainer == null || !contentContainer)
-                {
-                    Debug.LogWarning("[UniftUI] ScrollView rebuild skipped: container was destroyed.");
-                    return;
-                }
+            if (child == null)
+                return;
 
-                foreach (Transform child in contentContainer.transform)
-                {
-                    if (child != null && child.gameObject != null)
-                        DestroyGameObject(child.gameObject);
-                }
-
-                children.Clear();
-
-                var parentContext = UIContext.Current;
-                try
-                {
-                    UIContext.Current = this;
-                    content?.Invoke();
-                }
-                finally
-                {
-                    UIContext.Current = parentContext;
-                }
-
-                foreach (var child in children)
-                {
-                    if (child == null || contentContainer == null || contentContainer.transform == null)
-                        continue;
-                    ApplyInheritedFont(child);
-                    if (vertical && !horizontal && ChildMayFillWidth(child))
-                        child.WithInfiniteWidth();
-                    if (horizontal && !vertical && ChildMayFillHeight(child))
-                        child.WithInfiniteHeight();
-                    child.Build(contentContainer.transform);
-                }
-
-                LayoutRebuilder.ForceRebuildLayoutImmediate(contentContainer.GetComponent<RectTransform>());
-                LayoutRebuilder.ForceRebuildLayoutImmediate(container.GetComponent<RectTransform>());
-                Canvas.ForceUpdateCanvases();
-            });
+            if (vertical && !horizontal && ChildMayFillWidth(child))
+                child.WithInfiniteWidth();
+            if (horizontal && !vertical && ChildMayFillHeight(child))
+                child.WithInfiniteHeight();
         }
 
         private void ConfigureContentRect(RectTransform contentRect)

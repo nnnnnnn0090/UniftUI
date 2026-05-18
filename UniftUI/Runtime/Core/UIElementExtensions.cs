@@ -401,7 +401,7 @@ namespace UniftUI
             if (element is TextFieldElement textFieldElement)
             {
                 textFieldElement.SetCaretColor(color);
-                textFieldElement.SetSelectionColor(SelectionTint(color));
+                textFieldElement.SetSelectionColor(UniftUIColors.SelectionTint(color));
             }
             else if (element is ImageElement imageElement)
             {
@@ -574,7 +574,7 @@ namespace UniftUI
         /// <summary>Applies a reusable button style.</summary>
         public static ButtonElement ButtonStyle(this ButtonElement element, IButtonStyle style)
         {
-            style?.Apply(element);
+            element.SetButtonStyle(style);
             return element;
         }
 
@@ -912,11 +912,6 @@ namespace UniftUI
             return shadowElement;
         }
 
-        private static Color SelectionTint(Color color)
-        {
-            return new Color(color.r, color.g, color.b, Mathf.Min(color.a, 0.35f));
-        }
-
         /// <summary>Applies rotation effect in degrees (Z axis).</summary>
         public static T RotationEffect<T>(this T element, float degrees) where T : UIElement
         {
@@ -1047,6 +1042,12 @@ namespace UniftUI
         public static T Update<T>(this T element, Action action) where T : UIElement
         {
             return (T)element.WithUpdate(action);
+        }
+
+        /// <summary>Registers a callback when the pointer enters or exits the view.</summary>
+        public static T OnHover<T>(this T element, Action<bool> action) where T : UIElement
+        {
+            return (T)element.WithOnHover(action);
         }
 
         /// <summary>Enables implicit animation for property changes over <paramref name="duration"/> seconds.</summary>

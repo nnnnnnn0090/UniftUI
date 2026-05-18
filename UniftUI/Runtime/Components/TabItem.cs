@@ -30,14 +30,7 @@ namespace UniftUI
         {
             if (Content != null)
             {
-                GameObject contentContainer = new GameObject($"Content_{Title}");
-                contentContainer.transform.SetParent(parent, false);
-
-                RectTransform rect = contentContainer.AddComponent<RectTransform>();
-                rect.anchorMin = Vector2.zero;
-                rect.anchorMax = Vector2.one;
-                rect.offsetMin = Vector2.zero;
-                rect.offsetMax = Vector2.zero;
+                GameObject contentContainer = CreateFullStretchChild($"Content_{Title}", parent);
 
                 var tabContentContainer = new TabContentContainer(contentContainer.transform);
                 var parentContext = UIContext.Current;

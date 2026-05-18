@@ -1,6 +1,4 @@
 using UnityEngine;
-using System;
-using System.Collections.Generic;
 
 namespace UniftUI
 {
@@ -9,21 +7,22 @@ namespace UniftUI
     /// </summary>
     internal sealed class ElementLifecycleHost : MonoBehaviour
     {
-        internal BindingRegistry Registry;
-        private readonly List<IDisposable> disposables = new List<IDisposable>();
+        private UIElement owner;
+        private BindingRegistry registry;
 
-        internal void AddDisposable(IDisposable disposable)
+        internal void Attach(UIElement element, BindingRegistry bindingRegistry)
         {
-            if (disposable != null && !disposables.Contains(disposable))
-                disposables.Add(disposable);
+            owner = element;
+            registry = bindingRegistry;
         }
 
         private void OnDestroy()
         {
-            foreach (var disposable in disposables)
-                disposable?.Dispose();
-            disposables.Clear();
-            Registry?.Dispose();
+            if (owner == null || owner.IsCurrentBuiltGameObject(gameObject))
+                registry?.Dispose();
+
+            owner = null;
+            registry = null;
         }
     }
 }

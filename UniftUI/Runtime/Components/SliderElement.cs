@@ -8,6 +8,15 @@ namespace UniftUI
     /// <summary>Slider bound to either an integer or float state.</summary>
     public class SliderElement : UIElement
     {
+        private const float DefaultSliderHeight = 40f;
+        private const float DefaultSliderMinWidth = 100f;
+        private const int TrackCornerRadius = 10;
+        private const int CircleSpriteSize = 64;
+
+        private static readonly Color TrackColor = new Color(0.9f, 0.9f, 0.9f, 0.5f);
+        private static Sprite trackSprite;
+        private static Sprite handleSprite;
+
         private State<int> intValue;
         private State<float> floatValue;
         private float minValue;
@@ -16,8 +25,10 @@ namespace UniftUI
         private bool wholeNumbers;
         private Color accentColor = new Color(0.2f, 0.6f, 1.0f);
         private Color handleColor = new Color(0.1f, 0.4f, 0.8f);
+        private Slider builtSlider;
         private Image builtFillImage;
         private Image builtHandleImage;
+        private TextMeshProUGUI builtValueText;
 
         private float handleWidth = -1;
         private float handleHeight = -1;
@@ -29,6 +40,7 @@ namespace UniftUI
             this.maxValue = maxValue;
             this.showValue = showValue;
             this.wholeNumbers = true;
+            AddPropertyBinding(value, SyncSliderFromState, "sliderValue", BindingKind.Content);
             UIContext.Add(this);
         }
 
@@ -39,6 +51,7 @@ namespace UniftUI
             this.maxValue = maxValue;
             this.showValue = showValue;
             this.wholeNumbers = false;
+            AddPropertyBinding(value, SyncSliderFromState, "sliderValue", BindingKind.Content);
             UIContext.Add(this);
         }
 
@@ -49,7 +62,10 @@ namespace UniftUI
             if (builtFillImage != null)
                 builtFillImage.color = this.accentColor;
             if (builtHandleImage != null)
+            {
                 builtHandleImage.color = this.handleColor;
+                ConfigureSelectableColors(builtSlider, this.handleColor);
+            }
             return this;
         }
 
@@ -62,29 +78,21 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject sliderObj = new GameObject("SliderElement");
-            sliderObj.transform.SetParent(parent, false);
+            GameObject sliderObj = CreateElementRoot("SliderElement", parent);
+            Image sliderObjBackgroundImage = AddBackgroundImageIfNeeded(sliderObj);
+            builtValueText = null;
 
-            Image sliderObjBackgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                sliderObjBackgroundImage = sliderObj.AddComponent<Image>();
-                sliderObjBackgroundImage.color = backgroundColor;
-            }
-
-            float defaultSliderHeight = 40f;
-            float defaultSliderMinWidth = 100f;
             LayoutElement layoutElement = LayoutElementUtility.Configure(
                 sliderObj,
                 preferredWidth,
                 preferredHeight,
                 infiniteWidth,
                 infiniteHeight,
-                defaultSliderMinWidth,
-                defaultSliderHeight);
+                DefaultSliderMinWidth,
+                DefaultSliderHeight);
             if (preferredWidth < 0f && !infiniteWidth)
             {
-                layoutElement.minWidth = defaultSliderMinWidth;
+                layoutElement.minWidth = DefaultSliderMinWidth;
                 layoutElement.preferredWidth = -1f;
                 layoutElement.flexibleWidth = 1f;
             }
@@ -96,77 +104,62 @@ namespace UniftUI
                 vertLayout.Configure(UniftUIStackAxis.Vertical, 5f, VStackAlignment.Center, HStackAlignment.Center);
             }
 
-            GameObject sliderContainer = showValue ? new GameObject("SliderContainer") : sliderObj;
+            GameObject sliderContainer = showValue ? CreateChildObject("SliderContainer", sliderObj.transform) : sliderObj;
             if (showValue)
             {
-                sliderContainer.transform.SetParent(sliderObj.transform, false);
                 LayoutElement containerLayout = sliderContainer.AddComponent<LayoutElement>();
-                containerLayout.preferredHeight = defaultSliderHeight * 0.7f;
+                containerLayout.preferredHeight = DefaultSliderHeight * 0.7f;
                 containerLayout.flexibleWidth = 1;
             }
 
             Slider slider = sliderContainer.AddComponent<Slider>();
+            builtSlider = slider;
             slider.minValue = this.minValue;
             slider.maxValue = this.maxValue;
             slider.wholeNumbers = wholeNumbers;
             slider.value = CurrentValue();
             slider.transition = Selectable.Transition.ColorTint;
 
-            ColorBlock colors = slider.colors;
-            colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(0.95f, 0.95f, 0.95f);
-            colors.pressedColor = new Color(0.9f, 0.9f, 0.9f);
-            colors.selectedColor = Color.white;
-            slider.colors = colors;
-
-            GameObject background = new GameObject("Background");
-            background.transform.SetParent(sliderContainer.transform, false);
-            Image bgImage = background.AddComponent<Image>();
-            bgImage.color = new Color(0.9f, 0.9f, 0.9f, 0.5f);
-            bgImage.sprite = CreateRoundedRectSprite(10);
+            GameObject background = CreateChildObject("Background", sliderContainer.transform);
+            Image bgImage = AddImage(background, TrackColor);
+            bgImage.sprite = TrackSprite;
             bgImage.type = Image.Type.Sliced;
 
-            RectTransform bgRect = background.GetComponent<RectTransform>();
+            RectTransform bgRect = EnsureRectTransform(background);
             bgRect.anchorMin = new Vector2(0, 0.35f);
             bgRect.anchorMax = new Vector2(1, 0.65f);
             bgRect.offsetMin = Vector2.zero;
             bgRect.offsetMax = Vector2.zero;
 
-            GameObject fillArea = new GameObject("Fill Area");
-            fillArea.transform.SetParent(sliderContainer.transform, false);
-            RectTransform fillAreaRect = fillArea.AddComponent<RectTransform>();
+            GameObject fillArea = CreateChildObject("Fill Area", sliderContainer.transform);
+            RectTransform fillAreaRect = EnsureRectTransform(fillArea);
             fillAreaRect.anchorMin = new Vector2(0, 0.35f);
             fillAreaRect.anchorMax = new Vector2(1, 0.65f);
             fillAreaRect.offsetMin = new Vector2(5, 0);
             fillAreaRect.offsetMax = new Vector2(-5, 0);
 
-            GameObject fill = new GameObject("Fill");
-            fill.transform.SetParent(fillArea.transform, false);
-            Image fillImage = fill.AddComponent<Image>();
-            fillImage.color = accentColor;
-            fillImage.sprite = CreateRoundedRectSprite(10);
+            GameObject fill = CreateChildObject("Fill", fillArea.transform);
+            Image fillImage = AddImage(fill, accentColor);
+            fillImage.sprite = TrackSprite;
             fillImage.type = Image.Type.Sliced;
             builtFillImage = fillImage;
 
-            RectTransform fillRect = fill.GetComponent<RectTransform>();
+            RectTransform fillRect = EnsureRectTransform(fill);
             fillRect.anchorMin = Vector2.zero;
             fillRect.anchorMax = Vector2.one;
             fillRect.sizeDelta = Vector2.zero;
             slider.fillRect = fillRect;
 
-            GameObject handleSlideArea = new GameObject("Handle Slide Area");
-            handleSlideArea.transform.SetParent(sliderContainer.transform, false);
-            RectTransform handleSlideAreaRect = handleSlideArea.AddComponent<RectTransform>();
+            GameObject handleSlideArea = CreateChildObject("Handle Slide Area", sliderContainer.transform);
+            RectTransform handleSlideAreaRect = EnsureRectTransform(handleSlideArea);
             handleSlideAreaRect.anchorMin = new Vector2(0, 0.35f);
             handleSlideAreaRect.anchorMax = new Vector2(1, 0.65f);
             handleSlideAreaRect.offsetMin = new Vector2(5, 0);
             handleSlideAreaRect.offsetMax = new Vector2(-5, 0);
 
-            GameObject handle = new GameObject("Handle");
-            handle.transform.SetParent(handleSlideArea.transform, false);
-            Image handleImage = handle.AddComponent<Image>();
-            handleImage.color = handleColor;
-            handleImage.sprite = CreateCircleSprite();
+            GameObject handle = CreateChildObject("Handle", handleSlideArea.transform);
+            Image handleImage = AddImage(handle, handleColor);
+            handleImage.sprite = HandleSprite;
             handleImage.preserveAspect = true;
             builtHandleImage = handleImage;
 
@@ -174,14 +167,14 @@ namespace UniftUI
             handleShadow.effectColor = new Color(0, 0, 0, 0.3f);
             handleShadow.effectDistance = new Vector2(1, -1);
 
-            RectTransform handleRect = handle.GetComponent<RectTransform>();
+            RectTransform handleRect = EnsureRectTransform(handle);
             handleRect.anchorMin = new Vector2(0.5f, 0.5f);
             handleRect.anchorMax = new Vector2(0.5f, 0.5f);
             handleRect.pivot = new Vector2(0.5f, 0.5f);
 
             float referenceHeight = (preferredHeight >= 0 && !infiniteHeight)
                 ? preferredHeight
-                : defaultSliderHeight;
+                : DefaultSliderHeight;
 
             if (showValue) referenceHeight *= 0.7f;
 
@@ -201,16 +194,17 @@ namespace UniftUI
 
             slider.handleRect = handleRect;
             slider.targetGraphic = handleImage;
+            ConfigureSelectableColors(slider, handleColor);
 
             if (showValue)
             {
-                GameObject valueText = new GameObject("ValueText");
-                valueText.transform.SetParent(sliderObj.transform, false);
+                GameObject valueText = CreateChildObject("ValueText", sliderObj.transform);
                 TextMeshProUGUI tmpText = valueText.AddComponent<TextMeshProUGUI>();
                 tmpText.fontSize = 14;
                 tmpText.alignment = TextAlignmentOptions.MidlineRight;
                 tmpText.text = CurrentValueText();
                 tmpText.color = new Color(0.2f, 0.2f, 0.2f);
+                builtValueText = tmpText;
                 TMP_FontAsset effectiveFont = ResolveFont(null);
                 if (effectiveFont != null)
                     tmpText.font = effectiveFont;
@@ -222,41 +216,7 @@ namespace UniftUI
 
             slider.onValueChanged.AddListener((float newValue) => {
                 if (ApplySliderValue(newValue))
-                {
-                    if (showValue && slider.gameObject.activeInHierarchy)
-                    {
-                        Transform valueTextTrans = sliderObj.transform.Find("ValueText");
-                        if (valueTextTrans != null)
-                        {
-                            TextMeshProUGUI valueTextComponent = valueTextTrans.GetComponent<TextMeshProUGUI>();
-                            if (valueTextComponent != null)
-                            {
-                                valueTextComponent.text = CurrentValueText();
-                            }
-                        }
-                    }
-                }
-            });
-
-            StateObserver observer = sliderObj.AddComponent<StateObserver>();
-            observer.Initialize(new[] { WatchedState() }, () => {
-                float current = CurrentValue();
-                if (slider != null && !Mathf.Approximately(slider.value, current))
-                {
-                    slider.value = current;
-                    if (showValue)
-                    {
-                        Transform valueTextTrans = sliderObj.transform.Find("ValueText");
-                        if (valueTextTrans != null)
-                        {
-                            TextMeshProUGUI valueTextComponent = valueTextTrans.GetComponent<TextMeshProUGUI>();
-                            if (valueTextComponent != null)
-                            {
-                                valueTextComponent.text = CurrentValueText();
-                            }
-                        }
-                    }
-                }
+                    UpdateValueText();
             });
 
             ApplyAllEffects(sliderObj, sliderObjBackgroundImage);
@@ -265,9 +225,18 @@ namespace UniftUI
             return sliderObj;
         }
 
-        private State WatchedState()
+        private void SyncSliderFromState()
         {
-            return intValue != null ? (State)intValue : floatValue;
+            float current = CurrentValue();
+            if (builtSlider != null && !Mathf.Approximately(builtSlider.value, current))
+                builtSlider.value = current;
+            UpdateValueText();
+        }
+
+        private void UpdateValueText()
+        {
+            if (builtValueText != null)
+                builtValueText.text = CurrentValueText();
         }
 
         private float CurrentValue()
@@ -306,7 +275,27 @@ namespace UniftUI
                 : CurrentValue().ToString("0.##");
         }
 
-        private Sprite CreateRoundedRectSprite(int cornerRadius)
+        private static Sprite TrackSprite
+        {
+            get
+            {
+                if (trackSprite == null)
+                    trackSprite = CreateRoundedRectSprite(TrackCornerRadius);
+                return trackSprite;
+            }
+        }
+
+        private static Sprite HandleSprite
+        {
+            get
+            {
+                if (handleSprite == null)
+                    handleSprite = CreateCircleSprite();
+                return handleSprite;
+            }
+        }
+
+        private static Sprite CreateRoundedRectSprite(int cornerRadius)
         {
             int width = 100;
             int height = 20;
@@ -353,9 +342,9 @@ namespace UniftUI
             return Sprite.Create(texture, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f), 100, 0, SpriteMeshType.FullRect, new Vector4(cornerRadius, cornerRadius, cornerRadius, cornerRadius));
         }
 
-        private Sprite CreateCircleSprite()
+        private static Sprite CreateCircleSprite()
         {
-            int size = 64;
+            int size = CircleSpriteSize;
             int radius = size / 2;
 
             Texture2D texture = new Texture2D(size, size);
@@ -389,11 +378,4 @@ namespace UniftUI
         }
     }
 
-    public static class ColorExtensions
-    {
-        public static Color MultiplyAlpha(this Color color, float alpha)
-        {
-            return new Color(color.r, color.g, color.b, color.a * alpha);
-        }
-    }
 }

@@ -8,12 +8,13 @@ using UniftUI.Internal;
 namespace UniftUI
 {
     /// <summary>Button with a text label or custom child content.</summary>
-    public class ButtonElement : UIElement, ILayoutContainer
+    public class ButtonElement : UIElement, ILayoutContainer, IControlHitTargetSource
     {
         private string label;
         private UIElement customContent;
         private Action onClick;
-        private Color textColor = Color.black;
+        private Color textColor = new Color(0f, 0.4784314f, 1f, 1f);
+        private bool hasExplicitTextColor;
         private TMP_FontAsset fontAsset = null;
         private float fontSize = 14f;
         private bool isBold;
@@ -22,13 +23,18 @@ namespace UniftUI
         private bool isStrikethrough;
         private bool hasCustomContent = false;
         private List<UIElement> children = new List<UIElement>();
-        private TextMeshProUGUI builtTextComponent;
+        private Button builtButton;
         private Image builtBackgroundImage;
+        private IButtonStyle buttonStyle = ButtonStyles.Automatic();
+        private GameObject builtButtonObject;
+        private GameObject hitAreaObject;
+        private bool isPressed;
+        private bool isHovered;
 
         /// <summary>Creates a button that displays the given text label.</summary>
         public ButtonElement(string label, Action onClick)
         {
-            this.backgroundColor = new Color(0.8f, 0.8f, 0.8f);
+            this.backgroundColor = Color.clear;
             this.label = label;
             this.onClick = onClick;
             this.hasCustomContent = false;
@@ -38,7 +44,7 @@ namespace UniftUI
         /// <summary>Creates a button whose appearance is defined by the given child element.</summary>
         public ButtonElement(UIElement content, Action onClick)
         {
-            this.backgroundColor = new Color(0.8f, 0.8f, 0.8f);
+            this.backgroundColor = Color.clear;
             this.customContent = content;
             this.onClick = onClick;
             this.hasCustomContent = true;
@@ -82,51 +88,72 @@ namespace UniftUI
             return children;
         }
 
+        bool IControlHitTargetSource.TryGetControlHitTarget(out ControlHitTarget target)
+        {
+            if (onClick == null)
+            {
+                target = default(ControlHitTarget);
+                return false;
+            }
+
+            target = CreateHitTarget();
+            return true;
+        }
+
+        private void InvokeButtonAction()
+        {
+            if (!IsInputAllowed())
+                return;
+
+            try
+            {
+                onClick?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[UniftUI] Button onClick error: {e.Message}");
+            }
+        }
+
         public ButtonElement SetBackgroundColor(Color color)
         {
             backgroundColor = color;
             if (builtBackgroundImage != null)
+            {
                 builtBackgroundImage.color = color;
+                ConfigureButtonTransition();
+            }
             return this;
         }
 
         public ButtonElement SetTextColor(Color color)
         {
-            if (useAnimation && builtTextComponent != null && animationDuration > 0)
-            {
-                TextColorAnimator animator = BaseAnimator<Color>.GetOrReplace<TextColorAnimator>(builtTextComponent.gameObject);
-                animator.AnimateTo(builtTextComponent.color, color, animationDuration, animationEasing);
-                textColor = color;
-            }
-            else
-            {
-                textColor = color;
-                if (builtTextComponent != null)
-                    builtTextComponent.color = color;
-                if (hasCustomContent)
-                {
-                    foreach (var child in children)
-                        child.ForegroundColor(color);
-                }
-            }
+            hasExplicitTextColor = true;
+            textColor = color;
+            if (hasCustomContent)
+                foreach (var child in children)
+                    child.ForegroundColor(color);
+            RebuildStyleBody();
 
+            return this;
+        }
+
+        public ButtonElement SetButtonStyle(IButtonStyle style)
+        {
+            buttonStyle = style ?? ButtonStyles.Automatic();
+            RebuildStyleBody();
             return this;
         }
 
         public ButtonElement SetFont(TMP_FontAsset font)
         {
             fontAsset = font;
-            if (builtTextComponent != null)
-            {
-                TMP_FontAsset effectiveFont = ResolveFont(fontAsset);
-                if (effectiveFont != null)
-                    builtTextComponent.font = effectiveFont;
-            }
             if (hasCustomContent)
             {
                 foreach (var child in children)
                     child.Font(font);
             }
+            RebuildStyleBody();
 
             return this;
         }
@@ -134,13 +161,12 @@ namespace UniftUI
         public ButtonElement SetFontSize(float size)
         {
             fontSize = Mathf.Max(1f, size);
-            if (builtTextComponent != null)
-                ConfigureLabelText(builtTextComponent);
             if (hasCustomContent)
             {
                 foreach (var child in children)
                     child.FontSize(fontSize);
             }
+            RebuildStyleBody();
 
             return this;
         }
@@ -148,140 +174,209 @@ namespace UniftUI
         public ButtonElement SetBold(bool bold)
         {
             isBold = bold;
-            ApplyFontStyle(builtTextComponent);
             if (hasCustomContent)
                 foreach (var child in children)
                     child.Bold();
+            RebuildStyleBody();
             return this;
         }
 
         public ButtonElement SetItalic(bool italic)
         {
             isItalic = italic;
-            ApplyFontStyle(builtTextComponent);
             if (hasCustomContent)
                 foreach (var child in children)
                     child.Italic();
+            RebuildStyleBody();
             return this;
         }
 
         public ButtonElement SetUnderline(bool underline)
         {
             isUnderlined = underline;
-            ApplyFontStyle(builtTextComponent);
             if (hasCustomContent)
                 foreach (var child in children)
                     child.Underline();
+            RebuildStyleBody();
             return this;
         }
 
         public ButtonElement SetStrikethrough(bool strikethrough)
         {
             isStrikethrough = strikethrough;
-            ApplyFontStyle(builtTextComponent);
             if (hasCustomContent)
                 foreach (var child in children)
                     child.Strikethrough();
+            RebuildStyleBody();
             return this;
         }
 
         public override GameObject Build(Transform parent)
         {
-            builtTextComponent = null;
+            GameObject buttonObj = CreateElementRoot("Button", parent);
+            builtButtonObject = buttonObj;
 
-            GameObject buttonObj = new GameObject("Button");
-            buttonObj.transform.SetParent(parent, false);
-
-            Image image = buttonObj.AddComponent<Image>();
-            image.color = backgroundColor;
+            Image image = AddImage(buttonObj, backgroundColor);
             builtBackgroundImage = image;
 
             Button button = buttonObj.AddComponent<Button>();
             button.targetGraphic = image;
-
-            ColorBlock colors = button.colors;
-            colors.pressedColor = new Color(0.7f, 0.7f, 0.7f);
-            button.colors = colors;
+            builtButton = button;
+            ConfigureButtonTransition();
 
             var buttonLayout = buttonObj.AddComponent<UniftUISingleChildLayoutGroup>();
-            buttonLayout.Configure(new RectOffset(10, 10, 5, 5), TextAnchor.MiddleCenter);
-
-            if (hasCustomContent)
-            {
-                foreach (var child in children)
-                {
-                    ApplyInheritedFont(child);
-                    child.Build(buttonObj.transform);
-                }
-            }
-            else
-            {
-                GameObject textObj = new GameObject("Text");
-                textObj.transform.SetParent(buttonObj.transform, false);
-
-                RectTransform textRect = textObj.AddComponent<RectTransform>();
-                textRect.anchorMin = new Vector2(0, 0);
-                textRect.anchorMax = new Vector2(1, 1);
-                textRect.offsetMin = new Vector2(10, 5);
-                textRect.offsetMax = new Vector2(-10, -5);
-
-                TextMeshProUGUI textComponent = textObj.AddComponent<TextMeshProUGUI>();
-                textComponent.text = label;
-                ConfigureLabelText(textComponent);
-                builtTextComponent = textComponent;
-
-                TMP_FontAsset effectiveFont = ResolveFont(fontAsset);
-                if (effectiveFont != null)
-                {
-                    textComponent.font = effectiveFont;
-                }
-            }
+            buttonLayout.Configure(new RectOffset(0, 0, 0, 0), TextAnchor.MiddleCenter);
 
             LayoutElementUtility.Configure(buttonObj, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight);
+            ConfigureInteractionTracker(buttonObj);
+            RebuildStyleBody();
 
-            var capturedClick = onClick;
-            button.onClick.AddListener(() =>
-            {
-                try
-                {
-                    capturedClick?.Invoke();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[UniftUI] Button onClick error: {e.Message}");
-                }
-            });
+            button.onClick.AddListener(InvokeButtonAction);
 
             ApplyAllEffects(buttonObj, image);
 
             return buttonObj;
         }
 
-        private void ConfigureLabelText(TextMeshProUGUI textComponent)
+        private void ConfigureButtonTransition()
         {
-            textComponent.alignment = TextAlignmentOptions.Center;
-            textComponent.fontSize = fontSize;
-            textComponent.fontSizeMax = fontSize;
-            textComponent.fontSizeMin = Mathf.Min(8f, fontSize);
-            textComponent.enableAutoSizing = true;
-            textComponent.textWrappingMode = TextWrappingModes.NoWrap;
-            textComponent.overflowMode = TextOverflowModes.Ellipsis;
-            textComponent.color = textColor;
-            textComponent.raycastTarget = false;
-            ApplyFontStyle(textComponent);
-        }
-
-        private void ApplyFontStyle(TextMeshProUGUI textComponent)
-        {
-            if (textComponent == null)
+            if (builtButton == null)
                 return;
 
-            FontStyles fontStyle = FontStyles.Normal;
-            if (isBold) fontStyle |= FontStyles.Bold;
-            if (isItalic) fontStyle |= FontStyles.Italic;
-            if (isUnderlined) fontStyle |= FontStyles.Underline;
-            if (isStrikethrough) fontStyle |= FontStyles.Strikethrough;
-            textComponent.fontStyle = fontStyle;
+            ConfigureSelectableColors(builtButton, backgroundColor);
+
+            if (builtBackgroundImage != null)
+                builtBackgroundImage.color = backgroundColor;
+        }
+
+        private void ConfigureInteractionTracker(GameObject buttonObj)
+        {
+            ControlInteractionTracker tracker = buttonObj.GetComponent<ControlInteractionTracker>();
+            if (tracker == null)
+                tracker = buttonObj.AddComponent<ControlInteractionTracker>();
+            tracker.Initialize(CreateHitTarget());
+        }
+
+        private void EnsureHitArea(GameObject buttonObj)
+        {
+            EnsureControlHitArea(buttonObj, ref hitAreaObject, "ButtonHitArea", CreateHitTarget());
+        }
+
+        private ControlHitTarget CreateHitTarget()
+        {
+            return new ControlHitTarget(InvokeButtonAction, SetPressed, SetHovered, IsInputAllowed);
+        }
+
+        private void SetPressed(bool pressed)
+        {
+            bool next = pressed && IsInputAllowed();
+            if (isPressed == next)
+                return;
+
+            isPressed = next;
+            RebuildStyleBody();
+        }
+
+        private void SetHovered(bool hovered)
+        {
+            bool next = hovered && IsInputAllowed();
+            if (isHovered == next)
+                return;
+
+            isHovered = next;
+            RebuildStyleBody();
+        }
+
+        private void RebuildStyleBody()
+        {
+            if (builtButtonObject == null)
+                return;
+
+            ClearStyleBody();
+
+            UIElement labelElement = CreateLabelElement();
+            UIElement body = BuildStyleElement(labelElement) ?? labelElement;
+
+            if ((preferredWidth >= 0f || infiniteWidth) && ChildMayFillWidth(body))
+                body.WithInfiniteWidth();
+            if ((preferredHeight >= 0f || infiniteHeight) && ChildMayFillHeight(body))
+                body.WithInfiniteHeight();
+
+            ApplyInheritedFont(body);
+            body.Build(builtButtonObject.transform);
+            EnsureHitArea(builtButtonObject);
+
+            LayoutCore.ForceRebuildLayout(builtButtonObject);
+        }
+
+        private void ClearStyleBody()
+        {
+            var oldChildren = new List<GameObject>();
+            foreach (Transform child in builtButtonObject.transform)
+            {
+                if (child != null)
+                {
+                    if (child.gameObject == hitAreaObject)
+                        continue;
+                    oldChildren.Add(child.gameObject);
+                }
+            }
+
+            foreach (GameObject child in oldChildren)
+            {
+                child.SetActive(false);
+                child.transform.SetParent(null, false);
+                DestroyGameObject(child);
+            }
+        }
+
+        private UIElement BuildStyleElement(UIElement labelElement)
+        {
+            ILayoutContainer parentContext = UIContext.Current;
+            try
+            {
+                UIContext.Current = null;
+                var configuration = new ButtonStyleConfiguration(labelElement, isPressed, isHovered);
+                return (buttonStyle ?? ButtonStyles.Automatic()).MakeBody(configuration);
+            }
+            finally
+            {
+                UIContext.Current = parentContext;
+            }
+        }
+
+        private UIElement CreateLabelElement()
+        {
+            if (hasCustomContent)
+            {
+                if (hasExplicitTextColor && customContent != null)
+                    customContent.ForegroundColor(textColor);
+                return customContent;
+            }
+
+            ILayoutContainer parentContext = UIContext.Current;
+            try
+            {
+                UIContext.Current = null;
+                TextElement text = new TextElement(label);
+                text.SetTextColor(textColor);
+                text.SetFontSize(fontSize);
+                if (fontAsset != null)
+                    text.SetFont(fontAsset);
+                if (isBold)
+                    text.SetBold(true);
+                if (isItalic)
+                    text.SetItalic(true);
+                if (isUnderlined)
+                    text.SetUnderline(true);
+                if (isStrikethrough)
+                    text.SetStrikethrough(true);
+                return text;
+            }
+            finally
+            {
+                UIContext.Current = parentContext;
+            }
         }
 
     }

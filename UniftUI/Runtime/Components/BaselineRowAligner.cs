@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UniftUI.Internal;
 
 namespace UniftUI
 {
@@ -11,12 +12,12 @@ namespace UniftUI
             if (alignment != HStackAlignment.FirstTextBaseline && alignment != HStackAlignment.LastTextBaseline)
                 return;
 
-            RectTransform rowRt = rowRoot.GetComponent<RectTransform>();
+            RectTransform rowRt = LayoutCore.EnsureRectTransform(rowRoot);
             if (rowRt == null)
                 return;
 
             Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(rowRt);
+            LayoutCore.ForceRebuildLayout(rowRoot);
 
             bool lastLine = alignment == HStackAlignment.LastTextBaseline;
 

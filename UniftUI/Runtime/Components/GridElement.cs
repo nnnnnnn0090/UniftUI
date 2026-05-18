@@ -28,20 +28,7 @@ namespace UniftUI
             RowHorizontalSpacing = horizontalSpacing;
             VerticalSpacing = verticalSpacing;
             RowAlignment = rowAlignment;
-
-            if (content != null)
-            {
-                var parentContext = UIContext.Current;
-                try
-                {
-                    UIContext.Current = this;
-                    content.Invoke();
-                }
-                finally
-                {
-                    UIContext.Current = parentContext;
-                }
-            }
+            MaterializeContent(content, children);
         }
 
         public void AddChild(UIElement child)
@@ -70,15 +57,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject container = new GameObject("Grid");
-            container.transform.SetParent(parent, false);
-
-            Image backgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                backgroundImage = container.AddComponent<Image>();
-                backgroundImage.color = backgroundColor;
-            }
+            GameObject container = CreateElementRoot("Grid", parent);
+            Image backgroundImage = AddBackgroundImageIfNeeded(container);
 
             UniftUIStackLayoutGroup layout = container.AddComponent<UniftUIStackLayoutGroup>();
             layout.padding = padding ?? new RectOffset(0, 0, 0, 0);
@@ -86,79 +66,22 @@ namespace UniftUI
 
             LayoutElementUtility.Configure(container, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight);
 
-            foreach (var child in children)
-            {
-                ApplyInheritedFont(child);
-                child.Build(container.transform);
-            }
+            BuildContentChildren(children, container.transform);
 
-            if (states != null && states.Length > 0)
-                SetupStateObserver(container);
+            SetupContentRebuildObserver(
+                states,
+                container,
+                container.transform,
+                children,
+                content,
+                "Grid",
+                afterRebuild: () => GridColumnSynchronizer.Apply(EnsureRectTransform(container)));
 
             ApplyAllEffects(container, backgroundImage);
 
-            RectTransform gridRt = container.GetComponent<RectTransform>();
-            if (gridRt != null)
-                GridColumnSynchronizer.Apply(gridRt);
+            GridColumnSynchronizer.Apply(EnsureRectTransform(container));
 
             return container;
-        }
-
-        private void SetupStateObserver(GameObject container)
-        {
-            if (container == null) return;
-
-            var localContent = content;
-            var localChildren = children;
-
-            StateObserver observer = container.AddComponent<StateObserver>();
-            observer.Initialize(states, () =>
-            {
-                if (container == null || !container)
-                {
-                    Debug.LogWarning("[UniftUI] Grid rebuild skipped: container was destroyed.");
-                    return;
-                }
-
-                try
-                {
-                    foreach (Transform child in container.transform)
-                        if (child != null && child.gameObject != null)
-                            DestroyGameObject(child.gameObject);
-
-                    localChildren.Clear();
-
-                    var parentContext = UIContext.Current;
-                    try
-                    {
-                        UIContext.Current = this;
-                        localContent?.Invoke();
-                    }
-                    finally
-                    {
-                        UIContext.Current = parentContext;
-                    }
-
-                    foreach (var child in localChildren)
-                    {
-                        if (child == null || container.transform == null) continue;
-                        ApplyInheritedFont(child);
-                        child.Build(container.transform);
-                    }
-
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(container.GetComponent<RectTransform>());
-
-                    RectTransform syncRt = container.GetComponent<RectTransform>();
-                    if (syncRt != null)
-                        GridColumnSynchronizer.Apply(syncRt);
-
-                    Canvas.ForceUpdateCanvases();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[UniftUI] Grid rebuild error: {e.Message}\n{e.StackTrace}");
-                }
-            });
         }
     }
 }

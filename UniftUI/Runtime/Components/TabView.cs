@@ -44,6 +44,7 @@ namespace UniftUI
         {
             this.content = content;
             this.selectedIndex = externalSelectedIndex ?? new State<int>(0);
+            AddPropertyBinding(this.selectedIndex, ApplySelectedTab, "selectedTab", BindingKind.Content);
 
             if (content != null)
             {
@@ -136,15 +137,8 @@ namespace UniftUI
         /// <inheritdoc />
         public override GameObject Build(Transform parent)
         {
-            GameObject container = new GameObject("TabView");
-            container.transform.SetParent(parent, false);
-
-            Image background = null;
-            if (backgroundColor != Color.clear)
-            {
-                background = container.AddComponent<Image>();
-                background.color = backgroundColor;
-            }
+            GameObject container = CreateElementRoot("TabView", parent);
+            Image background = AddBackgroundImageIfNeeded(container);
 
             UniftUIStackLayoutGroup mainLayout = container.AddComponent<UniftUIStackLayoutGroup>();
             mainLayout.padding = new RectOffset(0, 0, 0, 0);
@@ -162,8 +156,7 @@ namespace UniftUI
 
         private GameObject CreateContentArea(Transform parent)
         {
-            GameObject contentArea = new GameObject("ContentArea");
-            contentArea.transform.SetParent(parent, false);
+            GameObject contentArea = CreateChildObject("ContentArea", parent);
 
             LayoutElement contentLayout = contentArea.AddComponent<LayoutElement>();
             contentLayout.minHeight = 0;
@@ -178,11 +171,6 @@ namespace UniftUI
                 currentContentObj = CreateTabContent(contentArea.transform, tabs[selectedIndex.Value]);
                 renderedIndex = selectedIndex.Value;
             }
-
-            StateObserver observer = contentArea.AddComponent<StateObserver>();
-            observer.Initialize(new State[] { selectedIndex }, () => {
-                ApplySelectedTab();
-            });
 
             builtContentParent = contentArea.transform;
             return contentArea;
@@ -274,14 +262,7 @@ namespace UniftUI
 
         private GameObject CreateTabContent(Transform parent, TabItem tab)
         {
-            GameObject tabRootContentObj = new GameObject($"Content_Tab_{parent.childCount}");
-            tabRootContentObj.transform.SetParent(parent, false);
-
-            RectTransform rect = tabRootContentObj.AddComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
+            GameObject tabRootContentObj = CreateFullStretchChild($"Content_Tab_{parent.childCount}", parent);
 
             var layoutGroup = tabRootContentObj.AddComponent<UniftUIStackLayoutGroup>();
             layoutGroup.padding = new RectOffset(0, 0, 0, 0);
@@ -312,11 +293,8 @@ namespace UniftUI
 
         private GameObject CreateTabBar(Transform parent)
         {
-            GameObject tabBar = new GameObject("TabBar");
-            tabBar.transform.SetParent(parent, false);
-
-            Image tabBarBg = tabBar.AddComponent<Image>();
-            tabBarBg.color = tabBarColor;
+            GameObject tabBar = CreateChildObject("TabBar", parent);
+            Image tabBarBg = AddImage(tabBar, tabBarColor);
 
             LayoutElement tabBarLayout = tabBar.AddComponent<LayoutElement>();
             tabBarLayout.minHeight = 60;
@@ -333,43 +311,30 @@ namespace UniftUI
                 CreateTabButton(tabBar.transform, tabs[i], i);
             }
 
-            StateObserver observer = tabBar.AddComponent<StateObserver>();
-            observer.Initialize(new State[] { selectedIndex }, () => {
-                UpdateTabButtons(tabBar.transform);
-            });
-
             builtTabBarParent = tabBar.transform;
             return tabBar;
         }
 
         private void CreateTabButton(Transform parent, TabItem tab, int index)
         {
-            GameObject tabButton = new GameObject($"Tab_{index}");
-            tabButton.transform.SetParent(parent, false);
-
-            Image buttonBg = tabButton.AddComponent<Image>();
-            buttonBg.color = index == selectedIndex.Value ? activeTabColor : inactiveTabColor;
+            GameObject tabButton = CreateChildObject($"Tab_{index}", parent);
+            Image buttonBg = AddImage(tabButton, index == selectedIndex.Value ? activeTabColor : inactiveTabColor);
 
             Button button = tabButton.AddComponent<Button>();
             button.targetGraphic = buttonBg;
-            button.onClick.AddListener(() => {
+            ConfigureSelectableColors(button, buttonBg.color);
+            Action selectTab = () => {
                 if (selectedIndex.Value == index)
                     return;
                 selectedIndex.Value = index;
-                ApplySelectedTab();
-                UpdateTabButtons(parent);
-            });
+            };
+            button.onClick.AddListener(() => selectTab.Invoke());
 
-            GameObject contentContainer = new GameObject("TabHeaderContent");
-            contentContainer.transform.SetParent(tabButton.transform, false);
+            GameObject contentContainer = CreateChildObject("TabHeaderContent", tabButton.transform);
             var headerLayout = tabButton.AddComponent<UniftUISingleChildLayoutGroup>();
             headerLayout.Configure(new RectOffset(0, 0, 0, 0), TextAnchor.MiddleCenter);
 
-            RectTransform contentRect = contentContainer.AddComponent<RectTransform>();
-            contentRect.anchorMin = Vector2.zero;
-            contentRect.anchorMax = Vector2.one;
-            contentRect.offsetMin = Vector2.zero;
-            contentRect.offsetMax = Vector2.zero;
+            AddFullStretchRect(contentContainer);
 
             if (tab.TitleContent != null)
             {
@@ -399,6 +364,7 @@ namespace UniftUI
                 text.alignment = TMPro.TextAlignmentOptions.Center;
                 text.fontSize = 16;
                 text.color = Color.white;
+                text.raycastTarget = false;
 
                 TMPro.TMP_FontAsset resolvedFont = ResolveFont(fontAsset);
                 if (resolvedFont != null)
@@ -406,6 +372,13 @@ namespace UniftUI
                     text.font = resolvedFont;
                 }
             }
+
+            GameObject hitArea = null;
+            EnsureControlHitArea(
+                tabButton,
+                ref hitArea,
+                "TabHitArea",
+                new ControlHitTarget(selectTab, canReceiveInput: IsInputAllowed));
 
             LayoutElement buttonLayout = tabButton.AddComponent<LayoutElement>();
             buttonLayout.minHeight = 60;
@@ -425,7 +398,9 @@ namespace UniftUI
                 Image buttonBg = tabChild.GetComponent<Image>();
                 if (buttonBg != null)
                 {
-                    buttonBg.color = i == selectedIndex.Value ? activeTabColor : inactiveTabColor;
+                    Color tabColor = i == selectedIndex.Value ? activeTabColor : inactiveTabColor;
+                    buttonBg.color = tabColor;
+                    ConfigureSelectableColors(tabChild.GetComponent<Button>(), tabColor);
                 }
             }
         }
@@ -436,7 +411,7 @@ namespace UniftUI
 
             if (isDirectChildOfCanvas)
             {
-                RectTransform rectTransform = container.GetComponent<RectTransform>();
+                RectTransform rectTransform = EnsureRectTransform(container);
                 rectTransform.anchorMin = Vector2.zero;
                 rectTransform.anchorMax = Vector2.one;
                 rectTransform.pivot = new Vector2(0.5f, 0.5f);

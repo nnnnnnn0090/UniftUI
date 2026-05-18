@@ -44,7 +44,7 @@ namespace UniftUI
                 else
                 {
                     layoutGroup.padding = newPadding;
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(layoutGroup.GetComponent<RectTransform>());
+                    LayoutCore.ForceRebuildLayout(layoutGroup.gameObject);
                 }
             }
         }
@@ -91,15 +91,12 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject paddingContainer = new GameObject("PaddingContainer");
-            paddingContainer.transform.SetParent(parent, false);
+            GameObject paddingContainer = CreateElementRoot("PaddingContainer", parent);
 
             Image bgImage = null;
             if (base.backgroundColor != Color.clear)
-            {
-                bgImage = paddingContainer.AddComponent<Image>();
-                bgImage.color = base.backgroundColor;
-            }
+                bgImage = AddImage(paddingContainer, base.backgroundColor);
+            bgImage = EnsureControlHitProxy(paddingContainer, bgImage, content);
 
             layoutGroup = paddingContainer.AddComponent<UniftUISingleChildLayoutGroup>();
             layoutGroup.Configure(paddingValue, TextAnchor.MiddleCenter);

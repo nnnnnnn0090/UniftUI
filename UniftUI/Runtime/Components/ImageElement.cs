@@ -98,8 +98,7 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject imageObj = new GameObject("Image");
-            imageObj.transform.SetParent(parent, false);
+            GameObject imageObj = CreateElementRoot("Image", parent);
             builtRoot = imageObj;
 
             float spriteMinWidth = -1, spriteMinHeight = -1;
@@ -114,7 +113,7 @@ namespace UniftUI
             bool fixedFrame = preferredWidth >= 0f && preferredHeight >= 0f && !infiniteWidth && !infiniteHeight;
             bool useAspectFill = scaleMode == ImageScaleMode.AspectFill && sprite != null && fixedFrame;
 
-            LayoutElement layoutElement = LayoutElementUtility.Configure(
+            LayoutElementUtility.Configure(
                 imageObj,
                 preferredWidth,
                 preferredHeight,
@@ -123,10 +122,13 @@ namespace UniftUI
                 spriteMinWidth,
                 spriteMinHeight);
 
+            Image backgroundImage = AddBackgroundImageIfNeeded(imageObj);
             Image mainGraphic;
 
             if (useAspectFill)
             {
+                imageObj.AddComponent<RectMask2D>();
+
                 Vector2 spriteSize = new Vector2(
                     sprite.rect.width,
                     sprite.rect.height);
@@ -137,49 +139,33 @@ namespace UniftUI
                     frameH / Mathf.Max(0.0001f, spriteSize.y));
                 Vector2 coverSize = spriteSize * coverScale;
 
-                GameObject contentObj = new GameObject("AspectFillContent");
-                contentObj.transform.SetParent(imageObj.transform, false);
-                RectTransform contentRt = contentObj.AddComponent<RectTransform>();
+                GameObject contentObj = CreateChildObject("AspectFillContent", imageObj.transform);
+                RectTransform contentRt = EnsureRectTransform(contentObj);
                 contentRt.anchorMin = contentRt.anchorMax = new Vector2(0.5f, 0.5f);
                 contentRt.pivot = new Vector2(0.5f, 0.5f);
                 contentRt.sizeDelta = coverSize;
                 contentRt.anchoredPosition = Vector2.zero;
                 builtAspectFillContent = contentRt;
 
-                mainGraphic = contentObj.AddComponent<Image>();
+                mainGraphic = AddImage(contentObj, EffectiveImageColor);
                 mainGraphic.sprite = sprite;
                 mainGraphic.preserveAspect = false;
                 mainGraphic.type = Image.Type.Simple;
-                mainGraphic.color = EffectiveImageColor;
             }
             else
             {
-                mainGraphic = imageObj.AddComponent<Image>();
+                GameObject graphicObj = CreateFullStretchChild("Graphic", imageObj.transform);
+                mainGraphic = AddImage(graphicObj, EffectiveImageColor);
                 mainGraphic.sprite = sprite;
-                mainGraphic.color = EffectiveImageColor;
                 mainGraphic.type = unityImageType;
                 ConfigureImageSizing(mainGraphic);
             }
 
             builtImage = mainGraphic;
 
-            if (backgroundColor != Color.clear)
-            {
-                GameObject bgObj = new GameObject("Background");
-                bgObj.transform.SetParent(imageObj.transform, false);
-                bgObj.transform.SetSiblingIndex(0);
-
-                RectTransform bgRect = bgObj.AddComponent<RectTransform>();
-                bgRect.anchorMin = Vector2.zero;
-                bgRect.anchorMax = Vector2.one;
-                bgRect.offsetMin = Vector2.zero;
-                bgRect.offsetMax = Vector2.zero;
-
-                Image bgImage = bgObj.AddComponent<Image>();
-                bgImage.color = backgroundColor;
-            }
-
-            ApplyAllEffects(imageObj, mainGraphic);
+            ApplyAllEffects(imageObj, backgroundImage ?? mainGraphic);
+            if (backgroundImage != null)
+                ApplyRoundedCorners(mainGraphic.gameObject, mainGraphic);
 
             return imageObj;
         }

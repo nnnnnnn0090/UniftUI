@@ -26,12 +26,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject rectangle = new GameObject("Rectangle");
-            rectangle.transform.SetParent(parent, false);
-
-            builtImage = rectangle.AddComponent<Image>();
-            builtImage.color = fillColor;
-            builtImage.raycastTarget = false;
+            GameObject rectangle = CreateElementRoot("Rectangle", parent);
+            builtImage = AddImage(rectangle, fillColor, false);
 
             LayoutElementUtility.Configure(rectangle, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight, 10f, 10f);
             ApplyAllEffects(rectangle, builtImage);

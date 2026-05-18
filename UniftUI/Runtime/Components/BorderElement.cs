@@ -70,12 +70,11 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject container = new GameObject("BorderContainer");
-            container.transform.SetParent(parent, false);
-
-            builtImage = container.AddComponent<Image>();
-            builtImage.color = backgroundColor != Color.clear ? backgroundColor : new Color(1f, 1f, 1f, 0f);
-            builtImage.raycastTarget = false;
+            GameObject container = CreateElementRoot("BorderContainer", parent);
+            builtImage = AddImage(
+                container,
+                backgroundColor != Color.clear ? backgroundColor : new Color(1f, 1f, 1f, 0f),
+                false);
 
             builtOutline = container.AddComponent<Outline>();
             builtOutline.effectColor = borderColor;

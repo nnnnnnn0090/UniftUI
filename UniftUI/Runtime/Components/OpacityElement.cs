@@ -54,8 +54,7 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            opacityContainer = new GameObject("OpacityContainer");
-            opacityContainer.transform.SetParent(parent, false);
+            opacityContainer = CreateElementRoot("OpacityContainer", parent);
 
             var layoutGroup = opacityContainer.AddComponent<UniftUISingleChildLayoutGroup>();
             layoutGroup.Configure(new RectOffset(0, 0, 0, 0), TextAnchor.MiddleCenter);

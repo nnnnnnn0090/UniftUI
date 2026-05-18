@@ -48,28 +48,22 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject root = new GameObject("ProgressView");
-            root.transform.SetParent(parent, false);
+            GameObject root = CreateElementRoot("ProgressView", parent);
 
-            Image trackImage = root.AddComponent<Image>();
-            trackImage.color = trackColor;
-            trackImage.raycastTarget = false;
+            Image trackImage = AddImage(root, trackColor, false);
             builtTrackImage = trackImage;
 
-            GameObject fill = new GameObject("Fill");
-            fill.transform.SetParent(root.transform, false);
+            GameObject fill = CreateChildObject("Fill", root.transform);
             builtFillObject = fill;
 
-            RectTransform fillRect = fill.AddComponent<RectTransform>();
+            RectTransform fillRect = EnsureRectTransform(fill);
             fillRect.anchorMin = Vector2.zero;
             fillRect.anchorMax = new Vector2(NormalizedValue(), 1f);
             fillRect.offsetMin = Vector2.zero;
             fillRect.offsetMax = Vector2.zero;
             builtFillRect = fillRect;
 
-            Image fillImage = fill.AddComponent<Image>();
-            fillImage.color = tintColor;
-            fillImage.raycastTarget = false;
+            Image fillImage = AddImage(fill, tintColor, false);
             builtFillImage = fillImage;
 
             LayoutElementUtility.Configure(root, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight, 120f, 8f);

@@ -21,21 +21,7 @@ namespace UniftUI
             this.states = states;
             this.spacing = spacing;
             this.alignment = alignment;
-
-            if (content != null)
-            {
-                var parentContext = UIContext.Current;
-
-                try
-                {
-                    UIContext.Current = this;
-                    content.Invoke();
-                }
-                finally
-                {
-                    UIContext.Current = parentContext;
-                }
-            }
+            MaterializeContent(content, children);
         }
 
         public void AddChild(UIElement child)
@@ -75,15 +61,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject container = new GameObject("HStack");
-            container.transform.SetParent(parent, false);
-
-            Image backgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                backgroundImage = container.AddComponent<Image>();
-                backgroundImage.color = backgroundColor;
-            }
+            GameObject container = CreateElementRoot("HStack", parent);
+            Image backgroundImage = AddBackgroundImageIfNeeded(container);
 
             UniftUIStackLayoutGroup layout = container.AddComponent<UniftUIStackLayoutGroup>();
             layout.padding = padding ?? new RectOffset(0, 0, 0, 0);
@@ -91,75 +70,22 @@ namespace UniftUI
 
             LayoutElementUtility.Configure(container, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight);
 
-            foreach (var child in children)
-            {
-                ApplyInheritedFont(child);
-                child.Build(container.transform);
-            }
+            BuildContentChildren(children, container.transform);
 
-            if (states != null && states.Length > 0)
-            {
-                SetupStateObserver(container);
-            }
+            SetupContentRebuildObserver(
+                states,
+                container,
+                container.transform,
+                children,
+                content,
+                "HStack",
+                afterRebuild: () => BaselineRowAligner.AlignIfNeeded(container, alignment));
 
             ApplyAllEffects(container, backgroundImage);
 
             BaselineRowAligner.AlignIfNeeded(container, alignment);
 
             return container;
-        }
-
-        private void SetupStateObserver(GameObject container)
-        {
-            if (container == null) return;
-
-            StateObserver observer = container.AddComponent<StateObserver>();
-            observer.Initialize(states, () => {
-                if (container == null || !container)
-                {
-                    Debug.LogWarning("[UniftUI] HStack rebuild skipped: container was destroyed.");
-                    return;
-                }
-
-                try
-                {
-                    foreach (Transform child in container.transform)
-                    {
-                        if (child != null && child.gameObject != null)
-                            DestroyGameObject(child.gameObject);
-                    }
-
-                    children.Clear();
-
-                    var parentContext = UIContext.Current;
-                    try
-                    {
-                        UIContext.Current = this;
-                        content?.Invoke();
-                    }
-                    finally
-                    {
-                        UIContext.Current = parentContext;
-                    }
-
-                    foreach (var child in children)
-                    {
-                        if (child == null) continue;
-
-                        ApplyInheritedFont(child);
-                        child.Build(container.transform);
-                    }
-
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(container.GetComponent<RectTransform>());
-                    Canvas.ForceUpdateCanvases();
-
-                    BaselineRowAligner.AlignIfNeeded(container, alignment);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[UniftUI] HStack rebuild error: {e.Message}\n{e.StackTrace}");
-                }
-            });
         }
     }
 }

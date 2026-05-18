@@ -17,9 +17,9 @@ namespace UniftUI.Internal
             SetDirty();
         }
 
-        public void SetVisualOffset(Vector2 swiftOffset)
+        public void SetVisualOffset(Vector2 offset)
         {
-            visualOffset = swiftOffset;
+            visualOffset = offset;
             SetDirty();
         }
 

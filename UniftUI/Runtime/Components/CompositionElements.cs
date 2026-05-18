@@ -60,15 +60,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject root = new GameObject("AspectRatio");
-            root.transform.SetParent(parent, false);
-
-            Image backgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                backgroundImage = root.AddComponent<Image>();
-                backgroundImage.color = backgroundColor;
-            }
+            GameObject root = CreateElementRoot("AspectRatio", parent);
+            Image backgroundImage = AddBackgroundImageIfNeeded(root);
 
             float width = preferredWidth;
             float height = preferredHeight;
@@ -168,8 +161,7 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject root = new GameObject(shape == UniftUIClipShape.Rectangle ? "Clipped" : "ClipShape");
-            root.transform.SetParent(parent, false);
+            GameObject root = CreateElementRoot(shape == UniftUIClipShape.Rectangle ? "Clipped" : "ClipShape", parent);
 
             Image maskImage = null;
             if (shape == UniftUIClipShape.Rectangle && Mathf.Approximately(radius, 0f))
@@ -178,8 +170,7 @@ namespace UniftUI
             }
             else
             {
-                maskImage = root.AddComponent<Image>();
-                maskImage.color = Color.white;
+                maskImage = AddImage(root, Color.white, false);
                 maskImage.raycastTarget = false;
 
                 Mask mask = root.AddComponent<Mask>();
@@ -262,72 +253,23 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject root = new GameObject("LazyVStack");
-            root.transform.SetParent(parent, false);
-
-            Image backgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                backgroundImage = root.AddComponent<Image>();
-                backgroundImage.color = backgroundColor;
-            }
+            GameObject root = CreateElementRoot("LazyVStack", parent);
+            Image backgroundImage = AddBackgroundImageIfNeeded(root);
 
             var layout = root.AddComponent<UniftUIStackLayoutGroup>();
             layout.padding = padding ?? new RectOffset(0, 0, 0, 0);
             layout.Configure(UniftUIStackAxis.Vertical, spacing, alignment, HStackAlignment.Center);
             LayoutElementUtility.Configure(root, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight);
 
-            MaterializeChildren();
-            BuildChildren(root.transform);
+            MaterializeContent(content, children);
+            BuildContentChildren(children, root.transform);
 
-            if (states != null && states.Length > 0)
-                SetupStateObserver(root);
+            SetupContentRebuildObserver(states, root, root.transform, children, content, "LazyVStack");
 
             ApplyAllEffects(root, backgroundImage);
             return root;
         }
 
-        private void SetupStateObserver(GameObject root)
-        {
-            StateObserver observer = root.AddComponent<StateObserver>();
-            observer.Initialize(states, () =>
-            {
-                foreach (Transform child in root.transform)
-                    if (child != null)
-                        DestroyGameObject(child.gameObject);
-
-                MaterializeChildren();
-                BuildChildren(root.transform);
-                LayoutRebuilder.ForceRebuildLayoutImmediate(root.GetComponent<RectTransform>());
-            });
-        }
-
-        private void MaterializeChildren()
-        {
-            children.Clear();
-            if (content == null)
-                return;
-
-            ILayoutContainer parentContext = UIContext.Current;
-            try
-            {
-                UIContext.Current = this;
-                content.Invoke();
-            }
-            finally
-            {
-                UIContext.Current = parentContext;
-            }
-        }
-
-        private void BuildChildren(Transform parent)
-        {
-            foreach (UIElement child in children)
-            {
-                ApplyInheritedFont(child);
-                child.Build(parent);
-            }
-        }
     }
 
     /// <summary>A horizontal stack that defers child creation until build time.</summary>
@@ -374,74 +316,31 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject root = new GameObject("LazyHStack");
-            root.transform.SetParent(parent, false);
-
-            Image backgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                backgroundImage = root.AddComponent<Image>();
-                backgroundImage.color = backgroundColor;
-            }
+            GameObject root = CreateElementRoot("LazyHStack", parent);
+            Image backgroundImage = AddBackgroundImageIfNeeded(root);
 
             var layout = root.AddComponent<UniftUIStackLayoutGroup>();
             layout.padding = padding ?? new RectOffset(0, 0, 0, 0);
             layout.Configure(UniftUIStackAxis.Horizontal, spacing, VStackAlignment.Center, alignment);
             LayoutElementUtility.Configure(root, preferredWidth, preferredHeight, infiniteWidth, infiniteHeight);
 
-            MaterializeChildren();
-            BuildChildren(root.transform);
+            MaterializeContent(content, children);
+            BuildContentChildren(children, root.transform);
 
-            if (states != null && states.Length > 0)
-                SetupStateObserver(root);
+            SetupContentRebuildObserver(
+                states,
+                root,
+                root.transform,
+                children,
+                content,
+                "LazyHStack",
+                afterRebuild: () => BaselineRowAligner.AlignIfNeeded(root, alignment));
 
             ApplyAllEffects(root, backgroundImage);
             BaselineRowAligner.AlignIfNeeded(root, alignment);
             return root;
         }
 
-        private void SetupStateObserver(GameObject root)
-        {
-            StateObserver observer = root.AddComponent<StateObserver>();
-            observer.Initialize(states, () =>
-            {
-                foreach (Transform child in root.transform)
-                    if (child != null)
-                        DestroyGameObject(child.gameObject);
-
-                MaterializeChildren();
-                BuildChildren(root.transform);
-                LayoutRebuilder.ForceRebuildLayoutImmediate(root.GetComponent<RectTransform>());
-                BaselineRowAligner.AlignIfNeeded(root, alignment);
-            });
-        }
-
-        private void MaterializeChildren()
-        {
-            children.Clear();
-            if (content == null)
-                return;
-
-            ILayoutContainer parentContext = UIContext.Current;
-            try
-            {
-                UIContext.Current = this;
-                content.Invoke();
-            }
-            finally
-            {
-                UIContext.Current = parentContext;
-            }
-        }
-
-        private void BuildChildren(Transform parent)
-        {
-            foreach (UIElement child in children)
-            {
-                ApplyInheritedFont(child);
-                child.Build(parent);
-            }
-        }
     }
 
     public readonly struct GeometryProxy
@@ -493,15 +392,8 @@ namespace UniftUI
 
         public override GameObject Build(Transform parent)
         {
-            GameObject root = new GameObject("GeometryReader");
-            root.transform.SetParent(parent, false);
-
-            Image backgroundImage = null;
-            if (backgroundColor != Color.clear)
-            {
-                backgroundImage = root.AddComponent<Image>();
-                backgroundImage.color = backgroundColor;
-            }
+            GameObject root = CreateElementRoot("GeometryReader", parent);
+            Image backgroundImage = AddBackgroundImageIfNeeded(root);
 
             Vector2 proposedSize = ResolveProposedSize(parent);
             LayoutElementUtility.Configure(
