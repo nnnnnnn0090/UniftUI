@@ -49,6 +49,7 @@ namespace UniftUI
         private RectTransform builtTextViewport;
         private EventTrigger builtFocusTrigger;
         private bool syncingFocusFromInput;
+        private bool isEditing;
 
         private static readonly Vector4 TextMaskPadding = new Vector4(-8f, -5f, -8f, -5f);
         protected virtual string ElementName => "TextField";
@@ -458,11 +459,6 @@ namespace UniftUI
             inputField.onDeselect.AddListener(_ => HandleEditingChanged(false));
             inputField.onSubmit.AddListener(value => onSubmit?.Invoke(value));
 
-            var focusSync = inputField.GetComponent<TextFieldFocusSync>();
-            if (focusSync == null)
-                focusSync = inputField.gameObject.AddComponent<TextFieldFocusSync>();
-            focusSync.Initialize(inputField, HandleEditingChanged);
-
             if (hasLineLimit)
                 ApplyLineLimit(inputField);
         }
@@ -507,6 +503,15 @@ namespace UniftUI
 
         private void HandleEditingChanged(bool editing)
         {
+            if (isEditing == editing)
+            {
+                if (!editing && builtInputField != null && builtInputField.isFocused)
+                    builtInputField.DeactivateInputField();
+                return;
+            }
+
+            isEditing = editing;
+
             if (!editing && builtInputField != null && builtInputField.isFocused)
                 builtInputField.DeactivateInputField();
 
@@ -622,29 +627,6 @@ namespace UniftUI
         }
 
         private Color EffectiveBackgroundColor => hasBackgroundColor ? backgroundColor : Color.clear;
-
-        private sealed class TextFieldFocusSync : MonoBehaviour, ISelectHandler, IDeselectHandler
-        {
-            private TMP_InputField inputField;
-            private Action<bool> onEditingChanged;
-
-            public void Initialize(TMP_InputField field, Action<bool> callback)
-            {
-                inputField = field;
-                onEditingChanged = callback;
-            }
-
-            public void OnSelect(BaseEventData eventData)
-            {
-                onEditingChanged?.Invoke(true);
-            }
-
-            public void OnDeselect(BaseEventData eventData)
-            {
-                onEditingChanged?.Invoke(false);
-            }
-
-        }
 
         private void ConfigureLayout(GameObject fieldContainer)
         {

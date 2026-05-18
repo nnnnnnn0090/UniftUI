@@ -239,7 +239,7 @@ namespace UniftUI.Internal
                 return;
             }
 
-            Set(layoutElement, axis, 0f, -1f, 0f);
+            Set(layoutElement, axis, -1f, -1f, -1f);
         }
 
         private static void Set(LayoutElement layoutElement, int axis, float min, float preferred, float flexible)

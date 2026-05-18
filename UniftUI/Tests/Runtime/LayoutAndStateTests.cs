@@ -61,6 +61,37 @@ namespace UniftUI.Tests
         }
 
         [UnityTest]
+        public IEnumerator HStackSpacerInsideRootVStackExpandsToAvailableWidth()
+        {
+            Canvas canvas = CreateCanvas();
+
+            UIElements.VStack(() =>
+            {
+                UIElements.HStack(() =>
+                {
+                    UIElements.Text("Count: 0")
+                        .fontSize(28)
+                        .bold();
+                    UIElements.Spacer();
+                }, spacing: 0f);
+            }, spacing: 12f)
+            .padding(24)
+            .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform hstack = FindRect(canvas.transform, "HStack");
+            RectTransform text = FindRect(hstack, "Text");
+            RectTransform spacer = FindRect(hstack, "Spacer");
+            Rect textRect = GetLocalRect(hstack, text);
+
+            Assert.That(hstack.rect.width, Is.GreaterThan(700f));
+            Assert.That(spacer.rect.width, Is.GreaterThan(500f));
+            Assert.That(textRect.xMin, Is.EqualTo(hstack.rect.xMin).Within(1f));
+        }
+
+        [UnityTest]
         public IEnumerator VStack_FrameCentersContentOnMainAxis()
         {
             Canvas canvas = CreateCanvas();
@@ -740,6 +771,43 @@ namespace UniftUI.Tests
             field.onDeselect.Invoke(field.text);
             Assert.That(focused.Value, Is.False);
             Assert.That(editing, Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator TextField_OnEditingChangedSkipsInitializationAndDuplicateFocusEvents()
+        {
+            Canvas canvas = CreateCanvas();
+            EventSystem eventSystem = CreateTestEventSystem();
+            var input = new State<string>("hello");
+            var editingChanges = new List<bool>();
+
+            UIElements.TextField("Name", text: input, prompt: UIElements.Text("name"))
+                .onEditingChanged(editingChanges.Add)
+                .frame(width: 280, height: 44)
+                .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+            yield return null;
+
+            Assert.That(editingChanges, Is.Empty);
+
+            TMP_InputField field = canvas.GetComponentInChildren<TMP_InputField>();
+            Assert.That(field, Is.Not.Null);
+
+            eventSystem.SetSelectedGameObject(field.gameObject);
+            yield return null;
+            Assert.That(editingChanges, Is.EqualTo(new[] { true }));
+
+            ExecuteEvents.Execute(field.gameObject, new BaseEventData(eventSystem), ExecuteEvents.selectHandler);
+            Assert.That(editingChanges, Is.EqualTo(new[] { true }));
+
+            eventSystem.SetSelectedGameObject(null);
+            yield return null;
+            Assert.That(editingChanges, Is.EqualTo(new[] { true, false }));
+
+            ExecuteEvents.Execute(field.gameObject, new BaseEventData(eventSystem), ExecuteEvents.deselectHandler);
+            Assert.That(editingChanges, Is.EqualTo(new[] { true, false }));
         }
 
         [UnityTest]
