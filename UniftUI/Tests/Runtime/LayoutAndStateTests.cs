@@ -60,6 +60,54 @@ namespace UniftUI.Tests
         }
 
         [UnityTest]
+        public IEnumerator VStack_FrameCentersContentOnMainAxis()
+        {
+            Canvas canvas = CreateCanvas();
+
+            UIElements.VStack(() =>
+            {
+                UIElements.Text("Count: 0").frame(width: 100f, height: 20f);
+                UIElements.Text("Increment").frame(width: 100f, height: 20f);
+            }, spacing: 12f)
+            .frame(width: 300f, height: 200f)
+            .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform vstack = canvas.transform.GetChild(0).GetComponent<RectTransform>();
+            Rect first = GetLocalRect(vstack, FindRect(vstack, "Text", 0));
+            Rect second = GetLocalRect(vstack, FindRect(vstack, "Text", 1));
+            float combinedCenterY = (Mathf.Min(first.yMin, second.yMin) + Mathf.Max(first.yMax, second.yMax)) * 0.5f;
+
+            Assert.That(combinedCenterY, Is.EqualTo(0f).Within(1f));
+        }
+
+        [UnityTest]
+        public IEnumerator HStack_FrameCentersContentOnMainAxis()
+        {
+            Canvas canvas = CreateCanvas();
+
+            UIElements.HStack(() =>
+            {
+                UIElements.Text("A").frame(width: 50f, height: 20f);
+                UIElements.Text("B").frame(width: 50f, height: 20f);
+            }, spacing: 12f)
+            .frame(width: 300f, height: 80f)
+            .Build(canvas);
+
+            yield return null;
+            ForceLayout(canvas);
+
+            RectTransform hstack = canvas.transform.GetChild(0).GetComponent<RectTransform>();
+            Rect first = GetLocalRect(hstack, FindRect(hstack, "Text", 0));
+            Rect second = GetLocalRect(hstack, FindRect(hstack, "Text", 1));
+            float combinedCenterX = (Mathf.Min(first.xMin, second.xMin) + Mathf.Max(first.xMax, second.xMax)) * 0.5f;
+
+            Assert.That(combinedCenterX, Is.EqualTo(0f).Within(1f));
+        }
+
+        [UnityTest]
         public IEnumerator Text_StateBindingUpdatesTextComponent()
         {
             Canvas canvas = CreateCanvas();

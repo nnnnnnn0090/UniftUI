@@ -108,7 +108,8 @@ namespace UniftUI.Internal
                 available = totalPreferred;
 
             float extra = Mathf.Max(0f, available - totalPreferred);
-            float position = GetStartOffsetOnMainAxis(layoutAxis, available, totalPreferred);
+            float consumed = totalFlexible > 0f ? available : totalPreferred;
+            float position = GetStartOffsetOnMainAxis(layoutAxis, available, consumed);
 
             for (int i = 0; i < rectChildren.Count; i++)
             {
@@ -144,11 +145,7 @@ namespace UniftUI.Internal
         {
             float start = layoutAxis == 0 ? padding.left : padding.top;
             float slack = Mathf.Max(0f, available - totalPreferred);
-
-            if (axis == UniftUIStackAxis.Horizontal)
-                return start;
-
-            return start;
+            return start + slack * 0.5f;
         }
 
         private float CrossAxisAlignmentOffset(int layoutAxis, float available, float childSize)
