@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="71" result="Failed(Child)" total="71" passed="65" failed="6" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.6311221">
+  <test-suite type="TestSuite" id="1089" name="UniftUI" fullname="UniftUI" runstate="Runnable" testcasecount="71" result="Failed" site="Child" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.631122" total="71" passed="65" failed="6" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1075" name="UniftUI.Runtime.Tests.dll" fullname="/Users/mini/Documents/GitHub/UniftUI/Example/Library/ScriptAssemblies/UniftUI.Runtime.Tests.dll" runstate="Runnable" testcasecount="71" result="Failed" site="Child" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.630120" total="71" passed="65" failed="6" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13919" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1076" name="UniftUI" fullname="UniftUI" runstate="Runnable" testcasecount="71" result="Failed" site="Child" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.629941" total="71" passed="65" failed="6" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1077" name="Tests" fullname="UniftUI.Tests" runstate="Runnable" testcasecount="71" result="Failed" site="Child" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.629795" total="71" passed="65" failed="6" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestFixture" id="1001" name="LayoutAndStateTests" fullname="UniftUI.Tests.LayoutAndStateTests" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" testcasecount="65" result="Failed" site="Child" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.587061" total="65" passed="59" failed="6" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-case id="1037" name="AllEasings_StartAndEndAtExactEndpoints" fullname="UniftUI.Tests.LayoutAndStateTests.AllEasings_StartAndEndAtExactEndpoints" methodname="AllEasings_StartAndEndAtExactEndpoints" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1578834605" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.000304" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1055" name="AnimationRestart_UsesCurrentRenderedOpacityAsStartValue" fullname="UniftUI.Tests.LayoutAndStateTests.AnimationRestart_UsesCurrentRenderedOpacityAsStartValue" methodname="AnimationRestart_UsesCurrentRenderedOpacityAsStartValue" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1240432019" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.009738" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1058" name="AnimationValue_ContentDependencyDoesNotTriggerOpacityAnimation" fullname="UniftUI.Tests.LayoutAndStateTests.AnimationValue_ContentDependencyDoesNotTriggerOpacityAnimation" methodname="AnimationValue_ContentDependencyDoesNotTriggerOpacityAnimation" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1182406504" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.009607" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1063" name="AnimationValue_CornerRadiusStateAnimatesInsteadOfJumping" fullname="UniftUI.Tests.LayoutAndStateTests.AnimationValue_CornerRadiusStateAnimatesInsteadOfJumping" methodname="AnimationValue_CornerRadiusStateAnimatesInsteadOfJumping" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1126136075" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007750" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1061" name="AnimationValue_FrameStateBeforeBackgroundAnimatesOuterFrame" fullname="UniftUI.Tests.LayoutAndStateTests.AnimationValue_FrameStateBeforeBackgroundAnimatesOuterFrame" methodname="AnimationValue_FrameStateBeforeBackgroundAnimatesOuterFrame" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="158408906" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007169" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1056" name="AnimationValue_OpacityWrapperAnimatesExactModifierChain" fullname="UniftUI.Tests.LayoutAndStateTests.AnimationValue_OpacityWrapperAnimatesExactModifierChain" methodname="AnimationValue_OpacityWrapperAnimatesExactModifierChain" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="2056429785" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007670" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1057" name="AnimationValue_OpacityWrapperReachesTargetAlphaOnExactModifierChain" fullname="UniftUI.Tests.LayoutAndStateTests.AnimationValue_OpacityWrapperReachesTargetAlphaOnExactModifierChain" methodname="AnimationValue_OpacityWrapperReachesTargetAlphaOnExactModifierChain" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1362493402" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007638" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1050" name="BorderCornerRadiusPropagatesToContent" fullname="UniftUI.Tests.LayoutAndStateTests.BorderCornerRadiusPropagatesToContent" methodname="BorderCornerRadiusPropagatesToContent" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1378510585" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007829" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1027" name="Button_CenterHitAreaInvokesClick" fullname="UniftUI.Tests.LayoutAndStateTests.Button_CenterHitAreaInvokesClick" methodname="Button_CenterHitAreaInvokesClick" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1204453948" result="Failed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007990" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[  Expected: greater than 0
+  But was:  0
+]]></message>
+                <stack-trace><![CDATA[at UniftUI.Tests.LayoutAndStateTests+<Button_CenterHitAreaInvokesClick>d__29.MoveNext () [0x00151] in /Users/mini/Documents/GitHub/UniftUI/UniftUI/Tests/Runtime/LayoutAndStateTests.cs:940
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in ./Library/PackageCache/com.unity.test-framework@aebcb98460c6/UnityEngine.TestRunner/NUnitExtensions/Attributes/TestEnumerator.cs:44
+]]></stack-trace>
+              </failure>
+            </test-case>
+            <test-case id="1028" name="Button_CustomContentStateBindingSurvivesPressedRebuild" fullname="UniftUI.Tests.LayoutAndStateTests.Button_CustomContentStateBindingSurvivesPressedRebuild" methodname="Button_CustomContentStateBindingSurvivesPressedRebuild" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="946753275" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.019824" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1031" name="Button_DefaultStyleUsesClearChromeAndAccentText" fullname="UniftUI.Tests.LayoutAndStateTests.Button_DefaultStyleUsesClearChromeAndAccentText" methodname="Button_DefaultStyleUsesClearChromeAndAccentText" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1632429705" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.006391" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1025" name="Button_PaddingThenBackgroundDoesNotShowDefaultChrome" fullname="UniftUI.Tests.LayoutAndStateTests.Button_PaddingThenBackgroundDoesNotShowDefaultChrome" methodname="Button_PaddingThenBackgroundDoesNotShowDefaultChrome" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1748222151" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.006615" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1026" name="Button_PaddingThenBackgroundRespondsAcrossPaddedArea" fullname="UniftUI.Tests.LayoutAndStateTests.Button_PaddingThenBackgroundRespondsAcrossPaddedArea" methodname="Button_PaddingThenBackgroundRespondsAcrossPaddedArea" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="2008991966" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007256" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1030" name="ButtonStyle_PressedConfigurationAppliesFromStyledPaddingArea" fullname="UniftUI.Tests.LayoutAndStateTests.ButtonStyle_PressedConfigurationAppliesFromStyledPaddingArea" methodname="ButtonStyle_PressedConfigurationAppliesFromStyledPaddingArea" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1480347015" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.016328" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1029" name="ButtonStyle_UsesPressedConfiguration" fullname="UniftUI.Tests.LayoutAndStateTests.ButtonStyle_UsesPressedConfiguration" methodname="ButtonStyle_UsesPressedConfiguration" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="275749438" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.014034" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1039" name="ConcreteAnimatorsDeclareUnityUpdateMessage" fullname="UniftUI.Tests.LayoutAndStateTests.ConcreteAnimatorsDeclareUnityUpdateMessage" methodname="ConcreteAnimatorsDeclareUnityUpdateMessage" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1665192883" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.000109" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1008" name="Controls_BindToStateWithoutExceptions" fullname="UniftUI.Tests.LayoutAndStateTests.Controls_BindToStateWithoutExceptions" methodname="Controls_BindToStateWithoutExceptions" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="328589722" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.008803" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1049" name="CornerRadiusOnlyAffectsTheElementThatReceivesIt" fullname="UniftUI.Tests.LayoutAndStateTests.CornerRadiusOnlyAffectsTheElementThatReceivesIt" methodname="CornerRadiusOnlyAffectsTheElementThatReceivesIt" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="2120143879" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.008982" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1019" name="FluentAdditions_BuildTextEditorPickerBackgroundAndImage" fullname="UniftUI.Tests.LayoutAndStateTests.FluentAdditions_BuildTextEditorPickerBackgroundAndImage" methodname="FluentAdditions_BuildTextEditorPickerBackgroundAndImage" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1460820431" result="Failed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.010335" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+                <stack-trace><![CDATA[at UniftUI.Tests.LayoutAndStateTests+<FluentAdditions_BuildTextEditorPickerBackgroundAndImage>d__21.MoveNext () [0x00226] in /Users/mini/Documents/GitHub/UniftUI/UniftUI/Tests/Runtime/LayoutAndStateTests.cs:651
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in ./Library/PackageCache/com.unity.test-framework@aebcb98460c6/UnityEngine.TestRunner/NUnitExtensions/Attributes/TestEnumerator.cs:44
+]]></stack-trace>
+              </failure>
+            </test-case>
+            <test-case id="1018" name="FluentAliases_BuildAndBind" fullname="UniftUI.Tests.LayoutAndStateTests.FluentAliases_BuildAndBind" methodname="FluentAliases_BuildAndBind" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="321543382" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.010324" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1053" name="ForegroundColorStateUpdatesButtonAndTextFieldAfterBuild" fullname="UniftUI.Tests.LayoutAndStateTests.ForegroundColorStateUpdatesButtonAndTextFieldAfterBuild" methodname="ForegroundColorStateUpdatesButtonAndTextFieldAfterBuild" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="515609771" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.010547" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1040" name="FramePaddingBackground_OrderKeepsExpectedOuterSizes" fullname="UniftUI.Tests.LayoutAndStateTests.FramePaddingBackground_OrderKeepsExpectedOuterSizes" methodname="FramePaddingBackground_OrderKeepsExpectedOuterSizes" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1794678397" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007545" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1002" name="HStack_DistributesSpacerExtraWidth" fullname="UniftUI.Tests.LayoutAndStateTests.HStack_DistributesSpacerExtraWidth" methodname="HStack_DistributesSpacerExtraWidth" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="591289592" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.006291" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1005" name="HStack_FrameCentersContentOnMainAxis" fullname="UniftUI.Tests.LayoutAndStateTests.HStack_FrameCentersContentOnMainAxis" methodname="HStack_FrameCentersContentOnMainAxis" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1921559220" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.005968" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1052" name="ImageOpacityStateWorksWhenImageIsTypedAsUIElement" fullname="UniftUI.Tests.LayoutAndStateTests.ImageOpacityStateWorksWhenImageIsTypedAsUIElement" methodname="ImageOpacityStateWorksWhenImageIsTypedAsUIElement" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1902613307" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.006594" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1011" name="Interaction_DisabledAndHitTestingUpdateCanvasGroupAndSelectables" fullname="UniftUI.Tests.LayoutAndStateTests.Interaction_DisabledAndHitTestingUpdateCanvasGroupAndSelectables" methodname="Interaction_DisabledAndHitTestingUpdateCanvasGroupAndSelectables" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1498545477" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007024" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1035" name="OnHover_ReceivesEnterAndExit" fullname="UniftUI.Tests.LayoutAndStateTests.OnHover_ReceivesEnterAndExit" methodname="OnHover_ReceivesEnterAndExit" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1014108892" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.006012" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1014" name="PublicApi_CompositionModifiersAndGeometryBuild" fullname="UniftUI.Tests.LayoutAndStateTests.PublicApi_CompositionModifiersAndGeometryBuild" methodname="PublicApi_CompositionModifiersAndGeometryBuild" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="579137458" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.008757" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1013" name="PublicApi_ControlsShapesStylesAndTintBuildAndBind" fullname="UniftUI.Tests.LayoutAndStateTests.PublicApi_ControlsShapesStylesAndTintBuildAndBind" methodname="PublicApi_ControlsShapesStylesAndTintBuildAndBind" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1582867117" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.018312" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1065" name="ReactiveVectorAndAxisTransformBindings_UseConfiguredAnimation" fullname="UniftUI.Tests.LayoutAndStateTests.ReactiveVectorAndAxisTransformBindings_UseConfiguredAnimation" methodname="ReactiveVectorAndAxisTransformBindings_UseConfiguredAnimation" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1961749063" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.008082" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1004" name="RootVStackWithPadding_CentersContentOnCanvas" fullname="UniftUI.Tests.LayoutAndStateTests.RootVStackWithPadding_CentersContentOnCanvas" methodname="RootVStackWithPadding_CentersContentOnCanvas" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1281840975" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.006451" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1046" name="RotationAfterBackground_TargetsBackgroundWrapper" fullname="UniftUI.Tests.LayoutAndStateTests.RotationAfterBackground_TargetsBackgroundWrapper" methodname="RotationAfterBackground_TargetsBackgroundWrapper" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1111389960" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007658" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1048" name="RotationBeforeDirectButtonBackground_TargetsButtonOnly" fullname="UniftUI.Tests.LayoutAndStateTests.RotationBeforeDirectButtonBackground_TargetsButtonOnly" methodname="RotationBeforeDirectButtonBackground_TargetsButtonOnly" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="519262998" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.008810" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1047" name="RotationBeforeDirectTextBackground_TargetsTextOnly" fullname="UniftUI.Tests.LayoutAndStateTests.RotationBeforeDirectTextBackground_TargetsTextOnly" methodname="RotationBeforeDirectTextBackground_TargetsTextOnly" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="2132967467" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.008720" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1042" name="ScrollView_ContentSizingMatchesEnabledAxes" fullname="UniftUI.Tests.LayoutAndStateTests.ScrollView_ContentSizingMatchesEnabledAxes" methodname="ScrollView_ContentSizingMatchesEnabledAxes" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1528429360" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.019278" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1012" name="ShapesOverlayBorderSecureFieldAndOnChangeBuild" fullname="UniftUI.Tests.LayoutAndStateTests.ShapesOverlayBorderSecureFieldAndOnChangeBuild" methodname="ShapesOverlayBorderSecureFieldAndOnChangeBuild" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1082440424" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.010413" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1009" name="Slider_FloatStateBindsTwoWay" fullname="UniftUI.Tests.LayoutAndStateTests.Slider_FloatStateBindsTwoWay" methodname="Slider_FloatStateBindsTwoWay" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="90155997" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.008249" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1066" name="SpringCountDemo_DoesNotChangeCardSizeOnFirstUpdate" fullname="UniftUI.Tests.LayoutAndStateTests.SpringCountDemo_DoesNotChangeCardSizeOnFirstUpdate" methodname="SpringCountDemo_DoesNotChangeCardSizeOnFirstUpdate" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1468233930" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.055863" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF08 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3067 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u4E0D was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u900F was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u660E was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u5EA6 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u3082 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u9023 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \u52D5 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+The character with Unicode value \uFF09 was not found in the [LiberationSans SDF] font asset or any potential fallbacks. It was replaced by Unicode character \u25A1 in text object [Text].
+]]></output>
+            </test-case>
+            <test-case id="1036" name="SpringEasing_StartsAtZeroAndEndsAtOne" fullname="UniftUI.Tests.LayoutAndStateTests.SpringEasing_StartsAtZeroAndEndsAtOne" methodname="SpringEasing_StartsAtZeroAndEndsAtOne" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="650034196" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.000128" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1043" name="TabView_ContentAreaFillsRemainingHeightAfterSwitch" fullname="UniftUI.Tests.LayoutAndStateTests.TabView_ContentAreaFillsRemainingHeightAfterSwitch" methodname="TabView_ContentAreaFillsRemainingHeightAfterSwitch" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="551111258" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.010770" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1044" name="TabView_HeaderClickSwitchesContent" fullname="UniftUI.Tests.LayoutAndStateTests.TabView_HeaderClickSwitchesContent" methodname="TabView_HeaderClickSwitchesContent" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1263552328" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.009882" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1045" name="TabView_HeaderHitAreaSwitchesContent" fullname="UniftUI.Tests.LayoutAndStateTests.TabView_HeaderHitAreaSwitchesContent" methodname="TabView_HeaderHitAreaSwitchesContent" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="263639160" result="Failed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.008464" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[  Expected: greater than 0
+  But was:  0
+]]></message>
+                <stack-trace><![CDATA[at UniftUI.Tests.LayoutAndStateTests+<TabView_HeaderHitAreaSwitchesContent>d__47.MoveNext () [0x00112] in /Users/mini/Documents/GitHub/UniftUI/UniftUI/Tests/Runtime/LayoutAndStateTests.cs:1613
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in ./Library/PackageCache/com.unity.test-framework@aebcb98460c6/UnityEngine.TestRunner/NUnitExtensions/Attributes/TestEnumerator.cs:44
+]]></stack-trace>
+              </failure>
+            </test-case>
+            <test-case id="1010" name="Text_LineLimitAndAlignmentConfigureTMP" fullname="UniftUI.Tests.LayoutAndStateTests.Text_LineLimitAndAlignmentConfigureTMP" methodname="Text_LineLimitAndAlignmentConfigureTMP" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="369580537" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.005488" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1006" name="Text_StateBindingUpdatesTextComponent" fullname="UniftUI.Tests.LayoutAndStateTests.Text_StateBindingUpdatesTextComponent" methodname="Text_StateBindingUpdatesTextComponent" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1453412475" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.006438" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1064" name="TextColorAnimationRestart_UsesCurrentRenderedColorAsStartValue" fullname="UniftUI.Tests.LayoutAndStateTests.TextColorAnimationRestart_UsesCurrentRenderedColorAsStartValue" methodname="TextColorAnimationRestart_UsesCurrentRenderedColorAsStartValue" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="728873793" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007290" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1023" name="TextField_BackgroundModifierShowsWrapperFill" fullname="UniftUI.Tests.LayoutAndStateTests.TextField_BackgroundModifierShowsWrapperFill" methodname="TextField_BackgroundModifierShowsWrapperFill" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1962174729" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.006887" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1015" name="TextField_ConfiguresVisibleCaret" fullname="UniftUI.Tests.LayoutAndStateTests.TextField_ConfiguresVisibleCaret" methodname="TextField_ConfiguresVisibleCaret" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="488519362" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.005658" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1022" name="TextField_FocusedBindingDoesNotReselectDuringDeselect" fullname="UniftUI.Tests.LayoutAndStateTests.TextField_FocusedBindingDoesNotReselectDuringDeselect" methodname="TextField_FocusedBindingDoesNotReselectDuringDeselect" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1644809398" result="Failed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.008420" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[  Expected: False
+  But was:  True
+]]></message>
+                <stack-trace><![CDATA[at UniftUI.Tests.LayoutAndStateTests+<TextField_FocusedBindingDoesNotReselectDuringDeselect>d__24.MoveNext () [0x00184] in /Users/mini/Documents/GitHub/UniftUI/UniftUI/Tests/Runtime/LayoutAndStateTests.cs:771
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in ./Library/PackageCache/com.unity.test-framework@aebcb98460c6/UnityEngine.TestRunner/NUnitExtensions/Attributes/TestEnumerator.cs:44
+]]></stack-trace>
+              </failure>
+            </test-case>
+            <test-case id="1020" name="TextField_LineLimitGreaterThanOneKeepsMultilineNewline" fullname="UniftUI.Tests.LayoutAndStateTests.TextField_LineLimitGreaterThanOneKeepsMultilineNewline" methodname="TextField_LineLimitGreaterThanOneKeepsMultilineNewline" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="393300462" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.005620" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1021" name="TextField_ModifiersConfigureFocusSubmitAndSelection" fullname="UniftUI.Tests.LayoutAndStateTests.TextField_ModifiersConfigureFocusSubmitAndSelection" methodname="TextField_ModifiersConfigureFocusSubmitAndSelection" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="240489850" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.005653" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1016" name="TextField_ModifiersCustomizeChrome" fullname="UniftUI.Tests.LayoutAndStateTests.TextField_ModifiersCustomizeChrome" methodname="TextField_ModifiersCustomizeChrome" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="446766684" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.005849" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1024" name="TextField_PaddingThenBackgroundDoesNotShowDefaultChrome" fullname="UniftUI.Tests.LayoutAndStateTests.TextField_PaddingThenBackgroundDoesNotShowDefaultChrome" methodname="TextField_PaddingThenBackgroundDoesNotShowDefaultChrome" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="2007050938" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.006123" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1034" name="TextField_PaddingThenBackgroundFocusesFromPaddedArea" fullname="UniftUI.Tests.LayoutAndStateTests.TextField_PaddingThenBackgroundFocusesFromPaddedArea" methodname="TextField_PaddingThenBackgroundFocusesFromPaddedArea" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1440760905" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.006426" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1017" name="TextField_PromptElementUsesTextStyling" fullname="UniftUI.Tests.LayoutAndStateTests.TextField_PromptElementUsesTextStyling" methodname="TextField_PromptElementUsesTextStyling" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="299392561" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.005915" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1032" name="Toggle_LabelAreaInvokesToggle" fullname="UniftUI.Tests.LayoutAndStateTests.Toggle_LabelAreaInvokesToggle" methodname="Toggle_LabelAreaInvokesToggle" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="307538412" result="Failed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.006167" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[  Expected: greater than 0
+  But was:  0
+]]></message>
+                <stack-trace><![CDATA[at UniftUI.Tests.LayoutAndStateTests+<Toggle_LabelAreaInvokesToggle>d__34.MoveNext () [0x0011b] in /Users/mini/Documents/GitHub/UniftUI/UniftUI/Tests/Runtime/LayoutAndStateTests.cs:1142
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in ./Library/PackageCache/com.unity.test-framework@aebcb98460c6/UnityEngine.TestRunner/NUnitExtensions/Attributes/TestEnumerator.cs:44
+]]></stack-trace>
+              </failure>
+            </test-case>
+            <test-case id="1033" name="Toggle_PaddingThenBackgroundRespondsAcrossPaddedArea" fullname="UniftUI.Tests.LayoutAndStateTests.Toggle_PaddingThenBackgroundRespondsAcrossPaddedArea" methodname="Toggle_PaddingThenBackgroundRespondsAcrossPaddedArea" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="2049820465" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007218" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1051" name="TransparentWrappersPropagateCornerRadiusToContent" fullname="UniftUI.Tests.LayoutAndStateTests.TransparentWrappersPropagateCornerRadiusToContent" methodname="TransparentWrappersPropagateCornerRadiusToContent" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="184618862" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.017912" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1003" name="VStack_FrameCentersContentOnMainAxis" fullname="UniftUI.Tests.LayoutAndStateTests.VStack_FrameCentersContentOnMainAxis" methodname="VStack_FrameCentersContentOnMainAxis" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1656420512" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.005609" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1007" name="VStack_StateRebuildsOnlyItsSubtree" fullname="UniftUI.Tests.LayoutAndStateTests.VStack_StateRebuildsOnlyItsSubtree" methodname="VStack_StateRebuildsOnlyItsSubtree" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="82750895" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007240" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1054" name="WithAnimation_CountChangeDoesNotAnimateUnchangedOpacityBinding" fullname="UniftUI.Tests.LayoutAndStateTests.WithAnimation_CountChangeDoesNotAnimateUnchangedOpacityBinding" methodname="WithAnimation_CountChangeDoesNotAnimateUnchangedOpacityBinding" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="281329024" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007378" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1060" name="WithAnimation_FrameStateAnimatesLayoutSizeInsteadOfJumping" fullname="UniftUI.Tests.LayoutAndStateTests.WithAnimation_FrameStateAnimatesLayoutSizeInsteadOfJumping" methodname="WithAnimation_FrameStateAnimatesLayoutSizeInsteadOfJumping" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1640577285" result="Failed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007427" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[  Expected: 80.0f +/- 0.00999999978f
+  But was:  160.0f
+]]></message>
+                <stack-trace><![CDATA[at UniftUI.Tests.LayoutAndStateTests+<WithAnimation_FrameStateAnimatesLayoutSizeInsteadOfJumping>d__62.MoveNext () [0x001bc] in /Users/mini/Documents/GitHub/UniftUI/UniftUI/Tests/Runtime/LayoutAndStateTests.cs:2131
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in ./Library/PackageCache/com.unity.test-framework@aebcb98460c6/UnityEngine.TestRunner/NUnitExtensions/Attributes/TestEnumerator.cs:44
+]]></stack-trace>
+              </failure>
+            </test-case>
+            <test-case id="1059" name="WithAnimation_OffsetStateAnimatesInsteadOfJumping" fullname="UniftUI.Tests.LayoutAndStateTests.WithAnimation_OffsetStateAnimatesInsteadOfJumping" methodname="WithAnimation_OffsetStateAnimatesInsteadOfJumping" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1924874231" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007340" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1062" name="WithAnimation_PaddingStateAnimatesInsetsInsteadOfJumping" fullname="UniftUI.Tests.LayoutAndStateTests.WithAnimation_PaddingStateAnimatesInsetsInsteadOfJumping" methodname="WithAnimation_PaddingStateAnimatesInsetsInsteadOfJumping" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="812569169" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.007374" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1038" name="ZeroDurationAnimator_AppliesTargetImmediately" fullname="UniftUI.Tests.LayoutAndStateTests.ZeroDurationAnimator_AppliesTargetImmediately" methodname="ZeroDurationAnimator_AppliesTargetImmediately" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="1546531716" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.000141" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1041" name="ZStack_AllAlignmentsPlaceForegroundInFixedFrame" fullname="UniftUI.Tests.LayoutAndStateTests.ZStack_AllAlignmentsPlaceForegroundInFixedFrame" methodname="ZStack_AllAlignmentsPlaceForegroundInFixedFrame" classname="UniftUI.Tests.LayoutAndStateTests" runstate="Runnable" seed="543873655" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.015132" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1067" name="PublicApiCompatibilityTests" fullname="UniftUI.Tests.PublicApiCompatibilityTests" classname="UniftUI.Tests.PublicApiCompatibilityTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.012907" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1068" name="LowercaseAliasesAndStaticFactories_BuildTogether" fullname="UniftUI.Tests.PublicApiCompatibilityTests.LowercaseAliasesAndStaticFactories_BuildTogether" methodname="LowercaseAliasesAndStaticFactories_BuildTogether" classname="UniftUI.Tests.PublicApiCompatibilityTests" runstate="Runnable" seed="752913101" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.011033" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1069" name="StateBindingLifecycleTests" fullname="UniftUI.Tests.StateBindingLifecycleTests" classname="UniftUI.Tests.StateBindingLifecycleTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.026298" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1070" name="BindingRegistry_ReRegisterPropertyRemovesOldStateIndex" fullname="UniftUI.Tests.StateBindingLifecycleTests.BindingRegistry_ReRegisterPropertyRemovesOldStateIndex" methodname="BindingRegistry_ReRegisterPropertyRemovesOldStateIndex" classname="UniftUI.Tests.StateBindingLifecycleTests" runstate="Runnable" seed="1840432667" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.000050" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1072" name="ContentRebuildObserver_DeduplicatesAndUnsubscribes" fullname="UniftUI.Tests.StateBindingLifecycleTests.ContentRebuildObserver_DeduplicatesAndUnsubscribes" methodname="ContentRebuildObserver_DeduplicatesAndUnsubscribes" classname="UniftUI.Tests.StateBindingLifecycleTests" runstate="Runnable" seed="2093158840" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.010156" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1074" name="ContentRebuildObserver_RepeatedRebuildsDoNotDuplicateChildren" fullname="UniftUI.Tests.StateBindingLifecycleTests.ContentRebuildObserver_RepeatedRebuildsDoNotDuplicateChildren" methodname="ContentRebuildObserver_RepeatedRebuildsDoNotDuplicateChildren" classname="UniftUI.Tests.StateBindingLifecycleTests" runstate="Runnable" seed="1592833325" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.013533" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1073" name="MaterializeContent_RestoresUIContextWhenContentThrows" fullname="UniftUI.Tests.StateBindingLifecycleTests.MaterializeContent_RestoresUIContextWhenContentThrows" methodname="MaterializeContent_RestoresUIContextWhenContentThrows" classname="UniftUI.Tests.StateBindingLifecycleTests" runstate="Runnable" seed="2101641312" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.000100" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1071" name="StateSubscriptionGroup_DeduplicatesAndClearsSubscriptions" fullname="UniftUI.Tests.StateBindingLifecycleTests.StateSubscriptionGroup_DeduplicatesAndClearsSubscriptions" methodname="StateSubscriptionGroup_DeduplicatesAndClearsSubscriptions" classname="UniftUI.Tests.StateBindingLifecycleTests" runstate="Runnable" seed="2005878387" result="Passed" start-time="2026-05-18 12:18:59Z" end-time="2026-05-18 12:18:59Z" duration="0.000034" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -95,8 +95,7 @@ public sealed class Example : UniftView
     public void Start()
     {
         PrepareHost();
-        font = Resources.Load<TMP_FontAsset>("Fonts/NotoSansJP-Medium SDF");
-        UIContext.SetDefaultFont(font);
+        font = Resources.Load<TMP_FontAsset>("Fonts/gomarice_rocks_serif SDF");
         BuildSprites();
         Draw();
     }
@@ -1739,7 +1738,7 @@ public sealed class Example : UniftView
         HStack(() =>
         {
             Text(api)
-                .font(font)
+                .bold()
                 .fontSize(12)
                 .foregroundColor(new Color(44 / 255f, 54 / 255f, 72 / 255f))
                 .frame(width: 290f);
