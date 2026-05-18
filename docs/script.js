@@ -48,6 +48,13 @@ function referenceTable(lang, rows) {
   );
 }
 
+function parameterTable(lang, rows) {
+  return table(
+    lang === "ja" ? ["API", "引数", "型", "意味"] : ["API", "Parameter", "Type", "Meaning"],
+    rows
+  );
+}
+
 const sharedReference = {
   factories: [
     ["Text", "Display text", "Labels, headings, reactive strings"],
@@ -96,6 +103,412 @@ const sharedReference = {
     ["ScrollIndicatorVisibility / UniftUIScrollAxis", "Scroll options", "Vertical/horizontal scroll chrome"],
     ["ButtonStyles / TextFieldStyles", "Built-in style factories", "Consistent controls"],
     ["GeometryProxy", "GeometryReader value", "Responsive layout decisions"]
+  ]
+};
+
+const factoryParametersJa = {
+  basics: [
+    ["Text(string text)", "text", "string", "表示する固定文字列です。"],
+    ["Text(string text, State[] dependencyStates)", "dependencyStates", "State[]", "固定文字列でも、指定したState変更時にTextを再生成したい場合に渡します。"],
+    ["Text(State&lt;string&gt; text)", "text", "State&lt;string&gt;", "Stateの値をそのまま表示します。値が変わるとTextも更新されます。"],
+    ["Text(State&lt;string&gt; text, State[] additionalStates)", "additionalStates", "State[]", "text以外にも更新のきっかけにしたいStateです。"],
+    ["Text(Func&lt;string&gt; content, State[] dependencyStates)", "content", "Func&lt;string&gt;", "表示文字列を計算する関数です。"],
+    ["Text(Func&lt;string&gt; content, State[] dependencyStates)", "dependencyStates", "State[]", "このTextを再計算するきっかけになるStateです。"],
+    ["Button(string label, Action onClick)", "label", "string", "ボタンに表示する文字です。"],
+    ["Button(string label, Action onClick)", "onClick", "Action", "クリック/タップ時に実行する処理です。"],
+    ["Button(Action action, string label)", "action / label", "Action / string", "処理を先に書くオーバーロードです。意味はButton(label, onClick)と同じです。"],
+    ["Button(UIElement content, Action onClick)", "content", "UIElement", "TextやHStackなど、ボタン内に置くカスタム表示です。"],
+    ["Button(Action action, UIElement label)", "action / label", "Action / UIElement", "カスタム表示を使い、処理を先に書くオーバーロードです。"],
+    ["Toggle(string title, State&lt;bool&gt; isOn)", "title", "string", "トグル横に表示する文字です。"],
+    ["Toggle(string title, State&lt;bool&gt; isOn)", "isOn", "State&lt;bool&gt;", "オン/オフ状態です。ユーザー操作で値も変わります。"],
+    ["Toggle(..., Action&lt;bool&gt; onValueChanged)", "onValueChanged", "Action&lt;bool&gt;", "値が変わった直後に新しいboolを受け取る処理です。"],
+    ["Label(string title, Sprite icon)", "title / icon", "string / Sprite", "文字とSpriteアイコンを横に並べます。"],
+    ["Label(string title, UIElement icon)", "icon", "UIElement", "Imageや図形など、任意の要素をアイコンとして使います。"]
+  ],
+  layout: [
+    ["VStack(Action content, State[] states, float spacing, VStackAlignment alignment)", "content", "Action", "中に並べる要素を書く場所です。"],
+    ["VStack(Action content, State[] states, float spacing, VStackAlignment alignment)", "states", "State[]", "中身を作り直すきっかけになるStateです。不要なら省略できます。"],
+    ["VStack(Action content, State[] states, float spacing, VStackAlignment alignment)", "spacing", "float", "子要素同士の間隔です。"],
+    ["VStack(Action content, State[] states, float spacing, VStackAlignment alignment)", "alignment", "VStackAlignment", "横方向の揃えです。Leading、Center、Trailingなど。"],
+    ["LazyVStack(Action content, State[] states, float spacing, VStackAlignment alignment)", "content / states", "Action / State[]", "Build時やState変更時に縦Stackの子要素を作ります。大量表示や遅延生成向けです。"],
+    ["LazyHStack(Action content, State[] states, float spacing, HStackAlignment alignment)", "content / states", "Action / State[]", "Build時やState変更時に横Stackの子要素を作ります。"],
+    ["HStack(Action content, State[] states, float spacing, HStackAlignment alignment)", "alignment", "HStackAlignment", "縦方向の揃えです。Top、Center、Bottom、FirstTextBaselineなど。"],
+    ["ZStack(Action content, State[] states, ZStackAlignment alignment)", "alignment", "ZStackAlignment", "重ねる子要素をどこに寄せるかです。"],
+    ["Grid(Action content, State[] states, float horizontalSpacing, float verticalSpacing, HStackAlignment rowAlignment)", "horizontalSpacing", "float", "列同士の間隔です。"],
+    ["Grid(Action content, State[] states, float horizontalSpacing, float verticalSpacing, HStackAlignment rowAlignment)", "verticalSpacing", "float", "行同士の間隔です。"],
+    ["Grid(Action content, State[] states, float horizontalSpacing, float verticalSpacing, HStackAlignment rowAlignment)", "rowAlignment", "HStackAlignment", "各行の縦方向の揃えです。"],
+    ["GridRow(Action content)", "content", "Action", "Grid内で1行分の要素を宣言します。"],
+    ["GeometryReader(Func&lt;GeometryProxy, UIElement&gt; content)", "content", "Func&lt;GeometryProxy, UIElement&gt;", "親から提案されたサイズを受け取り、返したUIElementを配置します。"],
+    ["Spacer(float minLength)", "minLength", "float", "Spacerが最低限確保する長さです。"],
+    ["ScrollView(Action content, State[] states, bool horizontal, bool vertical)", "content", "Action", "スクロール内に置く要素です。"],
+    ["ScrollView(Action content, State[] states, bool horizontal, bool vertical)", "states", "State[]", "スクロール内容を作り直すきっかけです。"],
+    ["ScrollView(Action content, State[] states, bool horizontal, bool vertical)", "horizontal / vertical", "bool", "横/縦スクロールを有効にするかです。"],
+    ["ForEach(int fromInclusive, int toInclusive, Action&lt;int&gt; content)", "fromInclusive / toInclusive", "int", "繰り返す範囲です。両端を含みます。"],
+    ["ForEach(Range range, Action&lt;int&gt; content)", "range", "Range", "0..10 のようなC# Rangeです。こちらは終端を含みません。"],
+    ["ForEach&lt;T&gt;(IEnumerable&lt;T&gt; data, Action&lt;T&gt; content)", "data", "IEnumerable&lt;T&gt;", "配列やListなどをそのまま繰り返します。"]
+  ],
+  shapes: [
+    ["Image(Sprite sprite)", "sprite", "Sprite", "表示する画像です。Resources.LoadやInspector参照などで渡します。"],
+    ["Rectangle(Color color)", "color", "Color", "矩形の塗り色です。省略時は白です。"],
+    ["Color(Color color)", "color", "Color", "指定色で塗ったRectangleElementを作ります。"],
+    ["Circle(Color color)", "color", "Color", "円の塗り色です。省略時は白です。"],
+    ["Capsule(Color color)", "color", "Color", "カプセル形状の塗り色です。省略時は白です。"],
+    ["RoundedRectangle(float cornerRadius, Color color)", "cornerRadius", "float", "角丸の半径です。"],
+    ["RoundedRectangle(float cornerRadius, Color color)", "color", "Color", "角丸矩形の塗り色です。省略時は白です。"],
+    ["Divider(Color color, float thickness)", "color", "Color", "区切り線の色です。"],
+    ["Divider(Color color, float thickness)", "thickness", "float", "区切り線の太さです。"]
+  ],
+  input: [
+    ["TextField(string title, State&lt;string&gt; text, TextElement prompt)", "title", "string", "入力欄の識別用タイトルです。"],
+    ["TextField(string title, State&lt;string&gt; text, TextElement prompt)", "text", "State&lt;string&gt;", "入力値です。ユーザー入力で値も更新されます。"],
+    ["TextField(string title, State&lt;string&gt; text, TextElement prompt)", "prompt", "TextElement", "未入力時に出るplaceholderです。Textのmodifierで装飾できます。"],
+    ["TextField(..., Action&lt;string&gt; onTextChanged)", "onTextChanged", "Action&lt;string&gt;", "入力が変わるたびに現在の文字列を受け取ります。"],
+    ["TextField(string title, State&lt;string&gt; text, Axis axis, TextElement prompt)", "axis", "Axis", "Verticalにすると複数行入力として扱います。"],
+    ["SecureField(string title, State&lt;string&gt; text, TextElement prompt)", "text", "State&lt;string&gt;", "パスワード文字列です。表示は伏せられます。"],
+    ["SecureField(..., Action&lt;string&gt; onTextChanged)", "onTextChanged", "Action&lt;string&gt;", "パスワード入力が変わったときに呼ばれます。"],
+    ["TextEditor(State&lt;string&gt; text)", "text", "State&lt;string&gt;", "複数行編集用の文字列です。"],
+    ["TextEditor(State&lt;string&gt; text, Action&lt;string&gt; onTextChanged)", "onTextChanged", "Action&lt;string&gt;", "複数行テキストが変わったときに呼ばれます。"]
+  ],
+  media: [
+    ["ProgressView(State&lt;float&gt; value, float total)", "value", "State&lt;float&gt;", "現在値です。"],
+    ["ProgressView(State&lt;float&gt; value, float total)", "total", "float", "最大値です。value / total が進捗になります。"],
+    ["Stepper(State&lt;int&gt; value, int minValue, int maxValue, int step)", "value", "State&lt;int&gt;", "増減する整数値です。"],
+    ["Stepper(State&lt;int&gt; value, int minValue, int maxValue, int step)", "minValue / maxValue", "int", "値の下限/上限です。"],
+    ["Stepper(State&lt;int&gt; value, int minValue, int maxValue, int step)", "step", "int", "1回の操作で増減する量です。"],
+    ["Stepper(string label, ...)", "label", "string", "Stepper横に表示する文字です。"],
+    ["Slider(State&lt;float&gt; value, float minValue, float maxValue)", "value", "State&lt;float&gt;", "現在値です。ユーザー操作で値も更新されます。"],
+    ["Slider(State&lt;int&gt; value, float minValue, float maxValue)", "value", "State&lt;int&gt;", "整数値として扱うSliderです。"],
+    ["Slider(State&lt;float&gt; value, float minValue, float maxValue)", "minValue / maxValue", "float", "スライダーの下限/上限です。"],
+    ["Picker(State&lt;int&gt; selection, params string[] options)", "selection", "State&lt;int&gt;", "選択中のindexです。"],
+    ["Picker(State&lt;int&gt; selection, params string[] options)", "options", "string[]", "表示する選択肢です。"],
+    ["TabView(Action content, State&lt;int&gt; selectedIndex)", "content", "Action", "中にTab(...)を並べます。"],
+    ["TabView(Action content, State&lt;int&gt; selectedIndex)", "selectedIndex", "State&lt;int&gt;", "選択中タブのindexです。省略時は内部状態で管理します。"],
+    ["Tab(string title, Action content)", "title", "string", "タブ見出しの文字です。"],
+    ["Tab(Action titleContent, Action content)", "titleContent", "Action", "タブ見出しを任意のUIで作るための処理です。"],
+    ["Tab(..., Action content)", "content", "Action", "そのタブを選択したときに表示する中身です。"]
+  ]
+};
+
+const factoryParametersEn = {
+  basics: [
+    ["Text(string text)", "text", "string", "Static text to display."],
+    ["Text(string text, State[] dependencyStates)", "dependencyStates", "State[]", "States that rebuild the Text even when the literal string is fixed."],
+    ["Text(State&lt;string&gt; text)", "text", "State&lt;string&gt;", "Displays the State value and updates when it changes."],
+    ["Text(State&lt;string&gt; text, State[] additionalStates)", "additionalStates", "State[]", "Extra states that should also trigger refresh."],
+    ["Text(Func&lt;string&gt; content, State[] dependencyStates)", "content", "Func&lt;string&gt;", "Function that computes the visible string."],
+    ["Text(Func&lt;string&gt; content, State[] dependencyStates)", "dependencyStates", "State[]", "States that cause the text to recompute."],
+    ["Button(string label, Action onClick)", "label", "string", "Text shown inside the button."],
+    ["Button(string label, Action onClick)", "onClick", "Action", "Code to run when the button is clicked."],
+    ["Button(Action action, string label)", "action / label", "Action / string", "Action-first overload with the same meaning as Button(label, onClick)."],
+    ["Button(UIElement content, Action onClick)", "content", "UIElement", "Custom label content, such as Text or HStack."],
+    ["Button(Action action, UIElement label)", "action / label", "Action / UIElement", "Action-first overload for custom label content."],
+    ["Toggle(string title, State&lt;bool&gt; isOn)", "title", "string", "Label shown next to the toggle."],
+    ["Toggle(string title, State&lt;bool&gt; isOn)", "isOn", "State&lt;bool&gt;", "On/off value. User interaction writes back to it."],
+    ["Toggle(..., Action&lt;bool&gt; onValueChanged)", "onValueChanged", "Action&lt;bool&gt;", "Callback that receives the new bool after a change."],
+    ["Label(string title, Sprite icon)", "title / icon", "string / Sprite", "Places text beside a Sprite icon."],
+    ["Label(string title, UIElement icon)", "icon", "UIElement", "Uses any element, such as Image or a shape, as the icon."]
+  ],
+  layout: [
+    ["VStack(Action content, State[] states, float spacing, VStackAlignment alignment)", "content", "Action", "Where you declare child elements."],
+    ["VStack(Action content, State[] states, float spacing, VStackAlignment alignment)", "states", "State[]", "States that rebuild the stack content. Optional."],
+    ["VStack(Action content, State[] states, float spacing, VStackAlignment alignment)", "spacing", "float", "Space between child elements."],
+    ["VStack(Action content, State[] states, float spacing, VStackAlignment alignment)", "alignment", "VStackAlignment", "Horizontal alignment: Leading, Center, Trailing, and similar values."],
+    ["LazyVStack(Action content, State[] states, float spacing, VStackAlignment alignment)", "content / states", "Action / State[]", "Creates vertical stack children at build time or state refresh time."],
+    ["LazyHStack(Action content, State[] states, float spacing, HStackAlignment alignment)", "content / states", "Action / State[]", "Creates horizontal stack children at build time or state refresh time."],
+    ["HStack(Action content, State[] states, float spacing, HStackAlignment alignment)", "alignment", "HStackAlignment", "Vertical alignment: Top, Center, Bottom, FirstTextBaseline, and similar values."],
+    ["ZStack(Action content, State[] states, ZStackAlignment alignment)", "alignment", "ZStackAlignment", "Where layered children are placed."],
+    ["Grid(Action content, State[] states, float horizontalSpacing, float verticalSpacing, HStackAlignment rowAlignment)", "horizontalSpacing", "float", "Space between columns."],
+    ["Grid(Action content, State[] states, float horizontalSpacing, float verticalSpacing, HStackAlignment rowAlignment)", "verticalSpacing", "float", "Space between rows."],
+    ["Grid(Action content, State[] states, float horizontalSpacing, float verticalSpacing, HStackAlignment rowAlignment)", "rowAlignment", "HStackAlignment", "Vertical alignment for each grid row."],
+    ["GridRow(Action content)", "content", "Action", "Declares one row inside Grid content."],
+    ["GeometryReader(Func&lt;GeometryProxy, UIElement&gt; content)", "content", "Func&lt;GeometryProxy, UIElement&gt;", "Receives the proposed parent size and returns the element to place."],
+    ["Spacer(float minLength)", "minLength", "float", "Minimum length the spacer should reserve."],
+    ["ScrollView(Action content, State[] states, bool horizontal, bool vertical)", "content", "Action", "Elements placed inside the scroll view."],
+    ["ScrollView(Action content, State[] states, bool horizontal, bool vertical)", "states", "State[]", "States that rebuild scroll content."],
+    ["ScrollView(Action content, State[] states, bool horizontal, bool vertical)", "horizontal / vertical", "bool", "Enables horizontal and/or vertical scrolling."],
+    ["ForEach(int fromInclusive, int toInclusive, Action&lt;int&gt; content)", "fromInclusive / toInclusive", "int", "Inclusive integer range. Both ends are included."],
+    ["ForEach(Range range, Action&lt;int&gt; content)", "range", "Range", "C# range such as 0..10. The end is excluded."],
+    ["ForEach&lt;T&gt;(IEnumerable&lt;T&gt; data, Action&lt;T&gt; content)", "data", "IEnumerable&lt;T&gt;", "Iterates arrays, lists, and other enumerable data directly."]
+  ],
+  shapes: [
+    ["Image(Sprite sprite)", "sprite", "Sprite", "Sprite to display."],
+    ["Rectangle(Color color)", "color", "Color", "Fill color. Defaults to white."],
+    ["Color(Color color)", "color", "Color", "Creates a RectangleElement filled with the color."],
+    ["Circle(Color color)", "color", "Color", "Circle fill color. Defaults to white."],
+    ["Capsule(Color color)", "color", "Color", "Capsule fill color. Defaults to white."],
+    ["RoundedRectangle(float cornerRadius, Color color)", "cornerRadius", "float", "Corner radius."],
+    ["RoundedRectangle(float cornerRadius, Color color)", "color", "Color", "Fill color. Defaults to white."],
+    ["Divider(Color color, float thickness)", "color", "Color", "Divider color."],
+    ["Divider(Color color, float thickness)", "thickness", "float", "Divider thickness."]
+  ],
+  input: [
+    ["TextField(string title, State&lt;string&gt; text, TextElement prompt)", "title", "string", "Identifier/title for the input field."],
+    ["TextField(string title, State&lt;string&gt; text, TextElement prompt)", "text", "State&lt;string&gt;", "Input value. User edits write back to it."],
+    ["TextField(string title, State&lt;string&gt; text, TextElement prompt)", "prompt", "TextElement", "Placeholder shown when empty. Style it with Text modifiers."],
+    ["TextField(..., Action&lt;string&gt; onTextChanged)", "onTextChanged", "Action&lt;string&gt;", "Called with the current string whenever input changes."],
+    ["TextField(string title, State&lt;string&gt; text, Axis axis, TextElement prompt)", "axis", "Axis", "Use Vertical for multiline input."],
+    ["SecureField(string title, State&lt;string&gt; text, TextElement prompt)", "text", "State&lt;string&gt;", "Password value. Displayed as hidden input."],
+    ["SecureField(..., Action&lt;string&gt; onTextChanged)", "onTextChanged", "Action&lt;string&gt;", "Called when password input changes."],
+    ["TextEditor(State&lt;string&gt; text)", "text", "State&lt;string&gt;", "Multiline editable text."],
+    ["TextEditor(State&lt;string&gt; text, Action&lt;string&gt; onTextChanged)", "onTextChanged", "Action&lt;string&gt;", "Called when multiline text changes."]
+  ],
+  media: [
+    ["ProgressView(State&lt;float&gt; value, float total)", "value", "State&lt;float&gt;", "Current progress value."],
+    ["ProgressView(State&lt;float&gt; value, float total)", "total", "float", "Maximum progress. value / total becomes the fill amount."],
+    ["Stepper(State&lt;int&gt; value, int minValue, int maxValue, int step)", "value", "State&lt;int&gt;", "Integer value to increment or decrement."],
+    ["Stepper(State&lt;int&gt; value, int minValue, int maxValue, int step)", "minValue / maxValue", "int", "Lower and upper bounds."],
+    ["Stepper(State&lt;int&gt; value, int minValue, int maxValue, int step)", "step", "int", "Amount changed per action."],
+    ["Stepper(string label, ...)", "label", "string", "Label shown beside the stepper."],
+    ["Slider(State&lt;float&gt; value, float minValue, float maxValue)", "value", "State&lt;float&gt;", "Current slider value. User interaction writes back to it."],
+    ["Slider(State&lt;int&gt; value, float minValue, float maxValue)", "value", "State&lt;int&gt;", "Slider value stored as an integer."],
+    ["Slider(State&lt;float&gt; value, float minValue, float maxValue)", "minValue / maxValue", "float", "Slider lower and upper bounds."],
+    ["Picker(State&lt;int&gt; selection, params string[] options)", "selection", "State&lt;int&gt;", "Selected option index."],
+    ["Picker(State&lt;int&gt; selection, params string[] options)", "options", "string[]", "Visible option labels."],
+    ["TabView(Action content, State&lt;int&gt; selectedIndex)", "content", "Action", "Declare Tab(...) calls inside."],
+    ["TabView(Action content, State&lt;int&gt; selectedIndex)", "selectedIndex", "State&lt;int&gt;", "Selected tab index. Omit it to use internal state."],
+    ["Tab(string title, Action content)", "title", "string", "Visible tab title."],
+    ["Tab(Action titleContent, Action content)", "titleContent", "Action", "Builds a custom tab title UI."],
+    ["Tab(..., Action content)", "content", "Action", "Content shown when this tab is selected."]
+  ]
+};
+
+const modifierParametersJa = {
+  layout: [
+    ["frame(width:height:)", "width / height", "float?", "指定した軸の推奨サイズです。nullならその軸は指定しません。"],
+    ["frame(State&lt;float&gt; width, State&lt;float&gt; height)", "width / height", "State&lt;float&gt;", "Stateに合わせてサイズを更新します。"],
+    ["frame(infiniteWidth:infiniteHeight:)", "infiniteWidth / infiniteHeight", "bool?", "親の空き領域をできるだけ使うかどうかです。"],
+    ["frame(minWidth:maxWidth:minHeight:maxHeight:)", "minWidth / maxWidth / minHeight / maxHeight", "float?", "伸縮できる範囲の下限/上限です。"],
+    ["layoutPriority(float priority)", "priority", "float", "Stack内で余白を配分するときの優先度です。大きいほど優先されます。"],
+    ["padding(int padding)", "padding", "int", "上下左右すべてに入れる余白です。"],
+    ["padding(State&lt;int&gt; padding)", "padding", "State&lt;int&gt;", "Stateに合わせて余白を更新します。"],
+    ["padding(RectOffset padding)", "padding", "RectOffset", "left/right/top/bottomをまとめて指定します。"],
+    ["padding(Edge edges, int length)", "edges", "Edge", "余白を入れる方向です。Horizontal、Vertical、Allなど。"],
+    ["padding(Edge edges, int length)", "length", "int", "余白のピクセル量です。"],
+    ["padding(top:bottom:left:right:)", "top / bottom / left / right", "float?", "必要な辺だけ個別に余白を指定します。"],
+    ["fixedSize(horizontal:vertical:)", "horizontal / vertical", "bool", "その軸で内容サイズを優先するかです。"],
+    ["aspectRatio(float ratio, AspectRatioContentMode contentMode)", "ratio", "float", "幅 ÷ 高さの比率です。2なら横長、1なら正方形です。"],
+    ["aspectRatio(float ratio, AspectRatioContentMode contentMode)", "contentMode", "AspectRatioContentMode", "Fitは収める、Fillは埋める方向で扱います。"]
+  ],
+  visual: [
+    ["background(Color color)", "color", "Color / State&lt;Color&gt;", "背景色です。Stateを渡すと色変更に追従します。"],
+    ["background(UIElement background, ZStackAlignment alignment)", "background", "UIElement", "背景として置くViewです。CapsuleやRoundedRectangleなど。"],
+    ["background(UIElement background, ZStackAlignment alignment)", "alignment", "ZStackAlignment", "背景Viewの配置です。通常はCenterで十分です。"],
+    ["overlay(UIElement overlay, ZStackAlignment alignment)", "overlay", "UIElement", "前面に重ねるViewです。バッジや装飾に使います。"],
+    ["overlay(UIElement overlay, ZStackAlignment alignment)", "alignment", "ZStackAlignment", "重ねる位置です。TopTrailingなど。"],
+    ["border(Color color, float width)", "color", "Color / State&lt;Color&gt;", "枠線の色です。"],
+    ["border(Color color, float width)", "width", "float", "枠線の太さです。"],
+    ["foregroundColor(Color color)", "color", "Color / State&lt;Color&gt;", "Textや対応Viewの前景色です。"],
+    ["tint(Color color)", "color", "Color / State&lt;Color&gt;", "Controlやtemplate Imageのアクセント色です。"],
+    ["opacity(float opacity)", "opacity", "float / State&lt;float&gt;", "0が透明、1が不透明です。"],
+    ["fontSize(float size)", "size", "float", "Textや対応Viewの文字サイズです。"],
+    ["font(TMP_FontAsset font)", "font", "TMP_FontAsset", "TextMesh Proのフォントアセットです。"],
+    ["lineLimit(int? limit)", "limit", "int?", "表示する最大行数です。nullなら制限しません。"],
+    ["multilineTextAlignment(TextAlignmentOptions alignment)", "alignment", "TextAlignmentOptions", "複数行テキストの揃えです。"],
+    ["cornerRadius(float radius)", "radius", "float / State&lt;float&gt;", "角丸の半径です。"],
+    ["cornerRadius(topLeft, topRight, bottomRight, bottomLeft)", "各corner", "float", "四隅の角丸を個別に指定します。"],
+    ["cornerRadius(RectCorner corners, float radius)", "corners / radius", "RectCorner / float", "指定した角だけ丸めます。"],
+    ["shadow(Color? color, float radius, float x, float y)", "color", "Color?", "影の色です。nullなら標準色を使います。"],
+    ["shadow(Color? color, float radius, float x, float y)", "radius / x / y", "float", "ぼかし量とオフセットです。"],
+    ["clipped()", "-", "-", "要素を矩形でクリップします。"],
+    ["clipShape(UniftUIClipShape shape, float cornerRadius)", "shape", "UniftUIClipShape", "Rectangle、RoundedRectangle、Circle、Capsuleから選びます。"],
+    ["clipShape(UniftUIClipShape shape, float cornerRadius)", "cornerRadius", "float", "RoundedRectangleで使う角丸量です。"],
+    ["resizable(ImageResizingMode resizingMode)", "resizingMode", "ImageResizingMode", "StretchまたはTileでImageのリサイズ方法を指定します。"],
+    ["renderingMode(ImageRenderingMode mode)", "mode", "ImageRenderingMode", "OriginalまたはTemplateを指定します。Templateはtintで着色できます。"],
+    ["pickerStyle(PickerStyle style)", "style", "PickerStyle", "Pickerの表示スタイルです。"]
+  ],
+  behavior: [
+    ["disabled(bool disabled)", "disabled", "bool / State&lt;bool&gt;", "trueなら操作不可にします。"],
+    ["hidden(bool hidden)", "hidden", "bool", "trueなら非表示にします。"],
+    ["allowsHitTesting(bool enabled)", "enabled", "bool / State&lt;bool&gt;", "クリックやタップを受けるかどうかです。"],
+    ["onAppear(Action action)", "action", "Action", "Build後に一度実行する処理です。"],
+    ["onAppear(Func&lt;Task&gt; action)", "action", "Func&lt;Task&gt;", "非同期で実行するonAppear処理です。"],
+    ["update(Action action)", "action", "Action", "フレーム更新で実行する処理です。"],
+    ["onChange(State state, Action action)", "state", "State", "監視するStateです。"],
+    ["onChange(State state, Action action)", "action", "Action", "State変更時に呼ばれる処理です。"],
+    ["onChange(State&lt;T&gt; state, Action&lt;T&gt; action)", "action", "Action&lt;T&gt;", "変更後の値を受け取る処理です。"],
+    ["animation(float duration)", "duration", "float", "標準イージングで動かす時間です。"],
+    ["animation(AnimationEasing easing, float duration)", "easing / duration", "AnimationEasing / float", "イージング種類と時間です。"],
+    ["animation(Animation animation, State value)", "animation", "Animation", "使うアニメーションです。"],
+    ["animation(Animation animation, State value)", "value", "State", "このStateが変わったときに動かします。"],
+    ["animation(Animation animation, State value0, State value1)", "value0 / value1", "State", "複数Stateのどちらが変わっても動かします。"]
+  ],
+  input: [
+    ["contentMargins(float horizontal, float vertical)", "horizontal / vertical", "float", "TextField内側の左右/上下余白です。"],
+    ["contentMargins(float left, float right, float top, float bottom)", "left / right / top / bottom", "float", "TextField内側の余白を辺ごとに指定します。"],
+    ["focused(State&lt;bool&gt; isFocused)", "isFocused", "State&lt;bool&gt;", "TextFieldのフォーカス状態と同期します。"],
+    ["onEditingChanged(Action&lt;bool&gt; action)", "action", "Action&lt;bool&gt;", "編集開始/終了をboolで受け取ります。"],
+    ["onSubmit(Action&lt;string&gt; action)", "action", "Action&lt;string&gt;", "送信時に現在の入力文字列を受け取ります。"],
+    ["selectAllOnFocus(bool enabled)", "enabled", "bool", "フォーカス時に全選択するかです。"],
+    ["textSelectionColor(Color color)", "color", "Color / State&lt;Color&gt;", "選択範囲の色です。"],
+    ["caretColor(Color color)", "color", "Color / State&lt;Color&gt;", "カーソル色です。"],
+    ["caretWidth(int width)", "width", "int", "カーソル幅です。"],
+    ["caretBlinkRate(float rate)", "rate", "float", "カーソル点滅速度です。"],
+    ["textContentType(TMP_InputField.ContentType type)", "type", "TMP_InputField.ContentType", "Password、EmailAddressなどの入力用途です。"],
+    ["textInputLimit(int limit)", "limit", "int", "入力できる最大文字数です。"],
+    ["keyboardType(TouchScreenKeyboardType type)", "type", "TouchScreenKeyboardType", "モバイルで出すキーボード種別です。"]
+  ],
+  transform: [
+    ["offset(float x, float y)", "x / y", "float", "現在位置からずらす量です。"],
+    ["offset(Vector2 offset)", "offset", "Vector2 / State&lt;Vector2&gt;", "2Dベクトルで指定するオフセットです。"],
+    ["position(float x, float y)", "x / y", "float / State&lt;float&gt;", "親内での絶対配置位置です。"],
+    ["rotationEffect(float degrees)", "degrees", "float / State&lt;float&gt;", "Z軸回転の角度です。"],
+    ["rotationEffect(float x, float y, float z)", "x / y / z", "float / State&lt;float&gt;", "各軸の回転角度です。"],
+    ["rotationEffect(State&lt;Vector3&gt; euler)", "euler", "State&lt;Vector3&gt;", "Stateでまとめて回転角を管理します。"],
+    ["scaleEffect(float scale)", "scale", "float / State&lt;float&gt;", "全軸に同じ倍率をかけます。"],
+    ["scaleEffect(float x, float y, float z)", "x / y / z", "float / State&lt;float&gt;", "軸ごとの拡大率です。"],
+    ["scaleEffect(Vector3 scale)", "scale", "Vector3 / State&lt;Vector3&gt;", "3Dベクトルで拡大率を指定します。"]
+  ],
+  scroll: [
+    ["scrollBounce(bool elastic)", "elastic", "bool", "端でバウンドするElastic挙動にするかです。"],
+    ["scrollSensitivity(float sensitivity)", "sensitivity", "float", "ホイール/ドラッグ入力の感度です。"],
+    ["scrollMovementType(ScrollRect.MovementType type)", "type", "ScrollRect.MovementType", "Elastic、Clamped、Unrestrictedなどの移動制限です。"],
+    ["scrollPositionY(State&lt;float&gt; normalized, bool twoWay)", "normalized", "State&lt;float&gt;", "縦スクロール位置です。0から1の正規化値です。"],
+    ["scrollPositionY/X(..., bool twoWay)", "twoWay", "bool", "trueならユーザー操作もStateへ書き戻します。"],
+    ["scrollPositionX(State&lt;float&gt; normalized, bool twoWay)", "normalized", "State&lt;float&gt;", "横スクロール位置です。0から1の正規化値です。"],
+    ["scrollIndicators(ScrollIndicatorVisibility visibility)", "visibility", "ScrollIndicatorVisibility", "スクロールバーを表示する条件です。"],
+    ["scrollIndicators(ScrollIndicatorVisibility visibility, UniftUIScrollAxis axes)", "axes", "UniftUIScrollAxis", "縦/横/両方のどの軸に適用するかです。"]
+  ],
+  styles: [
+    ["buttonStyle(IButtonStyle style)", "style", "IButtonStyle", "ButtonStyles.Filled/Plainなどで作ったButtonスタイルです。"],
+    ["textFieldStyle(ITextFieldStyle style)", "style", "ITextFieldStyle", "TextFieldStyles.RoundedBorder/Plain/Chromeなどで作ったTextFieldスタイルです。"],
+    ["ButtonStyles.Filled(Color backgroundColor, Color foregroundColor, float cornerRadius)", "backgroundColor / foregroundColor", "Color", "塗り色と文字色です。"],
+    ["ButtonStyles.Filled(..., float cornerRadius)", "cornerRadius", "float", "ボタン背景の角丸です。"],
+    ["ButtonStyles.Plain(Color foregroundColor)", "foregroundColor", "Color", "背景なしボタンの文字色です。"],
+    ["TextFieldStyles.RoundedBorder(...)", "backgroundColor / focusedBackgroundColor", "Color", "通常時/フォーカス時の背景色です。"],
+    ["TextFieldStyles.RoundedBorder(...)", "textColor / tintColor", "Color", "入力文字色とアクセント色です。"],
+    ["TextFieldStyles.Chrome(...)", "contentMargins", "Vector4?", "left/right/top/bottomの内側余白です。"],
+    ["TextFieldStyles.Chrome(...)", "caretWidth / caretBlinkRate", "int? / float?", "カーソル幅と点滅速度です。"]
+  ],
+  animations: [
+    ["WithAnimation(Animation animation, Action changes)", "animation", "Animation", "changes内のState変更に使うアニメーションです。"],
+    ["WithAnimation(Animation animation, Action changes)", "changes", "Action", "アニメーションさせたいState変更をまとめて書きます。"],
+    ["WithAnimation(Action changes)", "changes", "Action", "標準アニメーションで実行するState変更です。"],
+    ["Animation.linear(float duration)", "duration", "float", "一定速度で動く時間です。"],
+    ["Animation.easeIn/easeOut/easeInOut(float duration)", "duration", "float", "各イージングで動く時間です。"],
+    ["Animation.spring(float response, float dampingFraction)", "response", "float", "反応速度です。小さいほど速く反応します。"],
+    ["Animation.spring(float response, float dampingFraction)", "dampingFraction", "float", "減衰量です。小さいほど弾みます。"],
+    ["Animation.interactiveSpring(float response, float dampingFraction)", "response / dampingFraction", "float", "操作追従向けのばね設定です。"],
+    ["Animation.bouncy(float duration)", "duration", "float", "弾むプリセットの時間です。"]
+  ]
+};
+
+const modifierParametersEn = {
+  layout: [
+    ["frame(width:height:)", "width / height", "float?", "Preferred size for each axis. null leaves that axis unspecified."],
+    ["frame(State&lt;float&gt; width, State&lt;float&gt; height)", "width / height", "State&lt;float&gt;", "Updates size from State values."],
+    ["frame(infiniteWidth:infiniteHeight:)", "infiniteWidth / infiniteHeight", "bool?", "Whether the view should use available parent space."],
+    ["frame(minWidth:maxWidth:minHeight:maxHeight:)", "minWidth / maxWidth / minHeight / maxHeight", "float?", "Lower and upper flexible size bounds."],
+    ["layoutPriority(float priority)", "priority", "float", "Priority used when stack space is distributed. Larger values win more space."],
+    ["padding(int padding)", "padding", "int", "Padding applied to all edges."],
+    ["padding(State&lt;int&gt; padding)", "padding", "State&lt;int&gt;", "Reactive padding amount."],
+    ["padding(RectOffset padding)", "padding", "RectOffset", "left/right/top/bottom padding in one value."],
+    ["padding(Edge edges, int length)", "edges", "Edge", "Edges that receive padding: Horizontal, Vertical, All, and similar values."],
+    ["padding(Edge edges, int length)", "length", "int", "Padding amount in pixels."],
+    ["padding(top:bottom:left:right:)", "top / bottom / left / right", "float?", "Set only the edges you need."],
+    ["fixedSize(horizontal:vertical:)", "horizontal / vertical", "bool", "Whether that axis should prefer intrinsic content size."],
+    ["aspectRatio(float ratio, AspectRatioContentMode contentMode)", "ratio", "float", "Width divided by height. 2 is wide, 1 is square."],
+    ["aspectRatio(float ratio, AspectRatioContentMode contentMode)", "contentMode", "AspectRatioContentMode", "Fit contains; Fill covers."]
+  ],
+  visual: [
+    ["background(Color color)", "color", "Color / State&lt;Color&gt;", "Background color. State makes it reactive."],
+    ["background(UIElement background, ZStackAlignment alignment)", "background", "UIElement", "View placed behind this element, such as Capsule or RoundedRectangle."],
+    ["background(UIElement background, ZStackAlignment alignment)", "alignment", "ZStackAlignment", "Placement for the background view. Center is common."],
+    ["overlay(UIElement overlay, ZStackAlignment alignment)", "overlay", "UIElement", "View placed above this element, often for badges or decoration."],
+    ["overlay(UIElement overlay, ZStackAlignment alignment)", "alignment", "ZStackAlignment", "Placement for the overlay, such as TopTrailing."],
+    ["border(Color color, float width)", "color", "Color / State&lt;Color&gt;", "Border color."],
+    ["border(Color color, float width)", "width", "float", "Border thickness."],
+    ["foregroundColor(Color color)", "color", "Color / State&lt;Color&gt;", "Foreground color for Text and supported views."],
+    ["tint(Color color)", "color", "Color / State&lt;Color&gt;", "Accent color for controls and template images."],
+    ["opacity(float opacity)", "opacity", "float / State&lt;float&gt;", "0 is transparent, 1 is opaque."],
+    ["fontSize(float size)", "size", "float", "Text size for Text and supported views."],
+    ["font(TMP_FontAsset font)", "font", "TMP_FontAsset", "TextMesh Pro font asset."],
+    ["lineLimit(int? limit)", "limit", "int?", "Maximum visible line count. null means unlimited."],
+    ["multilineTextAlignment(TextAlignmentOptions alignment)", "alignment", "TextAlignmentOptions", "Alignment for multiline text."],
+    ["cornerRadius(float radius)", "radius", "float / State&lt;float&gt;", "Corner radius."],
+    ["cornerRadius(topLeft, topRight, bottomRight, bottomLeft)", "each corner", "float", "Sets each corner radius individually."],
+    ["cornerRadius(RectCorner corners, float radius)", "corners / radius", "RectCorner / float", "Rounds only the selected corners."],
+    ["shadow(Color? color, float radius, float x, float y)", "color", "Color?", "Shadow color. null uses the default."],
+    ["shadow(Color? color, float radius, float x, float y)", "radius / x / y", "float", "Blur radius and offset."],
+    ["clipped()", "-", "-", "Clips the element to a rectangle."],
+    ["clipShape(UniftUIClipShape shape, float cornerRadius)", "shape", "UniftUIClipShape", "Rectangle, RoundedRectangle, Circle, or Capsule."],
+    ["clipShape(UniftUIClipShape shape, float cornerRadius)", "cornerRadius", "float", "Radius used by RoundedRectangle."],
+    ["resizable(ImageResizingMode resizingMode)", "resizingMode", "ImageResizingMode", "Stretch or Tile resizing for Image."],
+    ["renderingMode(ImageRenderingMode mode)", "mode", "ImageRenderingMode", "Original or Template. Template can be tinted."],
+    ["pickerStyle(PickerStyle style)", "style", "PickerStyle", "Picker display style."]
+  ],
+  behavior: [
+    ["disabled(bool disabled)", "disabled", "bool / State&lt;bool&gt;", "true disables interaction."],
+    ["hidden(bool hidden)", "hidden", "bool", "true hides the view."],
+    ["allowsHitTesting(bool enabled)", "enabled", "bool / State&lt;bool&gt;", "Whether the view receives pointer input."],
+    ["onAppear(Action action)", "action", "Action", "Runs once after build."],
+    ["onAppear(Func&lt;Task&gt; action)", "action", "Func&lt;Task&gt;", "Async onAppear action."],
+    ["update(Action action)", "action", "Action", "Runs during frame updates."],
+    ["onChange(State state, Action action)", "state", "State", "State to observe."],
+    ["onChange(State state, Action action)", "action", "Action", "Callback invoked after the State changes."],
+    ["onChange(State&lt;T&gt; state, Action&lt;T&gt; action)", "action", "Action&lt;T&gt;", "Callback that receives the changed value."],
+    ["animation(float duration)", "duration", "float", "Duration using the default easing."],
+    ["animation(AnimationEasing easing, float duration)", "easing / duration", "AnimationEasing / float", "Easing type and duration."],
+    ["animation(Animation animation, State value)", "animation", "Animation", "Animation to use."],
+    ["animation(Animation animation, State value)", "value", "State", "State whose changes trigger animation."],
+    ["animation(Animation animation, State value0, State value1)", "value0 / value1", "State", "Animates when either state changes."]
+  ],
+  input: [
+    ["contentMargins(float horizontal, float vertical)", "horizontal / vertical", "float", "TextField horizontal and vertical inset."],
+    ["contentMargins(float left, float right, float top, float bottom)", "left / right / top / bottom", "float", "TextField inset per edge."],
+    ["focused(State&lt;bool&gt; isFocused)", "isFocused", "State&lt;bool&gt;", "Synchronizes TextField focus."],
+    ["onEditingChanged(Action&lt;bool&gt; action)", "action", "Action&lt;bool&gt;", "Receives true/false as editing begins or ends."],
+    ["onSubmit(Action&lt;string&gt; action)", "action", "Action&lt;string&gt;", "Receives current text when submitted."],
+    ["selectAllOnFocus(bool enabled)", "enabled", "bool", "Whether focus selects all text."],
+    ["textSelectionColor(Color color)", "color", "Color / State&lt;Color&gt;", "Text selection highlight color."],
+    ["caretColor(Color color)", "color", "Color / State&lt;Color&gt;", "Caret color."],
+    ["caretWidth(int width)", "width", "int", "Caret width."],
+    ["caretBlinkRate(float rate)", "rate", "float", "Caret blink speed."],
+    ["textContentType(TMP_InputField.ContentType type)", "type", "TMP_InputField.ContentType", "Input purpose, such as Password or EmailAddress."],
+    ["textInputLimit(int limit)", "limit", "int", "Maximum input length."],
+    ["keyboardType(TouchScreenKeyboardType type)", "type", "TouchScreenKeyboardType", "Mobile keyboard type."]
+  ],
+  transform: [
+    ["offset(float x, float y)", "x / y", "float", "Position delta from the current placement."],
+    ["offset(Vector2 offset)", "offset", "Vector2 / State&lt;Vector2&gt;", "Offset as a 2D vector."],
+    ["position(float x, float y)", "x / y", "float / State&lt;float&gt;", "Absolute position inside the parent."],
+    ["rotationEffect(float degrees)", "degrees", "float / State&lt;float&gt;", "Z-axis rotation in degrees."],
+    ["rotationEffect(float x, float y, float z)", "x / y / z", "float / State&lt;float&gt;", "Rotation per axis."],
+    ["rotationEffect(State&lt;Vector3&gt; euler)", "euler", "State&lt;Vector3&gt;", "Reactive Euler rotation."],
+    ["scaleEffect(float scale)", "scale", "float / State&lt;float&gt;", "Uniform scale."],
+    ["scaleEffect(float x, float y, float z)", "x / y / z", "float / State&lt;float&gt;", "Scale per axis."],
+    ["scaleEffect(Vector3 scale)", "scale", "Vector3 / State&lt;Vector3&gt;", "Scale as a 3D vector."]
+  ],
+  scroll: [
+    ["scrollBounce(bool elastic)", "elastic", "bool", "Whether the scroll view uses elastic bounce at the edges."],
+    ["scrollSensitivity(float sensitivity)", "sensitivity", "float", "Wheel/drag input sensitivity."],
+    ["scrollMovementType(ScrollRect.MovementType type)", "type", "ScrollRect.MovementType", "Movement restriction: Elastic, Clamped, Unrestricted, and similar values."],
+    ["scrollPositionY(State&lt;float&gt; normalized, bool twoWay)", "normalized", "State&lt;float&gt;", "Vertical scroll position from 0 to 1."],
+    ["scrollPositionY/X(..., bool twoWay)", "twoWay", "bool", "When true, user scrolling writes back into State."],
+    ["scrollPositionX(State&lt;float&gt; normalized, bool twoWay)", "normalized", "State&lt;float&gt;", "Horizontal scroll position from 0 to 1."],
+    ["scrollIndicators(ScrollIndicatorVisibility visibility)", "visibility", "ScrollIndicatorVisibility", "When scrollbars should be visible."],
+    ["scrollIndicators(ScrollIndicatorVisibility visibility, UniftUIScrollAxis axes)", "axes", "UniftUIScrollAxis", "Which axis receives the setting."]
+  ],
+  styles: [
+    ["buttonStyle(IButtonStyle style)", "style", "IButtonStyle", "Button style from ButtonStyles.Filled/Plain."],
+    ["textFieldStyle(ITextFieldStyle style)", "style", "ITextFieldStyle", "TextField style from TextFieldStyles.RoundedBorder/Plain/Chrome."],
+    ["ButtonStyles.Filled(Color backgroundColor, Color foregroundColor, float cornerRadius)", "backgroundColor / foregroundColor", "Color", "Fill and text colors."],
+    ["ButtonStyles.Filled(..., float cornerRadius)", "cornerRadius", "float", "Button background corner radius."],
+    ["ButtonStyles.Plain(Color foregroundColor)", "foregroundColor", "Color", "Text color for a plain button."],
+    ["TextFieldStyles.RoundedBorder(...)", "backgroundColor / focusedBackgroundColor", "Color", "Normal and focused background colors."],
+    ["TextFieldStyles.RoundedBorder(...)", "textColor / tintColor", "Color", "Input text color and accent color."],
+    ["TextFieldStyles.Chrome(...)", "contentMargins", "Vector4?", "left/right/top/bottom inset."],
+    ["TextFieldStyles.Chrome(...)", "caretWidth / caretBlinkRate", "int? / float?", "Caret width and blink speed."]
+  ],
+  animations: [
+    ["WithAnimation(Animation animation, Action changes)", "animation", "Animation", "Animation used for State changes inside changes."],
+    ["WithAnimation(Animation animation, Action changes)", "changes", "Action", "State changes to animate together."],
+    ["WithAnimation(Action changes)", "changes", "Action", "State changes run with the default animation."],
+    ["Animation.linear(float duration)", "duration", "float", "Duration for constant-speed motion."],
+    ["Animation.easeIn/easeOut/easeInOut(float duration)", "duration", "float", "Duration for each easing curve."],
+    ["Animation.spring(float response, float dampingFraction)", "response", "float", "Response speed. Smaller values react faster."],
+    ["Animation.spring(float response, float dampingFraction)", "dampingFraction", "float", "Damping amount. Smaller values bounce more."],
+    ["Animation.interactiveSpring(float response, float dampingFraction)", "response / dampingFraction", "float", "Spring settings for interaction-driven motion."],
+    ["Animation.bouncy(float duration)", "duration", "float", "Duration for the bouncy preset."]
   ]
 };
 
@@ -170,7 +583,7 @@ public sealed class CounterView : UniftView
                   { title: "State", body: "値が変わるUIの作り方を覚えます。" },
                   { title: "Layout", body: "Stack、Spacer、frame、paddingで画面を組みます。" },
                   { title: "Controls", body: "Button、TextField、PickerなどをStateに接続します。" },
-                  { title: "Reference", body: "迷ったときはAPI一覧とmodifier引数表を引きます。" }
+                  { title: "Reference", body: "迷ったときはAPI一覧、Factory引数、modifier引数表を引きます。" }
                 ])
               },
               {
@@ -222,8 +635,8 @@ public sealed class MainMenuView : UniftView
         VStack(() =>
         {
             Text("Main Menu").fontSize(32).bold();
-            Button("Start", StartGame);
-            Button("Options", OpenOptions);
+            Button("Start", () => Debug.Log("Start"));
+            Button("Options", () => Debug.Log("Options"));
         }, spacing: 12f)
         .frame(infiniteWidth: true, infiniteHeight: true)
         .Build(GetComponent<Canvas>());
@@ -255,14 +668,14 @@ public sealed class MainMenuView : UniftView
             kind: "Basics",
             summary: "変化する値をStateに置き、Text、入力、コントロール、アニメーションへ接続します。",
             declaration: "public class State<T> : State",
-            keywords: "State Value reactive onChange BatchUpdate binding update",
+            keywords: "State Value reactive onChange binding update",
             sections: [
               {
                 title: "Stateの考え方",
                 body: `
                   <p><code>State&lt;T&gt;</code> は監視できる値です。<code>Value</code> を変更すると、依存しているUIが更新されます。</p>
                   ${code(`
-private readonly State<int> score = new State<int>(0);
+State<int> score = new State<int>(0);
 
 Text(() => $"Score: {score.Value}", new State[] { score });
 Button("+10", () => score.Value += 10);`)}
@@ -271,7 +684,7 @@ Button("+10", () => score.Value += 10);`)}
               {
                 title: "TextFieldと双方向更新",
                 body: code(`
-private readonly State<string> playerName = new State<string>("");
+State<string> playerName = new State<string>("");
 
 TextField("Name", text: playerName, prompt: Text("Player name"));
 Text(() => $"Hello, {playerName.Value}", new State[] { playerName });`)
@@ -286,14 +699,24 @@ Slider(volume, 0, 100)
     });`)
               },
               {
-                title: "まとめて変更する",
+                title: "複数のStateを使う",
                 body: code(`
-using (State.BatchUpdate())
+State<int> hp = new State<int>(80);
+State<int> maxHp = new State<int>(100);
+State<int> selectedTab = new State<int>(0);
+
+HStack(() =>
 {
-    hp.Value = maxHp.Value;
-    mana.Value = maxMana.Value;
-    selectedTab.Value = 0;
-}`)
+    Text(() => $"HP {hp.Value} / {maxHp.Value}", new State[] { hp, maxHp });
+    Spacer();
+    Button("Recover", () => hp.Value = maxHp.Value);
+});
+
+TabView(() =>
+{
+    Tab("Status", () => Text("Status"));
+    Tab("Items", () => Text("Items"));
+}, selectedTab);`)
               }
             ],
             related: ["controls", "text-input", "animation"]
@@ -332,13 +755,20 @@ Text("Quest accepted")
               {
                 title: "リストと繰り返し",
                 body: code(`
+string[] quests =
+{
+    "Find the key",
+    "Open the gate",
+    "Return to town"
+};
+
 ScrollView(() =>
 {
     LazyVStack(() =>
     {
-        ForEach(0, quests.Count, i =>
+        ForEach(0, quests.Length - 1, i =>
         {
-            Text(quests[i].Title)
+            Text(quests[i])
                 .padding(12)
                 .frame(infiniteWidth: true);
         });
@@ -379,8 +809,11 @@ GeometryReader(proxy =>
               {
                 title: "3つのText",
                 body: code(`
+State<string> title = new State<string>("Status");
+State<int> hp = new State<int>(100);
+
 Text("Static");
-Text(titleState);
+Text(title);
 Text(() => $"HP: {hp.Value}", new State[] { hp });`)
               },
               {
@@ -394,6 +827,9 @@ Text("Warning")
               {
                 title: "フォント",
                 body: code(`
+TMP_FontAsset defaultFont = Resources.Load<TMP_FontAsset>("Fonts/NotoSansJP-Medium SDF");
+TMP_FontAsset titleFont = Resources.Load<TMP_FontAsset>("Fonts/NotoSansJP-Medium SDF");
+
 UIContext.SetDefaultFont(defaultFont);
 
 Text("Custom font")
@@ -421,24 +857,33 @@ Text("Long description that can wrap onto multiple lines.")
               {
                 title: "Button",
                 body: code(`
-Button("Save", Save)
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+
+Button("Save", () => Debug.Log("Saved"))
     .frame(infiniteWidth: true, height: 44)
     .buttonStyle(ButtonStyles.Filled(accent, Color.white, 10));`)
               },
               {
                 title: "カスタムラベル",
                 body: code(`
+Sprite saveIcon = Resources.Load<Sprite>("Icons/Save");
+
 Button(
     HStack(() =>
     {
         Image(saveIcon).frame(width: 18, height: 18);
         Text("Save").bold();
     }, spacing: 8f),
-    Save);`)
+    () => Debug.Log("Saved"));`)
               },
               {
                 title: "Stateに紐づくControl",
                 body: code(`
+State<bool> isEnabled = new State<bool>(true);
+State<int> volume = new State<int>(50);
+State<int> quantity = new State<int>(1);
+State<float> downloadProgress = new State<float>(0.35f);
+
 Toggle("Enabled", isEnabled);
 Slider(volume, 0, 100);
 Stepper("Quantity", quantity, 0, 9);
@@ -447,6 +892,9 @@ ProgressView(downloadProgress, total: 1);`)
               {
                 title: "Picker",
                 body: code(`
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+State<int> difficulty = new State<int>(1);
+
 Picker(difficulty, "Easy", "Normal", "Hard")
     .pickerStyle(PickerStyle.Segmented)
     .tint(accent);`)
@@ -465,6 +913,8 @@ Picker(difficulty, "Easy", "Normal", "Hard")
               {
                 title: "基本",
                 body: code(`
+State<string> email = new State<string>("");
+
 TextField("Email", text: email, prompt: Text("email@example.com"))
     .lineLimit(1)
     .contentMargins(horizontal: 12, vertical: 8)
@@ -476,7 +926,7 @@ TextField("Email", text: email, prompt: Text("email@example.com"))
                 body: code(`
 TextField(
     "Nickname",
-    text: nickname,
+    text: new State<string>(""),
     prompt: Text("Optional")
         .italic()
         .foregroundColor(Color.gray));`)
@@ -484,6 +934,9 @@ TextField(
               {
                 title: "パスワードと複数行",
                 body: code(`
+State<string> password = new State<string>("");
+State<string> notes = new State<string>("");
+
 SecureField("Password", text: password, prompt: Text("Password"));
 
 TextField("Notes", text: notes, axis: Axis.Vertical, prompt: Text("Notes"))
@@ -496,15 +949,21 @@ TextEditor(notes)
               {
                 title: "フォーカスと送信",
                 body: code(`
+State<string> query = new State<string>("");
+State<bool> searchFocused = new State<bool>(false);
+
 TextField("Search", text: query, prompt: Text("Search"))
     .focused(searchFocused)
     .selectAllOnFocus()
-    .onSubmit(value => Search(value))
+    .onSubmit(value => Debug.Log($"Search: {value}"))
     .onEditingChanged(isEditing => Debug.Log(isEditing));`)
               },
               {
                 title: "キャレットと選択色",
                 body: code(`
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+State<string> name = new State<string>("");
+
 TextField("Name", text: name)
     .caretColor(accent)
     .caretWidth(2)
@@ -551,6 +1010,8 @@ Text("Inbox")
               {
                 title: "切り抜き",
                 body: code(`
+Sprite avatar = Resources.Load<Sprite>("Avatars/Player");
+
 Image(avatar)
     .resizable()
     .scaledToFill()
@@ -560,7 +1021,10 @@ Image(avatar)
               {
                 title: "操作状態",
                 body: code(`
-Button("Submit", Submit)
+State<bool> isSubmitting = new State<bool>(false);
+State<bool> canTap = new State<bool>(true);
+
+Button("Submit", () => Debug.Log("Submitted"))
     .disabled(isSubmitting)
     .allowsHitTesting(canTap)
     .opacity(isSubmitting.Value ? 0.6f : 1f);`)
@@ -578,18 +1042,24 @@ Button("Submit", Submit)
               {
                 title: "ButtonStyles",
                 body: code(`
-Button("Continue", Continue)
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+
+Button("Continue", () => Debug.Log("Continue"))
     .buttonStyle(ButtonStyles.Filled(
         backgroundColor: accent,
         foregroundColor: Color.white,
         cornerRadius: 10));
 
-Button("Cancel", Cancel)
+Button("Cancel", () => Debug.Log("Cancel"))
     .buttonStyle(ButtonStyles.Plain(accent));`)
               },
               {
                 title: "TextFieldStyles",
                 body: code(`
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+State<string> firstName = new State<string>("");
+State<string> lastName = new State<string>("");
+
 var fieldStyle = TextFieldStyles.Chrome(
     backgroundColor: Color.white,
     focusedBackgroundColor: new Color(0.94f, 0.97f, 1f),
@@ -604,8 +1074,9 @@ TextField("Last name", text: lastName).textFieldStyle(fieldStyle);`)
               {
                 title: "Theme変数を持つ",
                 body: code(`
-private readonly Color accent = new Color(0.16f, 0.38f, 0.9f);
-private readonly Color panel = new Color(0.96f, 0.97f, 0.99f);
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+Color panel = new Color(0.96f, 0.97f, 0.99f);
+State<bool> soundEnabled = new State<bool>(true);
 
 VStack(() =>
 {
@@ -629,6 +1100,8 @@ VStack(() =>
               {
                 title: "WithAnimation",
                 body: code(`
+State<bool> expanded = new State<bool>(false);
+
 WithAnimation(Animation.easeInOut(0.25f), () =>
 {
     expanded.Value = !expanded.Value;
@@ -637,6 +1110,8 @@ WithAnimation(Animation.easeInOut(0.25f), () =>
               {
                 title: "特定のStateに紐づける",
                 body: code(`
+State<bool> isPressed = new State<bool>(false);
+
 Text("Tap")
     .scaleEffect(isPressed.Value ? 0.96f : 1f)
     .animation(Animation.easeOut(0.12f), isPressed);`)
@@ -680,7 +1155,7 @@ ScrollView(() =>
 {
     LazyVStack(() =>
     {
-        ForEach(0, 50, i => Text($"Row {i}").padding(10));
+        ForEach(0, 49, i => Text($"Row {i}").padding(10));
     });
 }, horizontal: false, vertical: true)
 .scrollIndicators(ScrollIndicatorVisibility.Visible, UniftUIScrollAxis.Vertical);`)
@@ -688,7 +1163,7 @@ ScrollView(() =>
               {
                 title: "スクロール位置をStateへ",
                 body: code(`
-private readonly State<float> scrollY = new State<float>(1f);
+State<float> scrollY = new State<float>(1f);
 
 ScrollView(() =>
 {
@@ -699,12 +1174,12 @@ ScrollView(() =>
               {
                 title: "TabView",
                 body: code(`
-private readonly State<int> selectedTab = new State<int>(0);
+State<int> selectedTab = new State<int>(0);
 
 TabView(() =>
 {
-    Tab("Home", () => HomePage());
-    Tab("Settings", () => SettingsPage());
+    Tab("Home", () => Text("Home"));
+    Tab("Settings", () => Text("Settings"));
 }, selectedTab)
 .frame(infiniteWidth: true, infiniteHeight: true);`)
               }
@@ -723,28 +1198,54 @@ TabView(() =>
                 body: `
                   <p>画面全体を1つのStateで更新するより、変わる値ごとにStateを分ける方が影響範囲を読みやすくできます。</p>
                   ${code(`
-private readonly State<int> hp = new State<int>(100);
-private readonly State<int> gold = new State<int>(0);
-private readonly State<bool> menuOpen = new State<bool>(false);`)}
+State<int> hp = new State<int>(100);
+State<int> gold = new State<int>(0);
+State<bool> menuOpen = new State<bool>(false);`)}
                 `
               },
               {
                 title: "一覧はLazy系を使う",
                 body: code(`
+string[] items = { "Potion", "Key", "Map" };
+
 ScrollView(() =>
 {
     LazyVStack(() =>
     {
-        ForEach(0, items.Count, i => ItemRow(items[i]));
+        ForEach(0, items.Length - 1, i => Text(items[i]).padding(8));
     });
 });`)
+              },
+              {
+                title: "複数変更の通知をまとめる",
+                body: `
+                  <p><code>State.BatchUpdate()</code> は、複数の <code>State</code> を一度に変更するときの通知をまとめるための応用機能です。初期化、リセット、セーブデータ読み込みのように、値をまとめて差し替える場面で使います。</p>
+                  ${code(`
+State<int> hp = new State<int>(40);
+State<int> mana = new State<int>(10);
+State<int> selectedTab = new State<int>(2);
+
+void ResetPlayerUi()
+{
+    using (State.BatchUpdate())
+    {
+        hp.Value = 100;
+        mana.Value = 50;
+        selectedTab.Value = 0;
+    }
+}`)}
+                `
               },
               {
                 title: "modifierの責務を分ける",
                 body: `
                   <p>レイアウト、見た目、操作を分けて読むと、意図が追いやすくなります。</p>
                   ${code(`
-Button("Buy", Buy)
+State<bool> canBuy = new State<bool>(true);
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+IButtonStyle primaryButtonStyle = ButtonStyles.Filled(accent, Color.white, 10);
+
+Button("Buy", () => Debug.Log("Buy"))
     .frame(infiniteWidth: true, height: 44)   // layout
     .buttonStyle(primaryButtonStyle)          // appearance
     .disabled(!canBuy.Value);                 // behavior`)}
@@ -779,6 +1280,9 @@ Button("Buy", Buy)
               {
                 title: "カード",
                 body: code(`
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+State<float> storageUsed = new State<float>(0.42f);
+
 VStack(() =>
 {
     Text("Storage").bold().fontSize(18);
@@ -796,6 +1300,14 @@ VStack(() =>
               {
                 title: "ログインフォーム",
                 body: code(`
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+State<string> email = new State<string>("");
+State<string> password = new State<string>("");
+ITextFieldStyle fieldStyle = TextFieldStyles.Chrome(
+    backgroundColor: Color.white,
+    tintColor: accent,
+    cornerRadius: 8);
+
 VStack(() =>
 {
     TextField("Email", text: email, prompt: Text("email@example.com"))
@@ -804,7 +1316,7 @@ VStack(() =>
     SecureField("Password", text: password, prompt: Text("Password"))
         .textFieldStyle(fieldStyle);
 
-    Button("Sign in", SignIn)
+    Button("Sign in", () => Debug.Log("Sign in"))
         .frame(infiniteWidth: true, height: 44)
         .buttonStyle(ButtonStyles.Filled(accent, Color.white, 10));
 }, spacing: 12f, alignment: VStackAlignment.Leading);`)
@@ -812,6 +1324,8 @@ VStack(() =>
               {
                 title: "設定行",
                 body: code(`
+State<bool> notifications = new State<bool>(true);
+
 HStack(() =>
 {
     VStack(() =>
@@ -830,6 +1344,9 @@ HStack(() =>
               {
                 title: "空状態",
                 body: code(`
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+Sprite emptyIcon = Resources.Load<Sprite>("Icons/Empty");
+
 VStack(() =>
 {
     Image(emptyIcon)
@@ -844,7 +1361,7 @@ VStack(() =>
         .foregroundColor(Color.gray)
         .multilineTextAlignment(TextAlignmentOptions.Center);
 
-    Button("Create", CreateItem)
+    Button("Create", () => Debug.Log("Create"))
         .buttonStyle(ButtonStyles.Filled(accent, Color.white, 10));
 }, spacing: 12f)
 .frame(infiniteWidth: true, infiniteHeight: true);`)
@@ -852,6 +1369,9 @@ VStack(() =>
               {
                 title: "HUD",
                 body: code(`
+State<int> hp = new State<int>(100);
+State<int> gold = new State<int>(250);
+
 HStack(() =>
 {
     Text(() => $"HP {hp.Value}", new State[] { hp }).bold();
@@ -872,65 +1392,82 @@ HStack(() =>
         title: "リファレンス",
         pages: [
           {
+            id: "factory-parameters",
+            title: "Factory引数リファレンス",
+            kind: "Reference",
+            summary: "Text、Button、Stack、TextFieldなど、UIを作る関数に渡す引数を名前・型・意味で引けます。",
+            keywords: "factory parameters arguments Text Button VStack HStack ZStack Grid TextField SecureField Image ProgressView Slider Picker spacing alignment states prompt content",
+            sections: [
+              {
+                title: "基本要素",
+                body: `
+                  <p>FactoryはUI要素を作る入口です。まずは <code>content</code> が中身、<code>State</code> が変化する値、<code>Action</code> が実行する処理だと覚えると読みやすくなります。</p>
+                  ${parameterTable("ja", factoryParametersJa.basics)}
+                `
+              },
+              {
+                title: "レイアウト",
+                body: `
+                  <p><code>spacing</code> は子要素同士の間隔、<code>alignment</code> は揃え位置、<code>states</code> は中身を再生成するきっかけです。</p>
+                  ${parameterTable("ja", factoryParametersJa.layout)}
+                `
+              },
+              {
+                title: "画像・図形",
+                body: parameterTable("ja", factoryParametersJa.shapes)
+              },
+              {
+                title: "入力",
+                body: parameterTable("ja", factoryParametersJa.input)
+              },
+              {
+                title: "画像・Control",
+                body: parameterTable("ja", factoryParametersJa.media)
+              }
+            ],
+            related: ["modifier-parameters", "api-index", "overview"]
+          },
+          {
             id: "modifier-parameters",
             title: "modifier引数リファレンス",
             kind: "Reference",
-            summary: "各modifierに渡す型と、使い分けの目安をまとめます。",
+            summary: "modifierに渡す引数を、引数名・型・意味で引けます。",
             keywords: "modifier parameters frame padding background overlay tint opacity cornerRadius border shadow input scroll",
             sections: [
               {
                 title: "レイアウト",
-                body: referenceTable("ja", [
-                  ["frame(width:height:)", "固定サイズ", "ボタン、アイコン、カード"],
-                  ["frame(infiniteWidth:infiniteHeight:)", "親の空間を使う", "横いっぱい、画面いっぱい"],
-                  ["frame(minWidth:maxWidth:minHeight:maxHeight:)", "サイズ制約", "伸縮するUIの上限/下限"],
-                  ["padding", "内側余白", "カード、行、ボタン"],
-                  ["fixedSize", "内容サイズを優先", "伸びてほしくないラベル"],
-                  ["layoutPriority", "空間配分の優先度", "同じStack内の競合調整"],
-                  ["aspectRatio", "比率維持", "画像、サムネイル"]
-                ])
+                body: parameterTable("ja", modifierParametersJa.layout)
               },
               {
                 title: "見た目",
-                body: referenceTable("ja", [
-                  ["background", "背景色/背景View", "カード、ピル、パネル"],
-                  ["overlay", "前面に重ねる", "バッジ、カスタム枠"],
-                  ["foregroundColor", "前景色", "Textや対応要素"],
-                  ["tint", "アクセント色", "Control、template Image、TextField"],
-                  ["opacity", "透明度", "表示状態、アニメーション"],
-                  ["cornerRadius", "角丸", "カード、入力欄"],
-                  ["border / shadow", "枠線/影", "装飾、階層表現"],
-                  ["clipped / clipShape", "切り抜き", "画像、アバター"]
-                ])
+                body: parameterTable("ja", modifierParametersJa.visual)
               },
               {
-                title: "Textと入力",
-                body: referenceTable("ja", [
-                  ["font / fontSize", "フォントとサイズ", "見出し、本文"],
-                  ["bold / italic / underline / strikethrough", "文字スタイル", "強調、リンク風表示"],
-                  ["lineLimit", "行数制限", "説明文、入力欄"],
-                  ["multilineTextAlignment", "複数行の揃え", "説明文、TextField"],
-                  ["focused", "フォーカスState", "フォーム制御"],
-                  ["contentMargins", "TextField内側余白", "入力欄の見た目"],
-                  ["caretColor / textSelectionColor", "入力中の色", "ブランド調整"],
-                  ["textContentType / keyboardType", "入力種別", "メール、パスワード、モバイル"]
-                ])
+                title: "変形",
+                body: parameterTable("ja", modifierParametersJa.transform)
+              },
+              {
+                title: "入力",
+                body: parameterTable("ja", modifierParametersJa.input)
+              },
+              {
+                title: "スクロール",
+                body: parameterTable("ja", modifierParametersJa.scroll)
               },
               {
                 title: "動きと操作",
-                body: referenceTable("ja", [
-                  ["offset", "見た目だけ移動", "バッジ、アニメーション"],
-                  ["position", "配置位置指定", "自由配置"],
-                  ["rotationEffect / scaleEffect", "回転/拡大", "押下フィードバック"],
-                  ["disabled", "操作不可", "ロード中、条件未達"],
-                  ["hidden", "非表示", "一時的な表示制御"],
-                  ["allowsHitTesting", "入力受付制御", "オーバーレイ"],
-                  ["onAppear / onChange / update", "ライフサイクル", "初期化、監視、毎フレーム"],
-                  ["animation", "State変化のアニメーション", "UIフィードバック"]
-                ])
+                body: parameterTable("ja", modifierParametersJa.behavior)
+              },
+              {
+                title: "Style factory",
+                body: parameterTable("ja", modifierParametersJa.styles)
+              },
+              {
+                title: "Animation factory",
+                body: parameterTable("ja", modifierParametersJa.animations)
               }
             ],
-            related: ["api-index", "modifiers", "text-input"]
+            related: ["factory-parameters", "api-index", "modifiers", "text-input"]
           },
           {
             id: "api-index",
@@ -944,7 +1481,7 @@ HStack(() =>
               { title: "TextField modifier", body: referenceTable("ja", sharedReference.input.map(row => [row[0], row[1], row[2]])) },
               { title: "型", body: referenceTable("ja", sharedReference.types.map(row => [row[0], row[1], row[2]])) }
             ],
-            related: ["modifier-parameters", "overview", "setup"]
+            related: ["factory-parameters", "modifier-parameters", "overview", "setup"]
           }
         ]
       }
@@ -1020,7 +1557,7 @@ public sealed class CounterView : UniftView
                   { title: "State", body: "Learn how values update UI." },
                   { title: "Layout", body: "Use stacks, Spacer, frame, and padding." },
                   { title: "Controls", body: "Connect buttons, fields, pickers, and sliders to State." },
-                  { title: "Reference", body: "Use the API index and modifier parameter pages when you need details." }
+                  { title: "Reference", body: "Use the API index, factory parameters, and modifier parameters when you need details." }
                 ])
               },
               {
@@ -1070,8 +1607,8 @@ public sealed class MainMenuView : UniftView
         VStack(() =>
         {
             Text("Main Menu").fontSize(32).bold();
-            Button("Start", StartGame);
-            Button("Options", OpenOptions);
+            Button("Start", () => Debug.Log("Start"));
+            Button("Options", () => Debug.Log("Options"));
         }, spacing: 12f)
         .frame(infiniteWidth: true, infiniteHeight: true)
         .Build(GetComponent<Canvas>());
@@ -1103,14 +1640,14 @@ public sealed class MainMenuView : UniftView
             kind: "Basics",
             summary: "Use State for changing values, text input, controls, callbacks, and animations.",
             declaration: "public class State<T> : State",
-            keywords: "State Value reactive onChange BatchUpdate binding update",
+            keywords: "State Value reactive onChange binding update",
             sections: [
               {
                 title: "State in one minute",
                 body: `
                   <p><code>State&lt;T&gt;</code> is an observable value. Change <code>Value</code>, and dependent UI updates.</p>
                   ${code(`
-private readonly State<int> score = new State<int>(0);
+State<int> score = new State<int>(0);
 
 Text(() => $"Score: {score.Value}", new State[] { score });
 Button("+10", () => score.Value += 10);`)}
@@ -1119,7 +1656,7 @@ Button("+10", () => score.Value += 10);`)}
               {
                 title: "Two-way text input",
                 body: code(`
-private readonly State<string> playerName = new State<string>("");
+State<string> playerName = new State<string>("");
 
 TextField("Name", text: playerName, prompt: Text("Player name"));
 Text(() => $"Hello, {playerName.Value}", new State[] { playerName });`)
@@ -1134,14 +1671,24 @@ Slider(volume, 0, 100)
     });`)
               },
               {
-                title: "Batch updates",
+                title: "Use several State values",
                 body: code(`
-using (State.BatchUpdate())
+State<int> hp = new State<int>(80);
+State<int> maxHp = new State<int>(100);
+State<int> selectedTab = new State<int>(0);
+
+HStack(() =>
 {
-    hp.Value = maxHp.Value;
-    mana.Value = maxMana.Value;
-    selectedTab.Value = 0;
-}`)
+    Text(() => $"HP {hp.Value} / {maxHp.Value}", new State[] { hp, maxHp });
+    Spacer();
+    Button("Recover", () => hp.Value = maxHp.Value);
+});
+
+TabView(() =>
+{
+    Tab("Status", () => Text("Status"));
+    Tab("Items", () => Text("Items"));
+}, selectedTab);`)
               }
             ],
             related: ["controls", "text-input", "animation"]
@@ -1172,13 +1719,20 @@ Text("Quest accepted")
     .background(new Color(0.95f, 0.97f, 1f))
     .cornerRadius(12);`) },
               { title: "Lists", body: code(`
+string[] quests =
+{
+    "Find the key",
+    "Open the gate",
+    "Return to town"
+};
+
 ScrollView(() =>
 {
     LazyVStack(() =>
     {
-        ForEach(0, quests.Count, i =>
+        ForEach(0, quests.Length - 1, i =>
         {
-            Text(quests[i].Title)
+            Text(quests[i])
                 .padding(12)
                 .frame(infiniteWidth: true);
         });
@@ -1210,8 +1764,11 @@ GeometryReader(proxy =>
             keywords: "Text font fontSize TMP_FontAsset bold italic lineLimit multilineTextAlignment foregroundColor",
             sections: [
               { title: "Text forms", body: code(`
+State<string> title = new State<string>("Status");
+State<int> hp = new State<int>(100);
+
 Text("Static");
-Text(titleState);
+Text(title);
 Text(() => $"HP: {hp.Value}", new State[] { hp });`) },
               { title: "Style", body: code(`
 Text("Warning")
@@ -1219,6 +1776,9 @@ Text("Warning")
     .bold()
     .foregroundColor(new Color(0.9f, 0.18f, 0.12f));`) },
               { title: "Fonts", body: code(`
+TMP_FontAsset defaultFont = Resources.Load<TMP_FontAsset>("Fonts/NotoSansJP-Medium SDF");
+TMP_FontAsset titleFont = Resources.Load<TMP_FontAsset>("Fonts/NotoSansJP-Medium SDF");
+
 UIContext.SetDefaultFont(defaultFont);
 
 Text("Custom font")
@@ -1240,23 +1800,35 @@ Text("Long description that can wrap onto multiple lines.")
             keywords: "Button Toggle Slider Stepper ProgressView Picker buttonStyle pickerStyle controls",
             sections: [
               { title: "Button", body: code(`
-Button("Save", Save)
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+
+Button("Save", () => Debug.Log("Saved"))
     .frame(infiniteWidth: true, height: 44)
     .buttonStyle(ButtonStyles.Filled(accent, Color.white, 10));`) },
               { title: "Custom button label", body: code(`
+Sprite saveIcon = Resources.Load<Sprite>("Icons/Save");
+
 Button(
     HStack(() =>
     {
         Image(saveIcon).frame(width: 18, height: 18);
         Text("Save").bold();
     }, spacing: 8f),
-    Save);`) },
+    () => Debug.Log("Saved"));`) },
               { title: "State-bound controls", body: code(`
+State<bool> isEnabled = new State<bool>(true);
+State<int> volume = new State<int>(50);
+State<int> quantity = new State<int>(1);
+State<float> downloadProgress = new State<float>(0.35f);
+
 Toggle("Enabled", isEnabled);
 Slider(volume, 0, 100);
 Stepper("Quantity", quantity, 0, 9);
 ProgressView(downloadProgress, total: 1);`) },
               { title: "Picker", body: code(`
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+State<int> difficulty = new State<int>(1);
+
 Picker(difficulty, "Easy", "Normal", "Hard")
     .pickerStyle(PickerStyle.Segmented)
     .tint(accent);`) }
@@ -1272,6 +1844,8 @@ Picker(difficulty, "Easy", "Normal", "Hard")
             keywords: "TextField SecureField TextEditor focused prompt contentMargins caretColor onSubmit keyboardType textInputLimit",
             sections: [
               { title: "Basic field", body: code(`
+State<string> email = new State<string>("");
+
 TextField("Email", text: email, prompt: Text("email@example.com"))
     .lineLimit(1)
     .contentMargins(horizontal: 12, vertical: 8)
@@ -1280,11 +1854,14 @@ TextField("Email", text: email, prompt: Text("email@example.com"))
               { title: "Style the prompt", body: code(`
 TextField(
     "Nickname",
-    text: nickname,
+    text: new State<string>(""),
     prompt: Text("Optional")
         .italic()
         .foregroundColor(Color.gray));`) },
               { title: "Password and multiline", body: code(`
+State<string> password = new State<string>("");
+State<string> notes = new State<string>("");
+
 SecureField("Password", text: password, prompt: Text("Password"));
 
 TextField("Notes", text: notes, axis: Axis.Vertical, prompt: Text("Notes"))
@@ -1294,12 +1871,18 @@ TextField("Notes", text: notes, axis: Axis.Vertical, prompt: Text("Notes"))
 TextEditor(notes)
     .frame(infiniteWidth: true, height: 140);`) },
               { title: "Focus and submit", body: code(`
+State<string> query = new State<string>("");
+State<bool> searchFocused = new State<bool>(false);
+
 TextField("Search", text: query, prompt: Text("Search"))
     .focused(searchFocused)
     .selectAllOnFocus()
-    .onSubmit(value => Search(value))
+    .onSubmit(value => Debug.Log($"Search: {value}"))
     .onEditingChanged(isEditing => Debug.Log(isEditing));`) },
               { title: "Caret and selection", body: code(`
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+State<string> name = new State<string>("");
+
 TextField("Name", text: name)
     .caretColor(accent)
     .caretWidth(2)
@@ -1337,13 +1920,18 @@ Text("Inbox")
         Circle(Color.red).frame(width: 8, height: 8),
         ZStackAlignment.TopTrailing);`) },
               { title: "Clipping", body: code(`
+Sprite avatar = Resources.Load<Sprite>("Avatars/Player");
+
 Image(avatar)
     .resizable()
     .scaledToFill()
     .frame(width: 64, height: 64)
     .clipShape(UniftUIClipShape.Circle);`) },
               { title: "Interaction state", body: code(`
-Button("Submit", Submit)
+State<bool> isSubmitting = new State<bool>(false);
+State<bool> canTap = new State<bool>(true);
+
+Button("Submit", () => Debug.Log("Submitted"))
     .disabled(isSubmitting)
     .allowsHitTesting(canTap)
     .opacity(isSubmitting.Value ? 0.6f : 1f);`) }
@@ -1358,15 +1946,21 @@ Button("Submit", Submit)
             keywords: "ButtonStyles TextFieldStyles style reuse theme tint foregroundColor",
             sections: [
               { title: "ButtonStyles", body: code(`
-Button("Continue", Continue)
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+
+Button("Continue", () => Debug.Log("Continue"))
     .buttonStyle(ButtonStyles.Filled(
         backgroundColor: accent,
         foregroundColor: Color.white,
         cornerRadius: 10));
 
-Button("Cancel", Cancel)
+Button("Cancel", () => Debug.Log("Cancel"))
     .buttonStyle(ButtonStyles.Plain(accent));`) },
               { title: "TextFieldStyles", body: code(`
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+State<string> firstName = new State<string>("");
+State<string> lastName = new State<string>("");
+
 var fieldStyle = TextFieldStyles.Chrome(
     backgroundColor: Color.white,
     focusedBackgroundColor: new Color(0.94f, 0.97f, 1f),
@@ -1378,8 +1972,9 @@ var fieldStyle = TextFieldStyles.Chrome(
 TextField("First name", text: firstName).textFieldStyle(fieldStyle);
 TextField("Last name", text: lastName).textFieldStyle(fieldStyle);`) },
               { title: "Theme values", body: code(`
-private readonly Color accent = new Color(0.16f, 0.38f, 0.9f);
-private readonly Color panel = new Color(0.96f, 0.97f, 0.99f);
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+Color panel = new Color(0.96f, 0.97f, 0.99f);
+State<bool> soundEnabled = new State<bool>(true);
 
 VStack(() =>
 {
@@ -1400,11 +1995,15 @@ VStack(() =>
             keywords: "Animation WithAnimation animation spring easeInOut opacity offset scaleEffect rotationEffect cornerRadius",
             sections: [
               { title: "WithAnimation", body: code(`
+State<bool> expanded = new State<bool>(false);
+
 WithAnimation(Animation.easeInOut(0.25f), () =>
 {
     expanded.Value = !expanded.Value;
 });`) },
               { title: "Bind animation to one State", body: code(`
+State<bool> isPressed = new State<bool>(false);
+
 Text("Tap")
     .scaleEffect(isPressed.Value ? 0.96f : 1f)
     .animation(Animation.easeOut(0.12f), isPressed);`) },
@@ -1439,12 +2038,12 @@ ScrollView(() =>
 {
     LazyVStack(() =>
     {
-        ForEach(0, 50, i => Text($"Row {i}").padding(10));
+        ForEach(0, 49, i => Text($"Row {i}").padding(10));
     });
 }, horizontal: false, vertical: true)
 .scrollIndicators(ScrollIndicatorVisibility.Visible, UniftUIScrollAxis.Vertical);`) },
               { title: "Bind scroll position", body: code(`
-private readonly State<float> scrollY = new State<float>(1f);
+State<float> scrollY = new State<float>(1f);
 
 ScrollView(() =>
 {
@@ -1452,12 +2051,12 @@ ScrollView(() =>
 })
 .scrollPositionY(scrollY, twoWay: true);`) },
               { title: "Tabs", body: code(`
-private readonly State<int> selectedTab = new State<int>(0);
+State<int> selectedTab = new State<int>(0);
 
 TabView(() =>
 {
-    Tab("Home", () => HomePage());
-    Tab("Settings", () => SettingsPage());
+    Tab("Home", () => Text("Home"));
+    Tab("Settings", () => Text("Settings"));
 }, selectedTab)
 .frame(infiniteWidth: true, infiniteHeight: true);`) }
             ],
@@ -1473,20 +2072,43 @@ TabView(() =>
               { title: "Keep State focused", body: `
                 <p>Prefer several focused State values over one large screen state. It makes dependencies and updates easier to reason about.</p>
                 ${code(`
-private readonly State<int> hp = new State<int>(100);
-private readonly State<int> gold = new State<int>(0);
-private readonly State<bool> menuOpen = new State<bool>(false);`)}
+State<int> hp = new State<int>(100);
+State<int> gold = new State<int>(0);
+State<bool> menuOpen = new State<bool>(false);`)}
               ` },
               { title: "Use lazy stacks for lists", body: code(`
+string[] items = { "Potion", "Key", "Map" };
+
 ScrollView(() =>
 {
     LazyVStack(() =>
     {
-        ForEach(0, items.Count, i => ItemRow(items[i]));
+        ForEach(0, items.Length - 1, i => Text(items[i]).padding(8));
     });
 });`) },
+              { title: "Batch several changes", body: `
+                <p><code>State.BatchUpdate()</code> is an advanced helper for grouping notifications when several <code>State</code> values change together. It fits reset, initialization, and save-data loading flows.</p>
+                ${code(`
+State<int> hp = new State<int>(40);
+State<int> mana = new State<int>(10);
+State<int> selectedTab = new State<int>(2);
+
+void ResetPlayerUi()
+{
+    using (State.BatchUpdate())
+    {
+        hp.Value = 100;
+        mana.Value = 50;
+        selectedTab.Value = 0;
+    }
+}`)}
+              ` },
               { title: "Separate responsibilities", body: code(`
-Button("Buy", Buy)
+State<bool> canBuy = new State<bool>(true);
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+IButtonStyle primaryButtonStyle = ButtonStyles.Filled(accent, Color.white, 10);
+
+Button("Buy", () => Debug.Log("Buy"))
     .frame(infiniteWidth: true, height: 44)   // layout
     .buttonStyle(primaryButtonStyle)          // appearance
     .disabled(!canBuy.Value);                 // behavior`) },
@@ -1514,6 +2136,9 @@ Button("Buy", Buy)
             keywords: "recipes card form settings row empty state hud badge",
             sections: [
               { title: "Card", body: code(`
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+State<float> storageUsed = new State<float>(0.42f);
+
 VStack(() =>
 {
     Text("Storage").bold().fontSize(18);
@@ -1528,6 +2153,14 @@ VStack(() =>
 .cornerRadius(12)
 .shadow(new Color(0, 0, 0, 0.12f), radius: 4, x: 0, y: -2);`) },
               { title: "Login form", body: code(`
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+State<string> email = new State<string>("");
+State<string> password = new State<string>("");
+ITextFieldStyle fieldStyle = TextFieldStyles.Chrome(
+    backgroundColor: Color.white,
+    tintColor: accent,
+    cornerRadius: 8);
+
 VStack(() =>
 {
     TextField("Email", text: email, prompt: Text("email@example.com"))
@@ -1536,11 +2169,13 @@ VStack(() =>
     SecureField("Password", text: password, prompt: Text("Password"))
         .textFieldStyle(fieldStyle);
 
-    Button("Sign in", SignIn)
+    Button("Sign in", () => Debug.Log("Sign in"))
         .frame(infiniteWidth: true, height: 44)
         .buttonStyle(ButtonStyles.Filled(accent, Color.white, 10));
 }, spacing: 12f, alignment: VStackAlignment.Leading);`) },
               { title: "Settings row", body: code(`
+State<bool> notifications = new State<bool>(true);
+
 HStack(() =>
 {
     VStack(() =>
@@ -1556,6 +2191,9 @@ HStack(() =>
 .background(Color.white)
 .cornerRadius(10);`) },
               { title: "Empty state", body: code(`
+Color accent = new Color(0.16f, 0.38f, 0.9f);
+Sprite emptyIcon = Resources.Load<Sprite>("Icons/Empty");
+
 VStack(() =>
 {
     Image(emptyIcon)
@@ -1570,11 +2208,14 @@ VStack(() =>
         .foregroundColor(Color.gray)
         .multilineTextAlignment(TextAlignmentOptions.Center);
 
-    Button("Create", CreateItem)
+    Button("Create", () => Debug.Log("Create"))
         .buttonStyle(ButtonStyles.Filled(accent, Color.white, 10));
 }, spacing: 12f)
 .frame(infiniteWidth: true, infiniteHeight: true);`) },
               { title: "HUD", body: code(`
+State<int> hp = new State<int>(100);
+State<int> gold = new State<int>(250);
+
 HStack(() =>
 {
     Text(() => $"HP {hp.Value}", new State[] { hp }).bold();
@@ -1594,53 +2235,58 @@ HStack(() =>
         title: "Reference",
         pages: [
           {
+            id: "factory-parameters",
+            title: "Factory Parameters",
+            kind: "Reference",
+            summary: "Look up the parameters passed to Text, Button, stacks, TextField, controls, and other factory calls.",
+            keywords: "factory parameters arguments Text Button VStack HStack ZStack Grid TextField SecureField Image ProgressView Slider Picker spacing alignment states prompt content",
+            sections: [
+              {
+                title: "Basic elements",
+                body: `
+                  <p>Factories create UI elements. Read <code>content</code> as child UI, <code>State</code> as changing value, and <code>Action</code> as code to run.</p>
+                  ${parameterTable("en", factoryParametersEn.basics)}
+                `
+              },
+              {
+                title: "Layout",
+                body: `
+                  <p><code>spacing</code> is the gap between children, <code>alignment</code> is placement, and <code>states</code> controls when content is rebuilt.</p>
+                  ${parameterTable("en", factoryParametersEn.layout)}
+                `
+              },
+              {
+                title: "Images and shapes",
+                body: parameterTable("en", factoryParametersEn.shapes)
+              },
+              {
+                title: "Input",
+                body: parameterTable("en", factoryParametersEn.input)
+              },
+              {
+                title: "Media and controls",
+                body: parameterTable("en", factoryParametersEn.media)
+              }
+            ],
+            related: ["modifier-parameters", "api-index", "overview"]
+          },
+          {
             id: "modifier-parameters",
             title: "Modifier Parameters",
             kind: "Reference",
-            summary: "Parameter types and practical guidance for the modifiers you use most often.",
+            summary: "Look up modifier parameters by name, type, and meaning.",
             keywords: "modifier parameters frame padding background overlay tint opacity cornerRadius border shadow input scroll",
             sections: [
-              { title: "Layout", body: referenceTable("en", [
-                ["frame(width:height:)", "Fixed preferred size", "Buttons, icons, cards"],
-                ["frame(infiniteWidth:infiniteHeight:)", "Use available parent space", "Full-width or full-screen layout"],
-                ["frame(minWidth:maxWidth:minHeight:maxHeight:)", "Size limits", "Flexible UI with bounds"],
-                ["padding", "Inner spacing", "Cards, rows, buttons"],
-                ["fixedSize", "Prefer intrinsic size", "Labels that should not stretch"],
-                ["layoutPriority", "Space priority", "Sibling layout conflicts"],
-                ["aspectRatio", "Preserve ratio", "Images and thumbnails"]
-              ]) },
-              { title: "Appearance", body: referenceTable("en", [
-                ["background", "Color or background view", "Cards, pills, panels"],
-                ["overlay", "Foreground layer", "Badges and custom borders"],
-                ["foregroundColor", "Foreground color", "Text and supported views"],
-                ["tint", "Accent color", "Controls, template images, text fields"],
-                ["opacity", "Alpha", "Visibility and animation"],
-                ["cornerRadius", "Rounded corners", "Cards and input fields"],
-                ["border / shadow", "Outline and depth", "Decoration and hierarchy"],
-                ["clipped / clipShape", "Masking", "Images and avatars"]
-              ]) },
-              { title: "Text and input", body: referenceTable("en", [
-                ["font / fontSize", "Font and size", "Headings and labels"],
-                ["bold / italic / underline / strikethrough", "Text style", "Emphasis and link-like UI"],
-                ["lineLimit", "Line limit", "Descriptions and input fields"],
-                ["multilineTextAlignment", "Multiline alignment", "Descriptions and TextField"],
-                ["focused", "Focus State", "Form control"],
-                ["contentMargins", "TextField inset", "Input chrome"],
-                ["caretColor / textSelectionColor", "Editing colors", "Brand polish"],
-                ["textContentType / keyboardType", "Input type", "Email, password, mobile"]
-              ]) },
-              { title: "Motion and behavior", body: referenceTable("en", [
-                ["offset", "Visual movement", "Badges and animation"],
-                ["position", "Explicit placement", "Free layout"],
-                ["rotationEffect / scaleEffect", "Transform", "Tap feedback"],
-                ["disabled", "Disable interaction", "Loading and invalid forms"],
-                ["hidden", "Hide", "Temporary visibility"],
-                ["allowsHitTesting", "Pointer input", "Overlays"],
-                ["onAppear / onChange / update", "Lifecycle", "Setup, observation, per-frame work"],
-                ["animation", "Animate State changes", "UI feedback"]
-              ]) }
+              { title: "Layout", body: parameterTable("en", modifierParametersEn.layout) },
+              { title: "Appearance", body: parameterTable("en", modifierParametersEn.visual) },
+              { title: "Transform", body: parameterTable("en", modifierParametersEn.transform) },
+              { title: "Input", body: parameterTable("en", modifierParametersEn.input) },
+              { title: "Scroll", body: parameterTable("en", modifierParametersEn.scroll) },
+              { title: "Motion and behavior", body: parameterTable("en", modifierParametersEn.behavior) },
+              { title: "Style factories", body: parameterTable("en", modifierParametersEn.styles) },
+              { title: "Animation factories", body: parameterTable("en", modifierParametersEn.animations) }
             ],
-            related: ["api-index", "modifiers", "text-input"]
+            related: ["factory-parameters", "api-index", "modifiers", "text-input"]
           },
           {
             id: "api-index",
@@ -1654,7 +2300,7 @@ HStack(() =>
               { title: "TextField modifiers", body: referenceTable("en", sharedReference.input) },
               { title: "Types", body: referenceTable("en", sharedReference.types) }
             ],
-            related: ["modifier-parameters", "overview", "setup"]
+            related: ["factory-parameters", "modifier-parameters", "overview", "setup"]
           }
         ]
       }
@@ -1684,7 +2330,14 @@ const aliases = {
   tabview: "scroll-tabs",
   withanimation: "animation",
   modifiers: "modifiers",
-  reference: "api-index"
+  reference: "api-index",
+  arguments: "factory-parameters",
+  args: "factory-parameters",
+  parameters: "factory-parameters",
+  factoryparams: "factory-parameters",
+  factoryparameters: "factory-parameters",
+  modifierparams: "modifier-parameters",
+  modifierparameters: "modifier-parameters"
 };
 
 const symbolList = document.getElementById("symbol-list");
