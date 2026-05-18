@@ -13,309 +13,102 @@ function code(value) {
   return `<pre><code>${escapeHtml(value.trim())}</code></pre>`;
 }
 
+function api(value) {
+  return `<code>${escapeHtml(value)}</code>`;
+}
+
 function table(headers, rows) {
   return `<table class="api-table">
     <thead><tr>${headers.map(header => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead>
-    <tbody>
-      ${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("")}
-    </tbody>
+    <tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("")}</tbody>
   </table>`;
 }
 
-function api(name) {
-  return `<code>${escapeHtml(name)}</code>`;
+function cards(items) {
+  return `<div class="topics">${items.map(item => `
+    <div class="topic-card">
+      <div><span class="signature">${escapeHtml(item.kicker)}</span>${item.href ? `<a href="${item.href}">${escapeHtml(item.title)}</a>` : `<strong>${escapeHtml(item.title)}</strong>`}</div>
+      <p>${item.body}</p>
+    </div>
+  `).join("")}</div>`;
 }
 
-const apiRows = {
+function steps(items) {
+  return `<div class="steps">${items.map(item => `<div class="step"><strong>${item.title}</strong><br>${item.body}</div>`).join("")}</div>`;
+}
+
+function callout(body) {
+  return `<div class="callout"><p>${body}</p></div>`;
+}
+
+function referenceTable(lang, rows) {
+  return table(
+    lang === "ja" ? ["名前", "用途", "よく使う場面"] : ["Name", "Purpose", "Use it for"],
+    rows
+  );
+}
+
+const sharedReference = {
   factories: [
-    ["Text", "Text, reactive text"],
-    ["Button", "Actions"],
-    ["TextField, SecureField, TextEditor", "Text input"],
-    ["Toggle, Slider, Stepper, ProgressView, Picker", "Controls"],
-    ["Image, Label, Divider", "Media and utility views"],
-    ["Rectangle, Circle, Capsule, RoundedRectangle", "Shapes"],
-    ["VStack, HStack, ZStack, Spacer", "Basic layout"],
-    ["LazyVStack, LazyHStack, Grid, GridRow, GeometryReader", "Advanced layout"],
-    ["ScrollView, TabView, Tab", "Navigation and containers"],
-    ["ForEach", "Repeat content"]
+    ["Text", "Display text", "Labels, headings, reactive strings"],
+    ["Button", "Run an action", "Primary actions, toolbar actions"],
+    ["TextField / SecureField / TextEditor", "Text input", "Forms, search, notes, passwords"],
+    ["Toggle / Slider / Stepper / Picker", "State-bound controls", "Settings and simple configuration"],
+    ["ProgressView", "Show progress", "Loading and completion"],
+    ["Image / Label / Divider", "Media and utility views", "Icons, status rows, separators"],
+    ["Rectangle / Circle / Capsule / RoundedRectangle", "Shapes", "Backgrounds, badges, masks"],
+    ["VStack / HStack / ZStack / Spacer", "Basic layout", "Rows, columns, layered UI"],
+    ["LazyVStack / LazyHStack / Grid / GridRow", "Larger layout", "Lists and table-like content"],
+    ["ScrollView / TabView / Tab", "Containers", "Scrollable pages and tab screens"],
+    ["GeometryReader", "Read parent size", "Responsive layouts"],
+    ["ForEach", "Repeat content", "Rows and generated controls"]
   ],
   modifiers: [
-    ["frame, padding, fixedSize, layoutPriority", "Size and spacing"],
-    ["background, overlay, border, shadow", "Layers and decoration"],
-    ["foregroundColor, tint, opacity", "Color"],
-    ["font, fontSize, bold, italic, underline, strikethrough", "Text"],
-    ["lineLimit, multilineTextAlignment", "Text wrapping"],
-    ["cornerRadius, clipped, clipShape, aspectRatio", "Shape and clipping"],
-    ["offset, position, rotationEffect, scaleEffect", "Transforms"],
-    ["disabled, hidden, allowsHitTesting", "Interaction"],
-    ["onAppear, onChange, update", "Lifecycle"],
-    ["animation", "Implicit animation"],
-    ["buttonStyle, textFieldStyle", "Styles"]
+    ["frame", "Size proposal", "Fixed size, full width, max/min constraints"],
+    ["padding", "Inner spacing", "Cards, buttons, rows"],
+    ["background / overlay", "Layer views", "Fills, badges, custom chrome"],
+    ["foregroundColor / tint / opacity", "Color and alpha", "Text, controls, template images"],
+    ["font / fontSize / bold / italic", "Text styling", "Headings, labels, prompts"],
+    ["lineLimit / multilineTextAlignment", "Text wrapping", "Descriptions and multiline input"],
+    ["cornerRadius / clipped / clipShape", "Rounded and masked shapes", "Cards, avatars, image crops"],
+    ["border / shadow", "Decoration", "Depth and outlines"],
+    ["offset / position", "Move views", "Badges, free placement, animated movement"],
+    ["rotationEffect / scaleEffect", "Transforms", "Feedback and animation"],
+    ["disabled / hidden / allowsHitTesting", "Interaction state", "Loading, overlays, conditional UI"],
+    ["onAppear / onChange / update", "Lifecycle hooks", "Start work, observe values, per-frame updates"],
+    ["animation / WithAnimation", "Animate changes", "Transitions, progress, feedback"]
   ],
   input: [
-    ["focused", "Bind focus state"],
-    ["onEditingChanged, onSubmit", "Input events"],
-    ["selectAllOnFocus", "Selection behavior"],
-    ["contentMargins", "Inner text padding"],
-    ["textSelectionColor, caretColor, caretWidth, caretBlinkRate", "Caret and selection"],
-    ["textContentType, textInputLimit, keyboardType", "Input rules"]
-  ],
-  imageScroll: [
-    ["resizable, scaledToFit, scaledToFill, renderingMode", "Image"],
-    ["pickerStyle", "Picker"],
-    ["scrollIndicators, scrollBounce, scrollSensitivity", "Scroll"],
-    ["scrollMovementType, scrollPositionX, scrollPositionY", "Scroll binding"]
+    ["focused", "Bind focus", "Validation, keyboard control"],
+    ["onEditingChanged / onSubmit", "Input events", "Search, login, submit flows"],
+    ["selectAllOnFocus", "Selection behavior", "Numeric fields and search boxes"],
+    ["contentMargins", "TextField inner spacing", "Reusable field chrome"],
+    ["caretColor / caretWidth / caretBlinkRate", "Caret styling", "Brand polish"],
+    ["textSelectionColor", "Selection color", "Readable highlight"],
+    ["textContentType / textInputLimit / keyboardType", "Input rules", "Email, password, mobile keyboard"]
   ],
   types: [
-    ["State<T>", "Observable value"],
-    ["Animation", "Animation definition"],
-    ["Axis, Edge, RectCorner", "Layout and modifier options"],
-    ["PickerStyle, ImageRenderingMode, ImageResizingMode", "Control and image options"],
-    ["AspectRatioContentMode, UniftUIClipShape", "Shape options"],
-    ["ScrollIndicatorVisibility, UniftUIScrollAxis", "Scroll options"],
-    ["VStackAlignment, HStackAlignment, ZStackAlignment", "Alignment options"],
-    ["GeometryProxy", "GeometryReader value"],
-    ["ButtonStyles, TextFieldStyles", "Built-in style factories"]
+    ["State<T>", "Observable value", "Reactive UI"],
+    ["Animation", "Animation definition", "Timing, easing, springs"],
+    ["Axis / Edge / RectCorner", "Layout options", "TextField axis, padding edges, rounded corners"],
+    ["VStackAlignment / HStackAlignment / ZStackAlignment", "Alignment", "Stack positioning"],
+    ["PickerStyle / ImageRenderingMode / ImageResizingMode", "Control and image options", "Segmented picker, template tint, tiling"],
+    ["ScrollIndicatorVisibility / UniftUIScrollAxis", "Scroll options", "Vertical/horizontal scroll chrome"],
+    ["ButtonStyles / TextFieldStyles", "Built-in style factories", "Consistent controls"],
+    ["GeometryProxy", "GeometryReader value", "Responsive layout decisions"]
   ]
 };
-
-const apiRowsJa = {
-  factories: [
-    ["Text", "文字表示。固定文字、State、計算した文字列に対応"],
-    ["Button", "クリック時の処理"],
-    ["TextField, SecureField, TextEditor", "テキスト入力"],
-    ["Toggle, Slider, Stepper, ProgressView, Picker", "状態に紐づくコントロール"],
-    ["Image, Label, Divider", "画像、ラベル、区切り線"],
-    ["Rectangle, Circle, Capsule, RoundedRectangle", "単純な図形"],
-    ["VStack, HStack, ZStack, Spacer", "基本レイアウト"],
-    ["LazyVStack, LazyHStack, Grid, GridRow, GeometryReader", "一覧、表、サイズ参照"],
-    ["ScrollView, TabView, Tab", "スクロールとタブ"],
-    ["ForEach", "繰り返し表示"]
-  ],
-  modifiers: [
-    ["frame, padding, fixedSize, layoutPriority", "サイズと余白"],
-    ["background, overlay, border, shadow", "背景、重ね合わせ、装飾"],
-    ["foregroundColor, tint, opacity", "色と透明度"],
-    ["font, fontSize, bold, italic, underline, strikethrough", "文字の見た目"],
-    ["lineLimit, multilineTextAlignment", "行数と複数行の揃え"],
-    ["cornerRadius, clipped, clipShape, aspectRatio", "角丸、切り抜き、比率"],
-    ["offset, position, rotationEffect, scaleEffect", "移動、位置、回転、拡大"],
-    ["disabled, hidden, allowsHitTesting", "操作と表示"],
-    ["onAppear, onChange, update", "ライフサイクル"],
-    ["animation", "State変化のアニメーション"],
-    ["buttonStyle, textFieldStyle", "コントロールのスタイル"]
-  ],
-  input: [
-    ["focused", "フォーカス状態のバインド"],
-    ["onEditingChanged, onSubmit", "入力開始/終了、送信イベント"],
-    ["selectAllOnFocus", "フォーカス時に全選択"],
-    ["contentMargins", "入力欄内側の余白"],
-    ["textSelectionColor, caretColor, caretWidth, caretBlinkRate", "選択色とキャレット"],
-    ["textContentType, textInputLimit, keyboardType", "入力種別、文字数制限、モバイルキーボード"]
-  ],
-  imageScroll: [
-    ["resizable, scaledToFit, scaledToFill, renderingMode", "画像のリサイズと表示方式"],
-    ["pickerStyle", "Pickerの見た目"],
-    ["scrollIndicators, scrollBounce, scrollSensitivity", "スクロールバーとスクロール感"],
-    ["scrollMovementType, scrollPositionX, scrollPositionY", "ScrollRectの動きと位置バインド"]
-  ],
-  types: [
-    ["State<T>", "監視できる値"],
-    ["Animation", "アニメーション定義"],
-    ["Axis, Edge, RectCorner", "入力方向、余白方向、角の指定"],
-    ["PickerStyle, ImageRenderingMode, ImageResizingMode", "Pickerと画像の指定"],
-    ["AspectRatioContentMode, UniftUIClipShape", "比率と切り抜き形状"],
-    ["ScrollIndicatorVisibility, UniftUIScrollAxis", "スクロール表示の指定"],
-    ["VStackAlignment, HStackAlignment, ZStackAlignment", "揃え位置"],
-    ["GeometryProxy", "GeometryReaderで受け取るサイズ情報"],
-    ["ButtonStyles, TextFieldStyles", "組み込みスタイル"]
-  ]
-};
-
-const modifierParamsJa = {
-  layout: [
-    ["frame(width:height:)", `${api("width")} / ${api("height")}`, "固定サイズを指定します。どちらかだけ指定しても使えます。"],
-    ["frame(infiniteWidth:infiniteHeight:)", `${api("bool?")}`, "親の空き幅/高さをできるだけ使います。横いっぱいのボタンや画面いっぱいのコンテナに使います。"],
-    ["frame(minWidth:maxWidth:minHeight:maxHeight:)", `${api("float?")}`, "最小/最大サイズを指定します。伸び縮みは許すが限界を持たせたいときに使います。"],
-    ["padding(_)", `${api("int")} / ${api("State<int>")} / ${api("RectOffset")}`, "全方向、State連動、または Unity の RectOffset で余白を指定します。"],
-    ["padding(_:_:)", `${api("Edge")} + ${api("int")}`, "特定方向の余白です。例: <code>Edge.Horizontal</code> は左右、<code>Edge.Vertical</code> は上下。"],
-    ["padding(top:bottom:left:right:)", `${api("float?")}`, "上下左右を個別に指定します。指定しない方向は 0 のままです。"],
-    ["fixedSize(horizontal:vertical:)", `${api("bool")}`, "親に伸ばされず、内容に近いサイズを優先します。"],
-    ["layoutPriority(_)", `${api("float")}`, "同じ親の中で、空間を優先してもらいたい度合いです。値が大きいほど優先されます。"],
-    ["aspectRatio(_:contentMode:)", `${api("float")} + ${api("AspectRatioContentMode")}`, "指定した比率を保つレイアウトです。<code>Fit</code> は収める、<code>Fill</code> は埋めます。"]
-  ],
-  visual: [
-    ["background(_)", `${api("Color")} / ${api("State<Color>")}`, "単色背景を付けます。<code>padding</code> の後に置くと余白込みで背景が付きます。"],
-    ["background(_)", `${api("UIElement")} / ${api("Action")}`, "背景に図形や独自の View を置きます。角丸の Capsule 背景などに使います。"],
-    ["overlay(_:alignment:)", `${api("UIElement")} / ${api("Action")} + ${api("ZStackAlignment")}`, "上に View を重ねます。バッジや枠線表現に使います。"],
-    ["foregroundColor(_)", `${api("Color")} / ${api("State<Color>")}`, "Text や対応する表示要素の前景色です。"],
-    ["tint(_)", `${api("Color")} / ${api("State<Color>")}`, "Button、Picker、TextField のキャレット、Image template などのアクセント色です。"],
-    ["opacity(_)", `${api("float")} / ${api("State<float>")}`, "透明度です。0 で透明、1 で不透明です。"],
-    ["cornerRadius(_)", `${api("float")} / ${api("State<float>")}`, "全角を丸めます。State を渡すと角丸アニメーションに使えます。"],
-    ["cornerRadius(_:_:_:_:)", `${api("float topLeft, topRight, bottomRight, bottomLeft")}`, "4つの角を個別に丸めます。"],
-    ["cornerRadius(_:_:)", `${api("RectCorner")} + ${api("float")}`, "指定した角だけ丸めます。例: <code>RectCorner.Top</code>。"],
-    ["border(_:width:)", `${api("Color")} / ${api("State<Color>")} + ${api("float")}`, "矩形の枠線を描きます。丸い枠が必要なら <code>overlay</code> で図形を重ねます。"],
-    ["shadow(color:radius:x:y:)", `${api("Color?")} + ${api("float radius")} + ${api("x/y")}`, "影を付けます。<code>x</code> と <code>y</code> は影のずれです。"],
-    ["clipped()", "なし", "子要素を親の矩形範囲で切り抜きます。"],
-    ["clipShape(_:cornerRadius:)", `${api("UniftUIClipShape")} + ${api("float")}`, "Circle、Capsule、RoundedRectangle などの形で切り抜きます。"]
-  ],
-  text: [
-    ["font(_)", `${api("TMP_FontAsset")}`, "TextMesh Pro のフォントアセットを指定します。"],
-    ["fontSize(_)", `${api("float")}`, "文字サイズです。"],
-    ["bold() / italic()", "なし", "太字/斜体にします。placeholder の <code>Text</code> にも使えます。"],
-    ["underline() / strikethrough()", "なし", "下線/取り消し線を付けます。"],
-    ["lineLimit(_)", `${api("int?")}`, "表示行数の上限です。<code>null</code> または省略で制限なしです。"],
-    ["multilineTextAlignment(_)", `${api("TextAlignmentOptions")}`, "複数行テキストの揃えです。TextField の複数行入力にも使います。"]
-  ],
-  transform: [
-    ["offset(x:y:)", `${api("float")} / ${api("State<float>")}`, "レイアウト位置はそのまま、見た目だけずらします。"],
-    ["offset(_)", `${api("Vector2")} / ${api("State<Vector2>")}`, "2Dベクトルで見た目のずれを指定します。"],
-    ["position(x:y:)", `${api("float")} / ${api("State<float>")}`, "RectTransform の位置を指定します。自由配置したいとき向けです。"],
-    ["rotationEffect(_)", `${api("float degrees")} / ${api("State<float>")}`, "Z軸回転の角度です。単位は度です。"],
-    ["rotationEffect(x:y:z:)", `${api("float")} / ${api("State<Vector3>")}`, "3軸の回転を指定します。"],
-    ["scaleEffect(_)", `${api("float")} / ${api("State<float>")}`, "全方向の拡大率です。1 が等倍です。"],
-    ["scaleEffect(x:y:)", `${api("float")} / ${api("State<float>")}`, "横と縦の拡大率を別々に指定します。"]
-  ],
-  behavior: [
-    ["disabled(_)", `${api("bool")} / ${api("State<bool>")}`, "操作できない状態にします。ボタンや入力を無効化したいときに使います。"],
-    ["hidden(_)", `${api("bool")}`, "非表示にします。入力も受けません。"],
-    ["allowsHitTesting(_)", `${api("bool")} / ${api("State<bool>")}`, "クリックやタップを受けるかどうかを制御します。"],
-    ["onAppear(_)", `${api("Action")} / ${api("Func<Task>")}`, "要素が表示されたときに呼ばれます。"],
-    ["onChange(_:_:)", `${api("State")} + ${api("Action")}`, "State が変わったときに呼ばれます。"],
-    ["update(_)", `${api("Action")}`, "毎フレーム呼ばれます。必要なときだけ使います。"],
-    ["animation(_:value:)", `${api("Animation")} + ${api("State")}`, "指定した State が変わったとき、この modifier までの見た目変更をアニメーションします。"]
-  ],
-  input: [
-    ["focused(_)", `${api("State<bool>")}`, "TextField のフォーカス状態を State と同期します。"],
-    ["onEditingChanged(_)", `${api("Action<bool>")}`, "編集開始時に true、終了時に false が渡ります。"],
-    ["onSubmit(_)", `${api("Action<string>")}`, "送信時に現在の文字列が渡ります。"],
-    ["selectAllOnFocus(_)", `${api("bool")}`, "フォーカス時に全選択するかどうかです。デフォルトは true。"],
-    ["contentMargins(horizontal:vertical:)", `${api("float")} + ${api("float")}`, "TextField 内側の左右/上下余白です。"],
-    ["contentMargins(left:right:top:bottom:)", `${api("float")}`, "TextField 内側の余白を個別に指定します。"],
-    ["textSelectionColor(_)", `${api("Color")} / ${api("State<Color>")}`, "選択範囲の色です。透明度を 0.2〜0.35 程度にすると見やすいです。"],
-    ["caretColor(_)", `${api("Color")} / ${api("State<Color>")}`, "キャレットの色です。"],
-    ["caretWidth(_)", `${api("int")}`, "キャレットの太さです。"],
-    ["caretBlinkRate(_)", `${api("float")}`, "キャレット点滅速度です。"],
-    ["textContentType(_)", `${api("TMP_InputField.ContentType")}`, "Email、Password など TMP 側の入力種別です。"],
-    ["textInputLimit(_)", `${api("int")}`, "最大文字数です。"],
-    ["keyboardType(_)", `${api("TouchScreenKeyboardType")}`, "モバイルキーボードの種類です。"]
-  ],
-  mediaScroll: [
-    ["resizable(_)", `${api("ImageResizingMode")}`, "Image をリサイズ対象にします。Stretch または Tile を指定できます。"],
-    ["scaledToFit()", "なし", "画像全体がフレーム内に収まるように表示します。"],
-    ["scaledToFill()", "なし", "フレームを埋めるように表示します。はみ出しは <code>clipped()</code> と組み合わせます。"],
-    ["renderingMode(_)", `${api("ImageRenderingMode")}`, "Original または Template を指定します。Template は tint と組み合わせます。"],
-    ["pickerStyle(_)", `${api("PickerStyle")}`, "Picker の表示形式です。現在は Segmented が主な用途です。"],
-    ["scrollIndicators(_:)", `${api("ScrollIndicatorVisibility")} / ${api("UniftUIScrollAxis")}`, "スクロールバーの表示と対象軸を指定します。"],
-    ["scrollBounce(_)", `${api("bool")}`, "端で弾む動きを許可するかどうかです。"],
-    ["scrollSensitivity(_)", `${api("float")}`, "ホイール/スクロール操作の感度です。"],
-    ["scrollMovementType(_)", `${api("ScrollRect.MovementType")}`, "Unity の ScrollRect の移動方式です。"],
-    ["scrollPositionX/Y(_:twoWay:)", `${api("State<float>")} + ${api("bool")}`, "正規化スクロール位置を State と同期します。twoWay が true ならユーザー操作も State へ戻します。"]
-  ]
-};
-
-const modifierParamsEn = {
-  layout: [
-    ["frame(width:height:)", `${api("width")} / ${api("height")}`, "Sets a fixed preferred size. You can provide only one axis."],
-    ["frame(infiniteWidth:infiniteHeight:)", `${api("bool?")}`, "Uses as much available parent width or height as possible."],
-    ["frame(minWidth:maxWidth:minHeight:maxHeight:)", `${api("float?")}`, "Sets flexible size limits."],
-    ["padding(_)", `${api("int")} / ${api("State<int>")} / ${api("RectOffset")}`, "Adds padding on all sides, binds padding to State, or uses a Unity RectOffset."],
-    ["padding(_:_:)", `${api("Edge")} + ${api("int")}`, "Adds padding to selected edges. <code>Edge.Horizontal</code> means left and right."],
-    ["padding(top:bottom:left:right:)", `${api("float?")}`, "Sets per-side padding. Omitted sides stay at zero."],
-    ["fixedSize(horizontal:vertical:)", `${api("bool")}`, "Prefers intrinsic content size instead of stretching on selected axes."],
-    ["layoutPriority(_)", `${api("float")}`, "Hints which sibling should receive flexible space first."],
-    ["aspectRatio(_:contentMode:)", `${api("float")} + ${api("AspectRatioContentMode")}`, "Preserves a ratio. <code>Fit</code> contains, <code>Fill</code> covers."]
-  ],
-  visual: [
-    ["background(_)", `${api("Color")} / ${api("State<Color>")}`, "Adds a solid background. Put it after padding to include padding in the fill."],
-    ["background(_)", `${api("UIElement")} / ${api("Action")}`, "Places a view behind the element, such as a Capsule or RoundedRectangle."],
-    ["overlay(_:alignment:)", `${api("UIElement")} / ${api("Action")} + ${api("ZStackAlignment")}`, "Places a view above the element, often for badges or custom borders."],
-    ["foregroundColor(_)", `${api("Color")} / ${api("State<Color>")}`, "Sets foreground color for Text and supported views."],
-    ["tint(_)", `${api("Color")} / ${api("State<Color>")}`, "Sets accent color for controls, template images, and text field carets."],
-    ["opacity(_)", `${api("float")} / ${api("State<float>")}`, "Sets alpha. 0 is transparent, 1 is opaque."],
-    ["cornerRadius(_)", `${api("float")} / ${api("State<float>")}`, "Rounds all corners. Bind to State for animated radius changes."],
-    ["cornerRadius(_:_:_:_:)", `${api("float topLeft, topRight, bottomRight, bottomLeft")}`, "Rounds each corner separately."],
-    ["cornerRadius(_:_:)", `${api("RectCorner")} + ${api("float")}`, "Rounds only selected corners, such as <code>RectCorner.Top</code>."],
-    ["border(_:width:)", `${api("Color")} / ${api("State<Color>")} + ${api("float")}`, "Draws a rectangular border."],
-    ["shadow(color:radius:x:y:)", `${api("Color?")} + ${api("float radius")} + ${api("x/y")}`, "Adds a shadow. x and y are the shadow offset."],
-    ["clipped()", "None", "Clips children to the element rectangle."],
-    ["clipShape(_:cornerRadius:)", `${api("UniftUIClipShape")} + ${api("float")}`, "Clips to Rectangle, RoundedRectangle, Circle, or Capsule."]
-  ],
-  text: [
-    ["font(_)", `${api("TMP_FontAsset")}`, "Sets the TextMesh Pro font asset."],
-    ["fontSize(_)", `${api("float")}`, "Sets text size."],
-    ["bold() / italic()", "None", "Applies bold or italic style. Also works for prompt Text."],
-    ["underline() / strikethrough()", "None", "Applies underline or strikethrough."],
-    ["lineLimit(_)", `${api("int?")}`, "Limits visible lines. Omit or pass null for no limit."],
-    ["multilineTextAlignment(_)", `${api("TextAlignmentOptions")}`, "Sets multiline text alignment, including multiline text fields."]
-  ],
-  transform: [
-    ["offset(x:y:)", `${api("float")} / ${api("State<float>")}`, "Moves the rendered view without changing the surrounding layout."],
-    ["offset(_)", `${api("Vector2")} / ${api("State<Vector2>")}`, "Moves the rendered view by a 2D vector."],
-    ["position(x:y:)", `${api("float")} / ${api("State<float>")}`, "Sets anchored position for free placement."],
-    ["rotationEffect(_)", `${api("float degrees")} / ${api("State<float>")}`, "Rotates around Z in degrees."],
-    ["rotationEffect(x:y:z:)", `${api("float")} / ${api("State<Vector3>")}`, "Sets 3-axis rotation."],
-    ["scaleEffect(_)", `${api("float")} / ${api("State<float>")}`, "Uniform scale. 1 is normal size."],
-    ["scaleEffect(x:y:)", `${api("float")} / ${api("State<float>")}`, "Separate horizontal and vertical scale."]
-  ],
-  behavior: [
-    ["disabled(_)", `${api("bool")} / ${api("State<bool>")}`, "Disables interaction for supported controls."],
-    ["hidden(_)", `${api("bool")}`, "Hides the element and prevents interaction."],
-    ["allowsHitTesting(_)", `${api("bool")} / ${api("State<bool>")}`, "Controls whether the element receives pointer events."],
-    ["onAppear(_)", `${api("Action")} / ${api("Func<Task>")}`, "Runs when the element appears."],
-    ["onChange(_:_:)", `${api("State")} + ${api("Action")}`, "Runs when a State changes."],
-    ["update(_)", `${api("Action")}`, "Runs every frame while the element is alive."],
-    ["animation(_:value:)", `${api("Animation")} + ${api("State")}`, "Animates visual changes up to this modifier when the State changes."]
-  ],
-  input: [
-    ["focused(_)", `${api("State<bool>")}`, "Binds TextField focus to State."],
-    ["onEditingChanged(_)", `${api("Action<bool>")}`, "Receives true when editing begins and false when editing ends."],
-    ["onSubmit(_)", `${api("Action<string>")}`, "Receives the current string when the field submits."],
-    ["selectAllOnFocus(_)", `${api("bool")}`, "Selects all text when focused. Defaults to true."],
-    ["contentMargins(horizontal:vertical:)", `${api("float")} + ${api("float")}`, "Sets horizontal and vertical inner padding."],
-    ["contentMargins(left:right:top:bottom:)", `${api("float")}`, "Sets per-side inner padding."],
-    ["textSelectionColor(_)", `${api("Color")} / ${api("State<Color>")}`, "Sets selected-text highlight color."],
-    ["caretColor(_)", `${api("Color")} / ${api("State<Color>")}`, "Sets caret color."],
-    ["caretWidth(_)", `${api("int")}`, "Sets caret width."],
-    ["caretBlinkRate(_)", `${api("float")}`, "Sets caret blink rate."],
-    ["textContentType(_)", `${api("TMP_InputField.ContentType")}`, "Sets TMP input content type, such as EmailAddress or Password."],
-    ["textInputLimit(_)", `${api("int")}`, "Sets max character count."],
-    ["keyboardType(_)", `${api("TouchScreenKeyboardType")}`, "Sets mobile keyboard type."]
-  ],
-  mediaScroll: [
-    ["resizable(_)", `${api("ImageResizingMode")}`, "Makes an Image resizable using Stretch or Tile."],
-    ["scaledToFit()", "None", "Shows the whole image inside the frame."],
-    ["scaledToFill()", "None", "Fills the frame. Combine with <code>clipped()</code> to hide overflow."],
-    ["renderingMode(_)", `${api("ImageRenderingMode")}`, "Uses Original or Template rendering. Template is useful with tint."],
-    ["pickerStyle(_)", `${api("PickerStyle")}`, "Sets Picker presentation, usually Segmented."],
-    ["scrollIndicators(_:)", `${api("ScrollIndicatorVisibility")} / ${api("UniftUIScrollAxis")}`, "Sets scrollbar visibility and target axes."],
-    ["scrollBounce(_)", `${api("bool")}`, "Enables or disables elastic bounce at the edges."],
-    ["scrollSensitivity(_)", `${api("float")}`, "Sets wheel or gesture sensitivity."],
-    ["scrollMovementType(_)", `${api("ScrollRect.MovementType")}`, "Sets the underlying Unity ScrollRect movement mode."],
-    ["scrollPositionX/Y(_:twoWay:)", `${api("State<float>")} + ${api("bool")}`, "Binds normalized scroll position. With twoWay true, user scrolling writes back to State."]
-  ]
-};
-
-function localizedApiTable(lang, rows) {
-  const headers = lang === "ja" ? ["API", "用途"] : ["API", "Use"];
-  return table(headers, rows.map(([name, description]) => [api(name), escapeHtml(description)]));
-}
-
-function modifierParamTable(lang, rows) {
-  const headers = lang === "ja" ? ["modifier", "引数", "意味"] : ["Modifier", "Parameters", "Meaning"];
-  return table(headers, rows.map(([name, parameters, meaning]) => [api(name), parameters, meaning]));
-}
 
 const docs = {
   ja: {
     chrome: {
       search: "検索",
       toc: "このページ",
-      noResults: "見つかりませんでした。",
+      noResults: "該当するページがありません。",
       docsTitle: "ドキュメント",
       menu: "メニュー",
       theme: "テーマ",
-      themeSystem: "デバイス",
+      themeSystem: "システム",
       themeLight: "ライト",
       themeDark: "ダーク"
     },
@@ -325,36 +118,24 @@ const docs = {
         pages: [
           {
             id: "overview",
-            title: "UniftUIとは",
-            kind: "ガイド",
-            summary: "Unity の Canvas を、SwiftUI に近い書き方で組み立てるためのライブラリです。",
-            keywords: "UniftUI Unity Canvas uGUI SwiftUI Build",
+            title: "UniftUIの全体像",
+            kind: "Guide",
+            summary: "UnityのCanvas UIを、C#だけで宣言的に組み立てるためのライブラリです。まず何を覚えればよいか、どこまでできるかを掴みます。",
+            keywords: "overview start beginner Unity Canvas uGUI State modifier",
             sections: [
               {
                 title: "何ができるか",
                 body: `
-                  <p>UniftUI は、C# のコードで UI の見た目と状態をまとめて書くための小さなフレームワークです。Unity の uGUI と TextMesh Pro を使って、実際の <code>GameObject</code> と <code>RectTransform</code> を作ります。</p>
-                  <div class="callout"><p>最初は <code>UniftView</code> を継承して、<code>VStack</code> の中に <code>Text</code> や <code>Button</code> を置くところから始めれば大丈夫です。</p></div>
+                  <p>UniftUIは、<code>Text</code>、<code>Button</code>、<code>VStack</code> などの要素をC#で組み合わせ、UnityのuGUIオブジェクトを生成します。値の変化は <code>State&lt;T&gt;</code> で扱い、見た目やレイアウトは modifier をチェーンして指定します。</p>
+                  ${cards([
+                    { kicker: "1", title: "Factory", body: "Text、Button、VStack のような関数でUI要素を作ります。", href: "#/api-index" },
+                    { kicker: "2", title: "State", body: "変わる値を State<T> に入れると、UIが追従します。", href: "#/state" },
+                    { kicker: "3", title: "Modifier", body: "padding、background、fontSize などで見た目を積み重ねます。", href: "#/modifiers" }
+                  ])}
                 `
               },
               {
-                title: "3つの基本",
-                body: `
-                  <ul>
-                    <li><strong>Factory</strong>: <code>Text</code>、<code>Button</code>、<code>VStack</code> などで部品を作ります。</li>
-                    <li><strong>State</strong>: 変わる値は <code>State&lt;T&gt;</code> に入れます。</li>
-                    <li><strong>Modifier</strong>: <code>.padding()</code>、<code>.background()</code>、<code>.fontSize()</code> のように後ろへつなげて見た目を変えます。</li>
-                  </ul>
-                  ${code(`
-Text("Save")
-    .fontSize(16)
-    .padding(12)
-    .background(Color.white)
-    .cornerRadius(8);`)}
-                `
-              },
-              {
-                title: "最小の例",
+                title: "最小の実用例",
                 body: code(`
 using UniftUI;
 using UnityEngine;
@@ -373,9 +154,9 @@ public sealed class CounterView : UniftView
 
             Button("Increment", () => count.Value++)
                 .padding(12)
-                .background(new Color(0.2f, 0.45f, 0.95f))
+                .background(new Color(0.15f, 0.38f, 0.9f))
                 .foregroundColor(Color.white)
-                .cornerRadius(12);
+                .cornerRadius(10);
         }, spacing: 12f)
         .padding(24)
         .Build(GetComponent<Canvas>());
@@ -384,13 +165,22 @@ public sealed class CounterView : UniftView
               },
               {
                 title: "読む順番",
+                body: steps([
+                  { title: "セットアップ", body: "Canvasに表示するところまでを確認します。" },
+                  { title: "State", body: "値が変わるUIの作り方を覚えます。" },
+                  { title: "Layout", body: "Stack、Spacer、frame、paddingで画面を組みます。" },
+                  { title: "Controls", body: "Button、TextField、PickerなどをStateに接続します。" },
+                  { title: "Reference", body: "迷ったときはAPI一覧とmodifier引数表を引きます。" }
+                ])
+              },
+              {
+                title: "向いている用途",
                 body: `
-                  <div class="steps">
-                    <div class="step"><strong>インストールと準備</strong><br>Canvas に <code>UniftView</code> を付けるところまで確認します。</div>
-                    <div class="step"><strong>State</strong><br>値が変わったら UI が変わる仕組みを覚えます。</div>
-                    <div class="step"><strong>レイアウト</strong><br><code>VStack</code>、<code>HStack</code>、<code>Spacer</code>、<code>frame</code> を使います。</div>
-                    <div class="step"><strong>コントロールと入力</strong><br><code>Button</code>、<code>TextField</code>、<code>Picker</code> などを追加します。</div>
-                  </div>
+                  ${cards([
+                    { kicker: "UI", title: "ゲーム内メニュー", body: "設定、ステータス、インベントリ、デバッグUIのようなCanvas UI。" },
+                    { kicker: "TOOLS", title: "社内/開発用ツール", body: "Unity上で動く操作パネル、パラメータ編集、プレビュー画面。" },
+                    { kicker: "FAST", title: "プロトタイピング", body: "Prefabを作り込む前に、C#で画面構造を素早く試せます。" }
+                  ])}
                 `
               }
             ],
@@ -398,186 +188,182 @@ public sealed class CounterView : UniftView
           },
           {
             id: "setup",
-            title: "インストールと準備",
-            kind: "ガイド",
-            summary: "Package Manager で追加し、Canvas にビューを表示するまでの準備です。",
-            keywords: "install Package Manager Canvas TMP TextMeshPro Build README",
+            title: "インストールと表示",
+            kind: "Guide",
+            summary: "Package Managerで導入し、Canvasに最初のViewを表示します。",
+            keywords: "install setup Package Manager Canvas Build TMP font",
             sections: [
               {
-                title: "インストール",
+                title: "Package Manager",
                 body: `
-                  <p>Unity Package Manager の <strong>Add package from git URL</strong> に以下を入れます。</p>
+                  <p>UnityのPackage Managerで <strong>Add package from git URL</strong> を選び、次を入力します。</p>
                   ${code("https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI")}
-                  <p>タグを指定する場合は、末尾に <code>#v0.1.0</code> のように付けます。</p>
+                  ${callout("タグを固定したい場合は末尾に <code>#v0.1.0</code> のように付けます。")}
                 `
               },
               {
-                title: "シーンの準備",
-                body: `
-                  <div class="steps">
-                    <div class="step">シーンに <strong>Canvas</strong> を置きます。</div>
-                    <div class="step">Canvas と同じ GameObject に、<code>UniftView</code> を継承したスクリプトを付けます。</div>
-                    <div class="step"><code>Start()</code> の最後で <code>.Build(GetComponent&lt;Canvas&gt;())</code> を呼びます。</div>
-                  </div>
-                `
+                title: "Sceneの準備",
+                body: steps([
+                  { title: "Canvasを作る", body: "GameObjectにCanvasを追加します。" },
+                  { title: "UniftViewを継承する", body: "Canvasと同じGameObjectにスクリプトを付けます。" },
+                  { title: "Buildする", body: "<code>.Build(GetComponent&lt;Canvas&gt;())</code> でUIを生成します。" }
+                ])
+              },
+              {
+                title: "テンプレート",
+                body: code(`
+using UniftUI;
+using UnityEngine;
+
+public sealed class MainMenuView : UniftView
+{
+    private void Start()
+    {
+        VStack(() =>
+        {
+            Text("Main Menu").fontSize(32).bold();
+            Button("Start", StartGame);
+            Button("Options", OpenOptions);
+        }, spacing: 12f)
+        .frame(infiniteWidth: true, infiniteHeight: true)
+        .Build(GetComponent<Canvas>());
+    }
+}`)
               },
               {
                 title: "表示されないとき",
                 body: `
                   <ul>
-                    <li>スクリプトが Canvas と同じ GameObject に付いているか確認します。</li>
-                    <li>Console に例外が出ていないか確認します。</li>
-                    <li>TextMesh Pro のフォントが必要な場合は、<code>UIContext.SetDefaultFont(...)</code> を使います。</li>
+                    <li>スクリプトがCanvasと同じGameObjectに付いているか確認します。</li>
+                    <li><code>Build</code> が呼ばれているか確認します。</li>
+                    <li>Consoleに例外が出ていないか確認します。</li>
+                    <li>文字が出ない場合はTextMesh Proのフォント設定を確認します。</li>
                   </ul>
                 `
-              },
-              {
-                title: "デフォルトフォントを設定する",
-                body: `
-                  <p>プロジェクトで同じ TMP フォントを使うなら、ビューを作る前に一度設定します。</p>
-                  ${code(`
-private TMP_FontAsset font;
-
-private void Start()
-{
-    font = Resources.Load<TMP_FontAsset>("Fonts/NotoSansJP-Medium SDF");
-    UIContext.SetDefaultFont(font);
-
-    VStack(() =>
-    {
-        Text("こんにちは");
-    })
-    .Build(GetComponent<Canvas>());
-}`)}
-                `
               }
             ],
-            related: ["overview", "text", "api-index"]
-          },
-          {
-            id: "state",
-            title: "StateでUIを更新する",
-            kind: "基本",
-            summary: "値を <code>State&lt;T&gt;</code> に入れると、値の変更にあわせて UI を更新できます。",
-            declaration: "public class State<T> : State",
-            keywords: "State Value reactive onChange BatchUpdate",
-            sections: [
-              {
-                title: "Stateの考え方",
-                body: `
-                  <p><code>State&lt;T&gt;</code> は UI に見せたい値を入れる箱です。<code>Value</code> を変えると、その State を使っている表示や modifier が更新されます。</p>
-                  ${code(`
-private readonly State<int> count = new State<int>(0);
-
-Text(() => $"Count: {count.Value}", new State[] { count });
-Button("+1", () => count.Value++);`)}
-                `
-              },
-              {
-                title: "入力とState",
-                body: code(`
-private readonly State<string> name = new State<string>("");
-
-TextField("Name", text: name, prompt: Text("Required"));
-Text(() => $"Hello, {name.Value}", new State[] { name });`)
-              },
-              {
-                title: "変更を受け取る",
-                body: `
-                  <p>値の変更に合わせて処理したいときは <code>.onChange(...)</code> を使います。表示の更新だけなら、依存する <code>State</code> を <code>Text</code> へ渡すだけで十分です。</p>
-                  ${code(`
-Text(() => $"Volume: {volume.Value}", new State[] { volume })
-    .onChange(volume, value =>
-    {
-        Debug.Log($"volume changed: {value}");
-    });`)}
-                `
-              },
-              {
-                title: "変更をまとめる",
-                body: code(`
-using (State.BatchUpdate())
-{
-    firstName.Value = "Ada";
-    lastName.Value = "Lovelace";
-}`)
-              }
-            ],
-            related: ["text-input", "animation", "api-index"]
+            related: ["overview", "state", "text"]
           }
         ]
       },
       {
-        title: "UIを作る",
+        title: "基本",
         pages: [
+          {
+            id: "state",
+            title: "Stateと更新",
+            kind: "Basics",
+            summary: "変化する値をStateに置き、Text、入力、コントロール、アニメーションへ接続します。",
+            declaration: "public class State<T> : State",
+            keywords: "State Value reactive onChange BatchUpdate binding update",
+            sections: [
+              {
+                title: "Stateの考え方",
+                body: `
+                  <p><code>State&lt;T&gt;</code> は監視できる値です。<code>Value</code> を変更すると、依存しているUIが更新されます。</p>
+                  ${code(`
+private readonly State<int> score = new State<int>(0);
+
+Text(() => $"Score: {score.Value}", new State[] { score });
+Button("+10", () => score.Value += 10);`)}
+                `
+              },
+              {
+                title: "TextFieldと双方向更新",
+                body: code(`
+private readonly State<string> playerName = new State<string>("");
+
+TextField("Name", text: playerName, prompt: Text("Player name"));
+Text(() => $"Hello, {playerName.Value}", new State[] { playerName });`)
+              },
+              {
+                title: "変更時に処理する",
+                body: code(`
+Slider(volume, 0, 100)
+    .onChange(volume, value =>
+    {
+        AudioListener.volume = value / 100f;
+    });`)
+              },
+              {
+                title: "まとめて変更する",
+                body: code(`
+using (State.BatchUpdate())
+{
+    hp.Value = maxHp.Value;
+    mana.Value = maxMana.Value;
+    selectedTab.Value = 0;
+}`)
+              }
+            ],
+            related: ["controls", "text-input", "animation"]
+          },
           {
             id: "layout",
             title: "レイアウト",
-            kind: "基本",
-            summary: "画面の並びは <code>VStack</code>、<code>HStack</code>、<code>ZStack</code>、<code>Spacer</code> から始めます。",
-            keywords: "VStack HStack ZStack Spacer frame padding Grid LazyVStack LazyHStack GeometryReader ForEach layoutPriority",
+            kind: "Basics",
+            summary: "VStack、HStack、ZStack、Spacer、frame、padding、Gridで画面を組みます。",
+            keywords: "layout VStack HStack ZStack Spacer frame padding fixedSize Grid LazyVStack GeometryReader",
             sections: [
               {
-                title: "縦・横・重ねる",
+                title: "Stackで並べる",
                 body: code(`
 VStack(() =>
 {
-    Text("Title").fontSize(24).bold();
+    Text("Profile").fontSize(24).bold();
 
     HStack(() =>
     {
-        Text("Left");
+        Text("Level");
         Spacer();
-        Text("Right");
+        Text("12").bold();
     });
 }, spacing: 12f, alignment: VStackAlignment.Leading);`)
               },
               {
-                title: "よくある1行レイアウト",
-                body: `
-                  <p><code>Spacer()</code> は、左右の要素を離したいときに使います。設定画面やリスト行でよく使う形です。</p>
-                  ${code(`
-HStack(() =>
-{
-    VStack(() =>
-    {
-        Text("Notifications").bold();
-        Text("Receive product updates")
-            .fontSize(12)
-            .foregroundColor(Color.gray);
-    }, spacing: 2f, alignment: VStackAlignment.Leading);
-
-    Spacer();
-
-    Toggle("On", notificationsEnabled);
-}, spacing: 12f, alignment: HStackAlignment.Center)
-.padding(12)
-.background(Color.white)
-.cornerRadius(10);`)}
-                `
-              },
-              {
-                title: "サイズと余白",
+                title: "横いっぱいのカード",
                 body: code(`
-Text("Card")
+Text("Quest accepted")
     .padding(16)
     .frame(infiniteWidth: true)
-    .background(Color.white)
-    .cornerRadius(10);`)
+    .background(new Color(0.95f, 0.97f, 1f))
+    .cornerRadius(12);`)
               },
               {
-                title: "繰り返しとグリッド",
+                title: "リストと繰り返し",
                 body: code(`
-LazyVStack(() =>
+ScrollView(() =>
 {
-    ForEach(0, 20, i => Text($"Row {i}"));
-});
-
+    LazyVStack(() =>
+    {
+        ForEach(0, quests.Count, i =>
+        {
+            Text(quests[i].Title)
+                .padding(12)
+                .frame(infiniteWidth: true);
+        });
+    }, spacing: 4f);
+});`)
+              },
+              {
+                title: "Grid",
+                body: code(`
 Grid(() =>
 {
-    GridRow(() => { Text("Name"); Text("Value"); });
-    GridRow(() => { Text("HP"); Text("100"); });
-});`)
+    GridRow(() => { Text("Stat").bold(); Text("Value").bold(); });
+    GridRow(() => { Text("HP"); Text("120"); });
+    GridRow(() => { Text("Attack"); Text("34"); });
+}, horizontalSpacing: 16f, verticalSpacing: 8f);`)
+              },
+              {
+                title: "GeometryReader",
+                body: code(`
+GeometryReader(proxy =>
+{
+    return Text($"Size: {proxy.Size.x:0} x {proxy.Size.y:0}")
+        .frame(infiniteWidth: true, infiniteHeight: true);
+})
+.frame(infiniteWidth: true, height: 80);`)
               }
             ],
             related: ["modifiers", "scroll-tabs", "api-index"]
@@ -585,267 +371,175 @@ Grid(() =>
           {
             id: "text",
             title: "Textとフォント",
-            kind: "基本",
-            summary: "文字の表示、フォント、サイズ、太字、斜体、行数を設定します。",
+            kind: "Basics",
+            summary: "固定文字列、State、計算文字列を表示し、TextMesh Proのフォントや行数を指定します。",
             declaration: "Text(string text)\nText(State<string> text)\nText(Func<string> content, State[] dependencyStates)",
-            keywords: "Text font fontSize bold italic underline strikethrough foregroundColor lineLimit multilineTextAlignment TMP_FontAsset",
+            keywords: "Text font fontSize TMP_FontAsset bold italic lineLimit multilineTextAlignment foregroundColor",
             sections: [
               {
-                title: "固定文字とStateの文字",
+                title: "3つのText",
                 body: code(`
-Text("Hello");
-
+Text("Static");
 Text(titleState);
-
-Text(() => $"Score: {score.Value}", new State[] { score });`)
+Text(() => $"HP: {hp.Value}", new State[] { hp });`)
               },
               {
-                title: "フォントと装飾",
+                title: "見た目",
                 body: code(`
-Text("Title")
-    .font(myTmpFontAsset)
-    .fontSize(24)
+Text("Warning")
+    .fontSize(20)
     .bold()
-    .italic()
-    .foregroundColor(Color.white);`)
+    .foregroundColor(new Color(0.9f, 0.18f, 0.12f));`)
               },
               {
-                title: "複数行",
+                title: "フォント",
                 body: code(`
-Text("Long text that wraps into two lines.")
+UIContext.SetDefaultFont(defaultFont);
+
+Text("Custom font")
+    .font(titleFont)
+    .fontSize(28);`)
+              },
+              {
+                title: "折り返し",
+                body: code(`
+Text("Long description that can wrap onto multiple lines.")
     .lineLimit(2)
-    .multilineTextAlignment(TextAlignmentOptions.TopLeft);`)
+    .multilineTextAlignment(TextAlignmentOptions.TopLeft)
+    .frame(width: 240);`)
               }
             ],
             related: ["text-input", "modifiers", "api-index"]
           },
           {
             id: "controls",
-            title: "ボタンとコントロール",
-            kind: "基本",
-            summary: "クリック、オンオフ、スライダー、選択、進捗表示を作ります。",
-            keywords: "Button Toggle Slider Stepper ProgressView Picker pickerStyle buttonStyle",
+            title: "ButtonとControls",
+            kind: "Basics",
+            summary: "操作できるUIを作り、Stateに接続します。",
+            keywords: "Button Toggle Slider Stepper ProgressView Picker buttonStyle pickerStyle controls",
             sections: [
               {
                 title: "Button",
                 body: code(`
 Button("Save", Save)
-    .buttonStyle(ButtonStyles.Filled(
-        backgroundColor: accent,
-        foregroundColor: Color.white,
-        cornerRadius: 10));`)
+    .frame(infiniteWidth: true, height: 44)
+    .buttonStyle(ButtonStyles.Filled(accent, Color.white, 10));`)
               },
               {
-                title: "中身を自由に作るButton",
-                body: `
-                  <p>文字だけでなく、<code>HStack</code> や <code>Image</code> を Button の中身にできます。</p>
-                  ${code(`
+                title: "カスタムラベル",
+                body: code(`
 Button(
     HStack(() =>
     {
         Image(saveIcon).frame(width: 18, height: 18);
         Text("Save").bold();
     }, spacing: 8f),
-    Save)
-    .padding(10)
-    .background(accent)
-    .foregroundColor(Color.white)
-    .cornerRadius(10);`)}
-                `
+    Save);`)
               },
               {
-                title: "Stateにバインドするコントロール",
+                title: "Stateに紐づくControl",
                 body: code(`
 Toggle("Enabled", isEnabled);
-
-Slider(volume, 0, 100)
-    .frame(infiniteWidth: true, height: 38);
-
-Stepper("Quantity", quantity, 0, 8);
-
-ProgressView(progress, total: 1)
-    .tint(accent);`)
+Slider(volume, 0, 100);
+Stepper("Quantity", quantity, 0, 9);
+ProgressView(downloadProgress, total: 1);`)
               },
               {
                 title: "Picker",
                 body: code(`
-Picker(selection, "Small", "Medium", "Large")
+Picker(difficulty, "Easy", "Normal", "Hard")
     .pickerStyle(PickerStyle.Segmented)
     .tint(accent);`)
               }
             ],
-            related: ["state", "modifiers", "api-index"]
+            related: ["state", "text-input", "styles"]
           },
           {
             id: "text-input",
-            title: "TextFieldと入力",
-            kind: "基本",
-            summary: "一行入力、複数行入力、パスワード、placeholder、キャレット、選択色を設定します。",
+            title: "Text入力",
+            kind: "Basics",
+            summary: "TextField、SecureField、TextEditor、フォーカス、キャレット、入力制限を扱います。",
             declaration: "TextField(\"Title\", text: state, prompt: Text(\"Placeholder\"))\nSecureField(\"Password\", text: state, prompt: Text(\"Password\"))\nTextEditor(state)",
-            keywords: "TextField SecureField TextEditor prompt placeholder contentMargins focused selectAllOnFocus onSubmit onEditingChanged caretColor caretWidth caretBlinkRate textSelectionColor textContentType textInputLimit keyboardType textFieldStyle",
+            keywords: "TextField SecureField TextEditor focused prompt contentMargins caretColor onSubmit keyboardType textInputLimit",
             sections: [
               {
-                title: "基本のTextField",
+                title: "基本",
                 body: code(`
-TextField(
-    "Name",
-    text: name,
-    prompt: Text("Required").italic().foregroundColor(Color.gray))
+TextField("Email", text: email, prompt: Text("email@example.com"))
     .lineLimit(1)
     .contentMargins(horizontal: 12, vertical: 8)
-    .textFieldStyle(TextFieldStyles.Chrome(
-        backgroundColor: Color.white,
-        tintColor: accent,
-        cornerRadius: 8));`)
+    .textContentType(TMP_InputField.ContentType.EmailAddress)
+    .keyboardType(TouchScreenKeyboardType.EmailAddress);`)
               },
               {
-                title: "placeholderを装飾する",
-                body: `
-                  <p>placeholder は <code>prompt: Text(...)</code> に渡します。斜体や色は通常の <code>Text</code> と同じ modifier で指定できます。</p>
-                  ${code(`
+                title: "promptを装飾する",
+                body: code(`
 TextField(
     "Nickname",
     text: nickname,
     prompt: Text("Optional")
         .italic()
-        .foregroundColor(new Color(0.45f, 0.45f, 0.5f)));`)}
-                `
+        .foregroundColor(Color.gray));`)
               },
               {
-                title: "複数行",
+                title: "パスワードと複数行",
                 body: code(`
+SecureField("Password", text: password, prompt: Text("Password"));
+
 TextField("Notes", text: notes, axis: Axis.Vertical, prompt: Text("Notes"))
-    .lineLimit(3)
-    .multilineTextAlignment(TextAlignmentOptions.TopLeft)
-    .frame(infiniteWidth: true, height: 82);
+    .lineLimit(4)
+    .frame(infiniteWidth: true, height: 100);
 
 TextEditor(notes)
-    .frame(infiniteWidth: true, height: 120);`)
+    .frame(infiniteWidth: true, height: 140);`)
               },
               {
-                title: "パスワード入力",
+                title: "フォーカスと送信",
                 body: code(`
-SecureField(
-    "Password",
-    text: password,
-    prompt: Text("Password").foregroundColor(Color.gray))
-    .lineLimit(1)
-    .contentMargins(horizontal: 12, vertical: 8)
-    .textFieldStyle(TextFieldStyles.Chrome(
-        backgroundColor: Color.white,
-        tintColor: accent,
-        cornerRadius: 8));`)
-              },
-              {
-                title: "入力の細かい制御",
-                body: code(`
-TextField("Email", text: email, prompt: Text("email@example.com"))
-    .textContentType(TMP_InputField.ContentType.EmailAddress)
-    .keyboardType(TouchScreenKeyboardType.EmailAddress)
-    .textInputLimit(40)
-    .focused(isFocused)
+TextField("Search", text: query, prompt: Text("Search"))
+    .focused(searchFocused)
     .selectAllOnFocus()
-    .textSelectionColor(new Color(0f, 0.4f, 0.85f, 0.25f))
+    .onSubmit(value => Search(value))
+    .onEditingChanged(isEditing => Debug.Log(isEditing));`)
+              },
+              {
+                title: "キャレットと選択色",
+                body: code(`
+TextField("Name", text: name)
     .caretColor(accent)
     .caretWidth(2)
-    .caretBlinkRate(0.85f)
-    .onSubmit(value => Debug.Log(value));`)
-              },
-              {
-                title: "TextFieldの見た目をまとめる",
-                body: `
-                  <p>同じ見た目を何度も使うときは <code>TextFieldStyles.Chrome(...)</code> に背景、フォーカス色、余白、角丸、キャレットなどをまとめます。</p>
-                  ${code(`
-var fieldStyle = TextFieldStyles.Chrome(
-    backgroundColor: Color.white,
-    focusedBackgroundColor: new Color(0.94f, 0.97f, 1f),
-    textColor: Color.black,
-    tintColor: accent,
-    contentMargins: new Vector4(12, 12, 8, 8),
-    cornerRadius: 8);
-
-TextField("First name", text: firstName).textFieldStyle(fieldStyle);
-TextField("Last name", text: lastName).textFieldStyle(fieldStyle);`)}
-                `
+    .caretBlinkRate(0.8f)
+    .textSelectionColor(new Color(0f, 0.45f, 1f, 0.25f));`)
               }
             ],
-            related: ["state", "text", "api-index"]
-          },
-          {
-            id: "image-shape",
-            title: "画像と図形",
-            kind: "基本",
-            summary: "Sprite、単純な図形、区切り線、ラベルを表示します。",
-            keywords: "Image resizable scaledToFit scaledToFill renderingMode Label Divider Rectangle Circle Capsule RoundedRectangle clipped clipShape",
-            sections: [
-              {
-                title: "Image",
-                body: code(`
-Image(icon)
-    .resizable()
-    .scaledToFit()
-    .renderingMode(ImageRenderingMode.Template)
-    .tint(Color.white)
-    .frame(width: 32, height: 32);`)
-              },
-              {
-                title: "図形",
-                body: code(`
-RoundedRectangle(12, new Color(0.93f, 0.96f, 1f))
-    .frame(width: 180, height: 44);
-
-Circle(Color.red)
-    .frame(width: 24, height: 24);`)
-              },
-              {
-                title: "LabelとDivider",
-                body: code(`
-Label("Status", Circle(Color.green).frame(width: 10, height: 10));
-
-Divider(new Color(0.82f, 0.84f, 0.88f), thickness: 1);`)
-              }
-            ],
-            related: ["modifiers", "api-index"]
+            related: ["styles", "state", "modifier-parameters"]
           }
         ]
       },
       {
-        title: "仕上げる",
+        title: "応用",
         pages: [
           {
             id: "modifiers",
-            title: "見た目を変えるmodifier",
-            kind: "基本",
-            summary: "余白、背景、色、角丸、影、重ね合わせ、無効化などをチェーンで指定します。",
-            keywords: "modifier frame padding background overlay foregroundColor tint opacity cornerRadius border shadow clipped clipShape aspectRatio fixedSize layoutPriority disabled hidden allowsHitTesting",
+            title: "Modifier設計",
+            kind: "Guide",
+            summary: "modifierの順番、背景、重ね合わせ、角丸、切り抜き、操作状態を理解します。",
+            keywords: "modifier order background overlay border shadow cornerRadius clipped clipShape opacity tint disabled",
             sections: [
               {
-                title: "modifierは順番が大事",
+                title: "順番で結果が変わる",
                 body: `
-                  <p>modifier は上から順番に適用されます。たとえば、<code>padding</code> のあとに <code>background</code> を置くと、余白込みで背景が付きます。</p>
+                  <p>modifierは上から順に適用されます。たとえば <code>padding</code> の後に <code>background</code> を置くと、余白を含んだ背景になります。</p>
                   ${code(`
-Text("Card")
-    .padding(16)
-    .background(Color.white)
-    .cornerRadius(10)
-    .shadow(new Color(0, 0, 0, 0.18f), radius: 4, x: 0, y: -2);`)}
-                `
-              },
-              {
-                title: "背景にViewを置く",
-                body: `
-                  <p>単色だけなら <code>.background(Color)</code>、図形を使いたいときは <code>.background(...)</code> に View を渡します。</p>
-                  ${code(`
-Text("Premium")
-    .bold()
+Text("Badge")
     .padding(Edge.Horizontal, 12)
     .padding(Edge.Vertical, 6)
-    .background(Capsule(new Color(1f, 0.9f, 0.45f)))
-    .foregroundColor(new Color(0.2f, 0.14f, 0.02f));`)}
+    .background(Capsule(new Color(1f, 0.88f, 0.35f)))
+    .foregroundColor(new Color(0.2f, 0.12f, 0f));`)}
                 `
               },
               {
-                title: "重ねる",
+                title: "backgroundとoverlay",
                 body: code(`
 Text("Inbox")
     .padding(12)
@@ -855,22 +549,82 @@ Text("Inbox")
         ZStackAlignment.TopTrailing);`)
               },
               {
-                title: "表示と操作",
+                title: "切り抜き",
+                body: code(`
+Image(avatar)
+    .resizable()
+    .scaledToFill()
+    .frame(width: 64, height: 64)
+    .clipShape(UniftUIClipShape.Circle);`)
+              },
+              {
+                title: "操作状態",
                 body: code(`
 Button("Submit", Submit)
     .disabled(isSubmitting)
     .allowsHitTesting(canTap)
-    .hidden(shouldHide);`)
+    .opacity(isSubmitting.Value ? 0.6f : 1f);`)
               }
             ],
-            related: ["layout", "modifier-parameters", "recipes", "animation", "api-index"]
+            related: ["modifier-parameters", "styles", "animation"]
+          },
+          {
+            id: "styles",
+            title: "Styleと再利用",
+            kind: "Guide",
+            summary: "ButtonStyles、TextFieldStyles、独自の組み合わせで画面全体の一貫性を作ります。",
+            keywords: "ButtonStyles TextFieldStyles style reuse theme tint foregroundColor",
+            sections: [
+              {
+                title: "ButtonStyles",
+                body: code(`
+Button("Continue", Continue)
+    .buttonStyle(ButtonStyles.Filled(
+        backgroundColor: accent,
+        foregroundColor: Color.white,
+        cornerRadius: 10));
+
+Button("Cancel", Cancel)
+    .buttonStyle(ButtonStyles.Plain(accent));`)
+              },
+              {
+                title: "TextFieldStyles",
+                body: code(`
+var fieldStyle = TextFieldStyles.Chrome(
+    backgroundColor: Color.white,
+    focusedBackgroundColor: new Color(0.94f, 0.97f, 1f),
+    textColor: Color.black,
+    tintColor: accent,
+    contentMargins: new Vector4(12, 12, 8, 8),
+    cornerRadius: 8);
+
+TextField("First name", text: firstName).textFieldStyle(fieldStyle);
+TextField("Last name", text: lastName).textFieldStyle(fieldStyle);`)
+              },
+              {
+                title: "Theme変数を持つ",
+                body: code(`
+private readonly Color accent = new Color(0.16f, 0.38f, 0.9f);
+private readonly Color panel = new Color(0.96f, 0.97f, 0.99f);
+
+VStack(() =>
+{
+    Text("Settings").bold();
+    Toggle("Sound", soundEnabled).tint(accent);
+})
+.padding(16)
+.background(panel)
+.cornerRadius(12);`)
+              }
+            ],
+            related: ["controls", "text-input", "recipes"]
           },
           {
             id: "animation",
-            title: "アニメーション",
-            kind: "基本",
-            summary: "<code>State</code> の変化にあわせて、サイズ、色、角丸、透明度、移動、回転、拡大を動かします。",
-            keywords: "Animation WithAnimation animation easeInOut spring bouncy delay speed repeatCount repeatForever offset position rotationEffect scaleEffect onAppear onChange update",
+            title: "Animation",
+            kind: "Guide",
+            summary: "State変化に合わせてサイズ、色、角丸、透明度、移動、回転、拡大を動かします。",
+            keywords: "Animation WithAnimation animation spring easeInOut opacity offset scaleEffect rotationEffect cornerRadius",
             sections: [
               {
                 title: "WithAnimation",
@@ -881,11 +635,11 @@ WithAnimation(Animation.easeInOut(0.25f), () =>
 });`)
               },
               {
-                title: "特定のStateに反応する",
+                title: "特定のStateに紐づける",
                 body: code(`
-RoundedRectangle(radius.Value)
-    .frame(width: width, height: height)
-    .animation(Animation.easeInOut(0.25f), radius);`)
+Text("Tap")
+    .scaleEffect(isPressed.Value ? 0.96f : 1f)
+    .animation(Animation.easeOut(0.12f), isPressed);`)
               },
               {
                 title: "よく使うAnimation",
@@ -897,49 +651,130 @@ Animation.easeInOut(0.25f)
 Animation.spring()
 Animation.bouncy(0.5f)
 Animation.easeInOut(0.25f).delay(0.1f).repeatCount(2)`)
+              },
+              {
+                title: "動かしやすい値",
+                body: referenceTable("ja", [
+                  ["opacity", "透明度", "フェードイン/アウト"],
+                  ["offset / position", "移動", "開閉、通知、ドラッグ風の動き"],
+                  ["frame", "サイズ", "展開/折りたたみ"],
+                  ["cornerRadius", "角丸", "カードから丸いピルへの変化"],
+                  ["foregroundColor / background", "色", "状態変化のフィードバック"],
+                  ["rotationEffect / scaleEffect", "変形", "ボタン押下、注目演出"]
+                ])
               }
             ],
-            related: ["state", "modifiers", "api-index"]
+            related: ["state", "modifiers", "recipes"]
           },
           {
             id: "scroll-tabs",
             title: "ScrollViewとTabView",
-            kind: "基本",
-            summary: "スクロールできる領域と、タブで切り替える画面を作ります。",
-            keywords: "ScrollView scrollIndicators scrollBounce scrollSensitivity scrollMovementType scrollPositionX scrollPositionY TabView Tab",
+            kind: "Guide",
+            summary: "長いコンテンツ、横スクロール、スクロール位置同期、タブ切り替えを扱います。",
+            keywords: "ScrollView TabView scrollIndicators scrollPositionX scrollPositionY Tab LazyVStack",
             sections: [
               {
-                title: "ScrollView",
+                title: "縦スクロール",
                 body: code(`
 ScrollView(() =>
 {
     LazyVStack(() =>
     {
-        ForEach(0, 50, i => Text($"Row {i}"));
+        ForEach(0, 50, i => Text($"Row {i}").padding(10));
     });
+}, horizontal: false, vertical: true)
+.scrollIndicators(ScrollIndicatorVisibility.Visible, UniftUIScrollAxis.Vertical);`)
+              },
+              {
+                title: "スクロール位置をStateへ",
+                body: code(`
+private readonly State<float> scrollY = new State<float>(1f);
+
+ScrollView(() =>
+{
+    LazyVStack(() => { /* rows */ });
 })
-.scrollIndicators(ScrollIndicatorVisibility.Visible, UniftUIScrollAxis.Vertical)
-.scrollBounce(true)
 .scrollPositionY(scrollY, twoWay: true);`)
               },
               {
                 title: "TabView",
                 body: code(`
+private readonly State<int> selectedTab = new State<int>(0);
+
 TabView(() =>
 {
-    Tab("Home", () => Text("Home"));
-    Tab("Settings", () => Text("Settings"));
-}, selectedTab);`)
+    Tab("Home", () => HomePage());
+    Tab("Settings", () => SettingsPage());
+}, selectedTab)
+.frame(infiniteWidth: true, infiniteHeight: true);`)
               }
             ],
-            related: ["layout", "api-index"]
+            related: ["layout", "state", "api-index"]
           },
+          {
+            id: "performance",
+            title: "実装とパフォーマンスの考え方",
+            kind: "Advanced",
+            summary: "大きな画面を作るときのState粒度、再構築範囲、Lazy系、Unity UIとしての注意点をまとめます。",
+            keywords: "performance advanced rebuild LazyVStack State granularity Unity Canvas layout",
+            sections: [
+              {
+                title: "Stateは小さく持つ",
+                body: `
+                  <p>画面全体を1つのStateで更新するより、変わる値ごとにStateを分ける方が影響範囲を読みやすくできます。</p>
+                  ${code(`
+private readonly State<int> hp = new State<int>(100);
+private readonly State<int> gold = new State<int>(0);
+private readonly State<bool> menuOpen = new State<bool>(false);`)}
+                `
+              },
+              {
+                title: "一覧はLazy系を使う",
+                body: code(`
+ScrollView(() =>
+{
+    LazyVStack(() =>
+    {
+        ForEach(0, items.Count, i => ItemRow(items[i]));
+    });
+});`)
+              },
+              {
+                title: "modifierの責務を分ける",
+                body: `
+                  <p>レイアウト、見た目、操作を分けて読むと、意図が追いやすくなります。</p>
+                  ${code(`
+Button("Buy", Buy)
+    .frame(infiniteWidth: true, height: 44)   // layout
+    .buttonStyle(primaryButtonStyle)          // appearance
+    .disabled(!canBuy.Value);                 // behavior`)}
+                `
+              },
+              {
+                title: "Unity UIとしての注意",
+                body: `
+                  <ul>
+                    <li>大量のCanvas更新はUnity側のレイアウト計算にも影響します。</li>
+                    <li>頻繁に変わる値は、必要な要素だけが依存するようにします。</li>
+                    <li>毎フレーム処理は <code>update</code> でできますが、必要な箇所に限定します。</li>
+                    <li>画像の <code>scaledToFill</code> は <code>clipped</code> や <code>clipShape</code> と組み合わせると扱いやすいです。</li>
+                  </ul>
+                `
+              }
+            ],
+            related: ["state", "layout", "api-index"]
+          }
+        ]
+      },
+      {
+        title: "レシピ",
+        pages: [
           {
             id: "recipes",
             title: "よく使うUIパターン",
-            kind: "レシピ",
-            summary: "カード、フォーム、ツールバー、空状態など、実際の画面でよく使う組み合わせです。",
-            keywords: "recipes card form toolbar empty state settings row validation badge",
+            kind: "Recipes",
+            summary: "カード、フォーム、設定行、空状態、ステータスHUDなど、実装に近い形のサンプルです。",
+            keywords: "recipes card form settings row empty state hud badge",
             sections: [
               {
                 title: "カード",
@@ -947,9 +782,7 @@ TabView(() =>
 VStack(() =>
 {
     Text("Storage").bold().fontSize(18);
-    Text("42 GB used")
-        .fontSize(13)
-        .foregroundColor(Color.gray);
+    Text("42 GB used").fontSize(13).foregroundColor(Color.gray);
 
     ProgressView(storageUsed, total: 1)
         .tint(accent)
@@ -961,13 +794,11 @@ VStack(() =>
 .shadow(new Color(0, 0, 0, 0.12f), radius: 4, x: 0, y: -2);`)
               },
               {
-                title: "フォーム",
+                title: "ログインフォーム",
                 body: code(`
 VStack(() =>
 {
     TextField("Email", text: email, prompt: Text("email@example.com"))
-        .textContentType(TMP_InputField.ContentType.EmailAddress)
-        .keyboardType(TouchScreenKeyboardType.EmailAddress)
         .textFieldStyle(fieldStyle);
 
     SecureField("Password", text: password, prompt: Text("Password"))
@@ -979,24 +810,22 @@ VStack(() =>
 }, spacing: 12f, alignment: VStackAlignment.Leading);`)
               },
               {
-                title: "ツールバー",
+                title: "設定行",
                 body: code(`
 HStack(() =>
 {
-    Button("Cancel", Cancel)
-        .buttonStyle(ButtonStyles.Plain(accent));
+    VStack(() =>
+    {
+        Text("Notifications").bold();
+        Text("Receive updates").fontSize(12).foregroundColor(Color.gray);
+    }, spacing: 2f, alignment: VStackAlignment.Leading);
 
     Spacer();
-
-    Text("Edit Profile").bold();
-
-    Spacer();
-
-    Button("Done", Save)
-        .buttonStyle(ButtonStyles.Filled(accent, Color.white, 8));
-}, spacing: 8f, alignment: HStackAlignment.Center)
+    Toggle("On", notifications);
+})
 .padding(12)
-.background(Color.white);`)
+.background(Color.white)
+.cornerRadius(10);`)
               },
               {
                 title: "空状態",
@@ -1019,9 +848,23 @@ VStack(() =>
         .buttonStyle(ButtonStyles.Filled(accent, Color.white, 10));
 }, spacing: 12f)
 .frame(infiniteWidth: true, infiniteHeight: true);`)
+              },
+              {
+                title: "HUD",
+                body: code(`
+HStack(() =>
+{
+    Text(() => $"HP {hp.Value}", new State[] { hp }).bold();
+    Spacer();
+    Text(() => $"{gold.Value} G", new State[] { gold }).bold();
+})
+.padding(12)
+.background(new Color(0f, 0f, 0f, 0.55f))
+.foregroundColor(Color.white)
+.cornerRadius(10);`)
               }
             ],
-            related: ["layout", "controls", "text-input", "modifiers"]
+            related: ["layout", "controls", "styles", "animation"]
           }
         ]
       },
@@ -1030,72 +873,76 @@ VStack(() =>
         pages: [
           {
             id: "modifier-parameters",
-            title: "modifierの引数",
-            kind: "リファレンス",
-            summary: "各 modifier に渡す引数の型と意味をまとめています。どの値を渡せばよいか迷ったときに見るページです。",
-            keywords: "modifier parameter 引数 frame padding background overlay foregroundColor tint opacity cornerRadius border shadow clipped clipShape font fontSize lineLimit multilineTextAlignment offset position rotationEffect scaleEffect disabled hidden allowsHitTesting onAppear onChange update animation focused contentMargins caretColor textSelectionColor keyboardType scrollIndicators",
+            title: "modifier引数リファレンス",
+            kind: "Reference",
+            summary: "各modifierに渡す型と、使い分けの目安をまとめます。",
+            keywords: "modifier parameters frame padding background overlay tint opacity cornerRadius border shadow input scroll",
             sections: [
               {
-                title: "サイズとレイアウト",
-                body: `
-                  <p><code>frame</code> はサイズ、<code>padding</code> は内側の余白です。横いっぱいにしたいときは <code>frame(infiniteWidth: true)</code> を使います。</p>
-                  ${modifierParamTable("ja", modifierParamsJa.layout)}
-                  ${code(`
-Text("Primary action")
-    .padding(Edge.Horizontal, 16)
-    .padding(Edge.Vertical, 10)
-    .frame(infiniteWidth: true)
-    .background(Color.white);`)}
-                `
+                title: "レイアウト",
+                body: referenceTable("ja", [
+                  ["frame(width:height:)", "固定サイズ", "ボタン、アイコン、カード"],
+                  ["frame(infiniteWidth:infiniteHeight:)", "親の空間を使う", "横いっぱい、画面いっぱい"],
+                  ["frame(minWidth:maxWidth:minHeight:maxHeight:)", "サイズ制約", "伸縮するUIの上限/下限"],
+                  ["padding", "内側余白", "カード、行、ボタン"],
+                  ["fixedSize", "内容サイズを優先", "伸びてほしくないラベル"],
+                  ["layoutPriority", "空間配分の優先度", "同じStack内の競合調整"],
+                  ["aspectRatio", "比率維持", "画像、サムネイル"]
+                ])
               },
               {
-                title: "見た目とレイヤー",
-                body: `
-                  <p><code>background</code> と <code>overlay</code> は、単色だけでなく View も渡せます。modifier の順番で結果が変わります。</p>
-                  ${modifierParamTable("ja", modifierParamsJa.visual)}
-                `
+                title: "見た目",
+                body: referenceTable("ja", [
+                  ["background", "背景色/背景View", "カード、ピル、パネル"],
+                  ["overlay", "前面に重ねる", "バッジ、カスタム枠"],
+                  ["foregroundColor", "前景色", "Textや対応要素"],
+                  ["tint", "アクセント色", "Control、template Image、TextField"],
+                  ["opacity", "透明度", "表示状態、アニメーション"],
+                  ["cornerRadius", "角丸", "カード、入力欄"],
+                  ["border / shadow", "枠線/影", "装飾、階層表現"],
+                  ["clipped / clipShape", "切り抜き", "画像、アバター"]
+                ])
               },
               {
-                title: "Text",
-                body: modifierParamTable("ja", modifierParamsJa.text)
+                title: "Textと入力",
+                body: referenceTable("ja", [
+                  ["font / fontSize", "フォントとサイズ", "見出し、本文"],
+                  ["bold / italic / underline / strikethrough", "文字スタイル", "強調、リンク風表示"],
+                  ["lineLimit", "行数制限", "説明文、入力欄"],
+                  ["multilineTextAlignment", "複数行の揃え", "説明文、TextField"],
+                  ["focused", "フォーカスState", "フォーム制御"],
+                  ["contentMargins", "TextField内側余白", "入力欄の見た目"],
+                  ["caretColor / textSelectionColor", "入力中の色", "ブランド調整"],
+                  ["textContentType / keyboardType", "入力種別", "メール、パスワード、モバイル"]
+                ])
               },
               {
-                title: "移動・回転・拡大",
-                body: `
-                  <p><code>offset</code> は見た目だけをずらし、<code>position</code> は配置位置を指定します。通常のレイアウトでは <code>offset</code> の方が扱いやすいです。</p>
-                  ${modifierParamTable("ja", modifierParamsJa.transform)}
-                `
-              },
-              {
-                title: "操作・ライフサイクル・アニメーション",
-                body: modifierParamTable("ja", modifierParamsJa.behavior)
-              },
-              {
-                title: "TextField",
-                body: `
-                  <p>TextField 系の modifier は、見た目の chrome と入力挙動を分けて考えると扱いやすいです。背景や余白は <code>textFieldStyle</code> / <code>contentMargins</code>、入力ルールは <code>textContentType</code> / <code>keyboardType</code> に寄せます。</p>
-                  ${modifierParamTable("ja", modifierParamsJa.input)}
-                `
-              },
-              {
-                title: "Image / Picker / ScrollView",
-                body: modifierParamTable("ja", modifierParamsJa.mediaScroll)
+                title: "動きと操作",
+                body: referenceTable("ja", [
+                  ["offset", "見た目だけ移動", "バッジ、アニメーション"],
+                  ["position", "配置位置指定", "自由配置"],
+                  ["rotationEffect / scaleEffect", "回転/拡大", "押下フィードバック"],
+                  ["disabled", "操作不可", "ロード中、条件未達"],
+                  ["hidden", "非表示", "一時的な表示制御"],
+                  ["allowsHitTesting", "入力受付制御", "オーバーレイ"],
+                  ["onAppear / onChange / update", "ライフサイクル", "初期化、監視、毎フレーム"],
+                  ["animation", "State変化のアニメーション", "UIフィードバック"]
+                ])
               }
             ],
-            related: ["modifiers", "text-input", "api-index"]
+            related: ["api-index", "modifiers", "text-input"]
           },
           {
             id: "api-index",
             title: "API一覧",
-            kind: "リファレンス",
-            summary: "UI を作るときに使う factory、modifier、style、型をまとめた一覧です。",
-            keywords: "Text Button Image Rectangle Circle Capsule RoundedRectangle Color Divider ProgressView Stepper Picker Label VStack HStack LazyVStack LazyHStack ZStack Grid GridRow GeometryReader Spacer Slider ScrollView Toggle TextField TextEditor SecureField TabView Tab ForEach Build frame background foregroundColor tint padding fixedSize bold italic underline strikethrough lineLimit multilineTextAlignment opacity fontSize font cornerRadius shadow border overlay offset aspectRatio clipped clipShape disabled hidden layoutPriority allowsHitTesting onChange onAppear update animation rotationEffect scaleEffect position buttonStyle textFieldStyle focused onEditingChanged onSubmit selectAllOnFocus textSelectionColor contentMargins textContentType textInputLimit caretColor caretWidth caretBlinkRate keyboardType resizable scaledToFit scaledToFill renderingMode pickerStyle scrollBounce scrollSensitivity scrollMovementType scrollPositionY scrollPositionX scrollIndicators State Animation Axis Edge RectCorner",
+            kind: "Reference",
+            summary: "Factory、modifier、入力、型をコンパクトに引ける一覧です。",
+            keywords: "API index Text Button Image VStack HStack State Animation modifier reference",
             sections: [
-              { title: "Factory", body: localizedApiTable("ja", apiRowsJa.factories) },
-              { title: "Modifier", body: localizedApiTable("ja", apiRowsJa.modifiers) },
-              { title: "TextField modifier", body: localizedApiTable("ja", apiRowsJa.input) },
-              { title: "Image / Picker / Scroll", body: localizedApiTable("ja", apiRowsJa.imageScroll) },
-              { title: "型", body: localizedApiTable("ja", apiRowsJa.types) }
+              { title: "Factory", body: referenceTable("ja", sharedReference.factories.map(row => [row[0], row[1], row[2]])) },
+              { title: "Modifier", body: referenceTable("ja", sharedReference.modifiers.map(row => [row[0], row[1], row[2]])) },
+              { title: "TextField modifier", body: referenceTable("ja", sharedReference.input.map(row => [row[0], row[1], row[2]])) },
+              { title: "型", body: referenceTable("ja", sharedReference.types.map(row => [row[0], row[1], row[2]])) }
             ],
             related: ["modifier-parameters", "overview", "setup"]
           }
@@ -1121,36 +968,24 @@ Text("Primary action")
         pages: [
           {
             id: "overview",
-            title: "What is UniftUI?",
+            title: "UniftUI at a Glance",
             kind: "Guide",
-            summary: "A SwiftUI-style way to build Unity Canvas UI with C#.",
-            keywords: "UniftUI Unity Canvas uGUI SwiftUI Build",
+            summary: "Build Unity Canvas UI from C# with declarative elements, observable State, and chainable modifiers.",
+            keywords: "overview start beginner Unity Canvas uGUI State modifier",
             sections: [
               {
-                title: "What it does",
+                title: "What you build with",
                 body: `
-                  <p>UniftUI lets you describe uGUI screens in C#. You build a tree with views such as <code>Text</code>, <code>Button</code>, and <code>VStack</code>, bind it to <code>State&lt;T&gt;</code>, and UniftUI creates the Unity UI objects.</p>
-                  <div class="callout"><p>Start with a class that inherits <code>UniftView</code>, put views inside a stack, then call <code>.Build(canvas)</code>.</p></div>
+                  <p>UniftUI creates uGUI objects from C# view trees. You compose factories such as <code>Text</code>, <code>Button</code>, and <code>VStack</code>, store changing values in <code>State&lt;T&gt;</code>, and adjust layout or appearance with modifiers.</p>
+                  ${cards([
+                    { kicker: "1", title: "Factories", body: "Create views with Text, Button, VStack, and similar calls.", href: "#/api-index" },
+                    { kicker: "2", title: "State", body: "Put changing values in State<T> so UI can follow them.", href: "#/state" },
+                    { kicker: "3", title: "Modifiers", body: "Chain padding, background, fontSize, tint, and more.", href: "#/modifiers" }
+                  ])}
                 `
               },
               {
-                title: "Three basics",
-                body: `
-                  <ul>
-                    <li><strong>Factories</strong>: Create views with <code>Text</code>, <code>Button</code>, <code>VStack</code>, and similar calls.</li>
-                    <li><strong>State</strong>: Store changing values in <code>State&lt;T&gt;</code>.</li>
-                    <li><strong>Modifiers</strong>: Chain calls such as <code>.padding()</code>, <code>.background()</code>, and <code>.fontSize()</code> to change layout and appearance.</li>
-                  </ul>
-                  ${code(`
-Text("Save")
-    .fontSize(16)
-    .padding(12)
-    .background(Color.white)
-    .cornerRadius(8);`)}
-                `
-              },
-              {
-                title: "Smallest useful example",
+                title: "Small useful example",
                 body: code(`
 using UniftUI;
 using UnityEngine;
@@ -1169,9 +1004,9 @@ public sealed class CounterView : UniftView
 
             Button("Increment", () => count.Value++)
                 .padding(12)
-                .background(new Color(0.2f, 0.45f, 0.95f))
+                .background(new Color(0.15f, 0.38f, 0.9f))
                 .foregroundColor(Color.white)
-                .cornerRadius(12);
+                .cornerRadius(10);
         }, spacing: 12f)
         .padding(24)
         .Build(GetComponent<Canvas>());
@@ -1179,201 +1014,190 @@ public sealed class CounterView : UniftView
 }`)
               },
               {
-                title: "Recommended order",
-                body: `
-                  <div class="steps">
-                    <div class="step"><strong>Install and prepare</strong><br>Add the package and build into a Canvas.</div>
-                    <div class="step"><strong>State</strong><br>Learn how values update UI.</div>
-                    <div class="step"><strong>Layout</strong><br>Use <code>VStack</code>, <code>HStack</code>, <code>Spacer</code>, and <code>frame</code>.</div>
-                    <div class="step"><strong>Controls and input</strong><br>Add <code>Button</code>, <code>TextField</code>, <code>Picker</code>, and more.</div>
-                  </div>
-                `
+                title: "Recommended path",
+                body: steps([
+                  { title: "Install", body: "Get a view rendering into a Canvas." },
+                  { title: "State", body: "Learn how values update UI." },
+                  { title: "Layout", body: "Use stacks, Spacer, frame, and padding." },
+                  { title: "Controls", body: "Connect buttons, fields, pickers, and sliders to State." },
+                  { title: "Reference", body: "Use the API index and modifier parameter pages when you need details." }
+                ])
+              },
+              {
+                title: "Best fit",
+                body: cards([
+                  { kicker: "UI", title: "Game menus", body: "Settings, status, inventory, debug UI, and other Canvas screens." },
+                  { kicker: "TOOLS", title: "Internal tools", body: "Parameter panels, previews, and editor-like runtime utilities." },
+                  { kicker: "FAST", title: "Prototypes", body: "Try screen structure in C# before committing to prefabs." }
+                ])
               }
             ],
             related: ["setup", "state", "layout"]
           },
           {
             id: "setup",
-            title: "Install and Prepare",
+            title: "Install and Render",
             kind: "Guide",
-            summary: "Add the package and show your first view on a Canvas.",
-            keywords: "install Package Manager Canvas TMP TextMeshPro Build README",
+            summary: "Install the package, prepare a Canvas, and render your first view.",
+            keywords: "install setup Package Manager Canvas Build TMP font",
             sections: [
               {
-                title: "Install",
+                title: "Package Manager",
                 body: `
                   <p>In Unity Package Manager, choose <strong>Add package from git URL</strong> and enter:</p>
                   ${code("https://github.com/nnnnnnn0090/UniftUI.git?path=UniftUI")}
+                  ${callout("To pin a version, append a tag such as <code>#v0.1.0</code>.")}
                 `
               },
               {
                 title: "Scene setup",
-                body: `
-                  <div class="steps">
-                    <div class="step">Add a <strong>Canvas</strong> to the scene.</div>
-                    <div class="step">Attach a script that inherits <code>UniftView</code> to the same GameObject as the Canvas.</div>
-                    <div class="step">Call <code>.Build(GetComponent&lt;Canvas&gt;())</code> at the end of <code>Start()</code>.</div>
-                  </div>
-                `
+                body: steps([
+                  { title: "Create a Canvas", body: "Add a Canvas GameObject to the scene." },
+                  { title: "Inherit UniftView", body: "Attach your script to the same GameObject as the Canvas." },
+                  { title: "Build", body: "Call <code>.Build(GetComponent&lt;Canvas&gt;())</code> after composing the view." }
+                ])
               },
               {
-                title: "If nothing appears",
+                title: "Starter script",
+                body: code(`
+using UniftUI;
+using UnityEngine;
+
+public sealed class MainMenuView : UniftView
+{
+    private void Start()
+    {
+        VStack(() =>
+        {
+            Text("Main Menu").fontSize(32).bold();
+            Button("Start", StartGame);
+            Button("Options", OpenOptions);
+        }, spacing: 12f)
+        .frame(infiniteWidth: true, infiniteHeight: true)
+        .Build(GetComponent<Canvas>());
+    }
+}`)
+              },
+              {
+                title: "Troubleshooting",
                 body: `
                   <ul>
-                    <li>Check that the script is on the same GameObject as the Canvas.</li>
+                    <li>Make sure the script is on the same GameObject as the Canvas.</li>
+                    <li>Make sure <code>Build</code> is called.</li>
                     <li>Check the Console for exceptions.</li>
-                    <li>If you need a TMP font, set it with <code>UIContext.SetDefaultFont(...)</code>.</li>
+                    <li>If text is missing, check your TextMesh Pro font setup.</li>
                   </ul>
                 `
-              },
-              {
-                title: "Set a default font",
-                body: `
-                  <p>If your project uses one TMP font across screens, set it before building the view.</p>
-                  ${code(`
-private TMP_FontAsset font;
-
-private void Start()
-{
-    font = Resources.Load<TMP_FontAsset>("Fonts/NotoSansJP-Medium SDF");
-    UIContext.SetDefaultFont(font);
-
-    VStack(() =>
-    {
-        Text("Hello");
-    })
-    .Build(GetComponent<Canvas>());
-}`)}
-                `
               }
             ],
-            related: ["overview", "text", "api-index"]
-          },
-          {
-            id: "state",
-            title: "Update UI with State",
-            kind: "Basics",
-            summary: "Put changing values in <code>State&lt;T&gt;</code> so the UI can react to them.",
-            declaration: "public class State<T> : State",
-            keywords: "State Value reactive onChange BatchUpdate",
-            sections: [
-              {
-                title: "The idea",
-                body: `
-                  <p><code>State&lt;T&gt;</code> stores a value that the UI can observe. Change <code>Value</code>, and any dependent UI updates.</p>
-                  ${code(`
-private readonly State<int> count = new State<int>(0);
-
-Text(() => $"Count: {count.Value}", new State[] { count });
-Button("+1", () => count.Value++);`)}
-                `
-              },
-              {
-                title: "Input and state",
-                body: code(`
-private readonly State<string> name = new State<string>("");
-
-TextField("Name", text: name, prompt: Text("Required"));
-Text(() => $"Hello, {name.Value}", new State[] { name });`)
-              },
-              {
-                title: "React to changes",
-                body: `
-                  <p>Use <code>.onChange(...)</code> when a state change should run code. If you only need the UI to update, passing the state as a dependency is enough.</p>
-                  ${code(`
-Text(() => $"Volume: {volume.Value}", new State[] { volume })
-    .onChange(volume, value =>
-    {
-        Debug.Log($"volume changed: {value}");
-    });`)}
-                `
-              },
-              {
-                title: "Batch changes",
-                body: code(`
-using (State.BatchUpdate())
-{
-    firstName.Value = "Ada";
-    lastName.Value = "Lovelace";
-}`)
-              }
-            ],
-            related: ["text-input", "animation", "api-index"]
+            related: ["overview", "state", "text"]
           }
         ]
       },
       {
-        title: "Build UI",
+        title: "Core Concepts",
         pages: [
+          {
+            id: "state",
+            title: "State and Updates",
+            kind: "Basics",
+            summary: "Use State for changing values, text input, controls, callbacks, and animations.",
+            declaration: "public class State<T> : State",
+            keywords: "State Value reactive onChange BatchUpdate binding update",
+            sections: [
+              {
+                title: "State in one minute",
+                body: `
+                  <p><code>State&lt;T&gt;</code> is an observable value. Change <code>Value</code>, and dependent UI updates.</p>
+                  ${code(`
+private readonly State<int> score = new State<int>(0);
+
+Text(() => $"Score: {score.Value}", new State[] { score });
+Button("+10", () => score.Value += 10);`)}
+                `
+              },
+              {
+                title: "Two-way text input",
+                body: code(`
+private readonly State<string> playerName = new State<string>("");
+
+TextField("Name", text: playerName, prompt: Text("Player name"));
+Text(() => $"Hello, {playerName.Value}", new State[] { playerName });`)
+              },
+              {
+                title: "Run code on change",
+                body: code(`
+Slider(volume, 0, 100)
+    .onChange(volume, value =>
+    {
+        AudioListener.volume = value / 100f;
+    });`)
+              },
+              {
+                title: "Batch updates",
+                body: code(`
+using (State.BatchUpdate())
+{
+    hp.Value = maxHp.Value;
+    mana.Value = maxMana.Value;
+    selectedTab.Value = 0;
+}`)
+              }
+            ],
+            related: ["controls", "text-input", "animation"]
+          },
           {
             id: "layout",
             title: "Layout",
             kind: "Basics",
-            summary: "Arrange views with stacks, spacers, frames, lazy stacks, grids, and GeometryReader.",
-            keywords: "VStack HStack ZStack Spacer frame padding Grid LazyVStack LazyHStack GeometryReader ForEach layoutPriority",
+            summary: "Arrange views with stacks, Spacer, frame, padding, grids, lazy stacks, and GeometryReader.",
+            keywords: "layout VStack HStack ZStack Spacer frame padding fixedSize Grid LazyVStack GeometryReader",
             sections: [
-              {
-                title: "Stacks",
-                body: code(`
+              { title: "Stacks", body: code(`
 VStack(() =>
 {
-    Text("Title").fontSize(24).bold();
+    Text("Profile").fontSize(24).bold();
 
     HStack(() =>
     {
-        Text("Left");
+        Text("Level");
         Spacer();
-        Text("Right");
+        Text("12").bold();
     });
-}, spacing: 12f, alignment: VStackAlignment.Leading);`)
-              },
-              {
-                title: "Common row layout",
-                body: `
-                  <p><code>Spacer()</code> pushes content apart. It is useful for settings screens and list rows.</p>
-                  ${code(`
-HStack(() =>
-{
-    VStack(() =>
-    {
-        Text("Notifications").bold();
-        Text("Receive product updates")
-            .fontSize(12)
-            .foregroundColor(Color.gray);
-    }, spacing: 2f, alignment: VStackAlignment.Leading);
-
-    Spacer();
-
-    Toggle("On", notificationsEnabled);
-}, spacing: 12f, alignment: HStackAlignment.Center)
-.padding(12)
-.background(Color.white)
-.cornerRadius(10);`)}
-                `
-              },
-              {
-                title: "Size and spacing",
-                body: code(`
-Text("Card")
+}, spacing: 12f, alignment: VStackAlignment.Leading);`) },
+              { title: "Full-width card", body: code(`
+Text("Quest accepted")
     .padding(16)
     .frame(infiniteWidth: true)
-    .background(Color.white)
-    .cornerRadius(10);`)
-              },
-              {
-                title: "Repeated and grid content",
-                body: code(`
-LazyVStack(() =>
+    .background(new Color(0.95f, 0.97f, 1f))
+    .cornerRadius(12);`) },
+              { title: "Lists", body: code(`
+ScrollView(() =>
 {
-    ForEach(0, 20, i => Text($"Row {i}"));
-});
-
+    LazyVStack(() =>
+    {
+        ForEach(0, quests.Count, i =>
+        {
+            Text(quests[i].Title)
+                .padding(12)
+                .frame(infiniteWidth: true);
+        });
+    }, spacing: 4f);
+});`) },
+              { title: "Grid", body: code(`
 Grid(() =>
 {
-    GridRow(() => { Text("Name"); Text("Value"); });
-    GridRow(() => { Text("HP"); Text("100"); });
-});`)
-              }
+    GridRow(() => { Text("Stat").bold(); Text("Value").bold(); });
+    GridRow(() => { Text("HP"); Text("120"); });
+    GridRow(() => { Text("Attack"); Text("34"); });
+}, horizontalSpacing: 16f, verticalSpacing: 8f);`) },
+              { title: "GeometryReader", body: code(`
+GeometryReader(proxy =>
+{
+    return Text($"Size: {proxy.Size.x:0} x {proxy.Size.y:0}")
+        .frame(infiniteWidth: true, infiniteHeight: true);
+})
+.frame(infiniteWidth: true, height: 80);`) }
             ],
             related: ["modifiers", "scroll-tabs", "api-index"]
           },
@@ -1381,36 +1205,30 @@ Grid(() =>
             id: "text",
             title: "Text and Fonts",
             kind: "Basics",
-            summary: "Display text and set font, size, weight, color, and line behavior.",
+            summary: "Display static, State-bound, and computed text with TextMesh Pro styling.",
             declaration: "Text(string text)\nText(State<string> text)\nText(Func<string> content, State[] dependencyStates)",
-            keywords: "Text font fontSize bold italic underline strikethrough foregroundColor lineLimit multilineTextAlignment TMP_FontAsset",
+            keywords: "Text font fontSize TMP_FontAsset bold italic lineLimit multilineTextAlignment foregroundColor",
             sections: [
-              {
-                title: "Text forms",
-                body: code(`
-Text("Hello");
-
+              { title: "Text forms", body: code(`
+Text("Static");
 Text(titleState);
-
-Text(() => $"Score: {score.Value}", new State[] { score });`)
-              },
-              {
-                title: "Font and style",
-                body: code(`
-Text("Title")
-    .font(myTmpFontAsset)
-    .fontSize(24)
+Text(() => $"HP: {hp.Value}", new State[] { hp });`) },
+              { title: "Style", body: code(`
+Text("Warning")
+    .fontSize(20)
     .bold()
-    .italic()
-    .foregroundColor(Color.white);`)
-              },
-              {
-                title: "Multiple lines",
-                body: code(`
-Text("Long text that wraps into two lines.")
+    .foregroundColor(new Color(0.9f, 0.18f, 0.12f));`) },
+              { title: "Fonts", body: code(`
+UIContext.SetDefaultFont(defaultFont);
+
+Text("Custom font")
+    .font(titleFont)
+    .fontSize(28);`) },
+              { title: "Wrapping", body: code(`
+Text("Long description that can wrap onto multiple lines.")
     .lineLimit(2)
-    .multilineTextAlignment(TextAlignmentOptions.TopLeft);`)
-              }
+    .multilineTextAlignment(TextAlignmentOptions.TopLeft)
+    .frame(width: 240);`) }
             ],
             related: ["text-input", "modifiers", "api-index"]
           },
@@ -1418,139 +1236,137 @@ Text("Long text that wraps into two lines.")
             id: "controls",
             title: "Buttons and Controls",
             kind: "Basics",
-            summary: "Create actions, toggles, sliders, steppers, progress views, and pickers.",
-            keywords: "Button Toggle Slider Stepper ProgressView Picker pickerStyle buttonStyle",
+            summary: "Create actions and state-bound controls: buttons, toggles, sliders, steppers, progress, and pickers.",
+            keywords: "Button Toggle Slider Stepper ProgressView Picker buttonStyle pickerStyle controls",
             sections: [
-              {
-                title: "Button",
-                body: code(`
+              { title: "Button", body: code(`
 Button("Save", Save)
-    .buttonStyle(ButtonStyles.Filled(
-        backgroundColor: accent,
-        foregroundColor: Color.white,
-        cornerRadius: 10));`)
-              },
-              {
-                title: "Button with custom content",
-                body: `
-                  <p>A button label can be any UniftUI element, not just a string.</p>
-                  ${code(`
+    .frame(infiniteWidth: true, height: 44)
+    .buttonStyle(ButtonStyles.Filled(accent, Color.white, 10));`) },
+              { title: "Custom button label", body: code(`
 Button(
     HStack(() =>
     {
         Image(saveIcon).frame(width: 18, height: 18);
         Text("Save").bold();
     }, spacing: 8f),
-    Save)
-    .padding(10)
-    .background(accent)
-    .foregroundColor(Color.white)
-    .cornerRadius(10);`)}
-                `
-              },
-              {
-                title: "State-bound controls",
-                body: code(`
+    Save);`) },
+              { title: "State-bound controls", body: code(`
 Toggle("Enabled", isEnabled);
-
-Slider(volume, 0, 100)
-    .frame(infiniteWidth: true, height: 38);
-
-Stepper("Quantity", quantity, 0, 8);
-
-ProgressView(progress, total: 1)
-    .tint(accent);`)
-              },
-              {
-                title: "Picker",
-                body: code(`
-Picker(selection, "Small", "Medium", "Large")
+Slider(volume, 0, 100);
+Stepper("Quantity", quantity, 0, 9);
+ProgressView(downloadProgress, total: 1);`) },
+              { title: "Picker", body: code(`
+Picker(difficulty, "Easy", "Normal", "Hard")
     .pickerStyle(PickerStyle.Segmented)
-    .tint(accent);`)
-              }
+    .tint(accent);`) }
             ],
-            related: ["state", "modifiers", "api-index"]
+            related: ["state", "text-input", "styles"]
           },
           {
             id: "text-input",
             title: "Text Input",
             kind: "Basics",
-            summary: "Create single-line input, multiline input, passwords, placeholders, carets, and selection styling.",
+            summary: "Build TextField, SecureField, TextEditor, focus behavior, caret styling, and input rules.",
             declaration: "TextField(\"Title\", text: state, prompt: Text(\"Placeholder\"))\nSecureField(\"Password\", text: state, prompt: Text(\"Password\"))\nTextEditor(state)",
-            keywords: "TextField SecureField TextEditor prompt placeholder contentMargins focused selectAllOnFocus onSubmit onEditingChanged caretColor caretWidth caretBlinkRate textSelectionColor textContentType textInputLimit keyboardType textFieldStyle",
+            keywords: "TextField SecureField TextEditor focused prompt contentMargins caretColor onSubmit keyboardType textInputLimit",
             sections: [
-              {
-                title: "Basic TextField",
-                body: code(`
-TextField(
-    "Name",
-    text: name,
-    prompt: Text("Required").italic().foregroundColor(Color.gray))
+              { title: "Basic field", body: code(`
+TextField("Email", text: email, prompt: Text("email@example.com"))
     .lineLimit(1)
     .contentMargins(horizontal: 12, vertical: 8)
-    .textFieldStyle(TextFieldStyles.Chrome(
-        backgroundColor: Color.white,
-        tintColor: accent,
-        cornerRadius: 8));`)
-              },
-              {
-                title: "Style the placeholder",
-                body: `
-                  <p>The placeholder is the <code>prompt: Text(...)</code> value. Style it with normal <code>Text</code> modifiers.</p>
-                  ${code(`
+    .textContentType(TMP_InputField.ContentType.EmailAddress)
+    .keyboardType(TouchScreenKeyboardType.EmailAddress);`) },
+              { title: "Style the prompt", body: code(`
 TextField(
     "Nickname",
     text: nickname,
     prompt: Text("Optional")
         .italic()
-        .foregroundColor(new Color(0.45f, 0.45f, 0.5f)));`)}
-                `
-              },
-              {
-                title: "Multiline input",
-                body: code(`
+        .foregroundColor(Color.gray));`) },
+              { title: "Password and multiline", body: code(`
+SecureField("Password", text: password, prompt: Text("Password"));
+
 TextField("Notes", text: notes, axis: Axis.Vertical, prompt: Text("Notes"))
-    .lineLimit(3)
-    .multilineTextAlignment(TextAlignmentOptions.TopLeft)
-    .frame(infiniteWidth: true, height: 82);
+    .lineLimit(4)
+    .frame(infiniteWidth: true, height: 100);
 
 TextEditor(notes)
-    .frame(infiniteWidth: true, height: 120);`)
-              },
-              {
-                title: "Password input",
-                body: code(`
-SecureField(
-    "Password",
-    text: password,
-    prompt: Text("Password").foregroundColor(Color.gray))
-    .lineLimit(1)
-    .contentMargins(horizontal: 12, vertical: 8)
-    .textFieldStyle(TextFieldStyles.Chrome(
-        backgroundColor: Color.white,
-        tintColor: accent,
-        cornerRadius: 8));`)
-              },
-              {
-                title: "Input behavior",
-                body: code(`
-TextField("Email", text: email, prompt: Text("email@example.com"))
-    .textContentType(TMP_InputField.ContentType.EmailAddress)
-    .keyboardType(TouchScreenKeyboardType.EmailAddress)
-    .textInputLimit(40)
-    .focused(isFocused)
+    .frame(infiniteWidth: true, height: 140);`) },
+              { title: "Focus and submit", body: code(`
+TextField("Search", text: query, prompt: Text("Search"))
+    .focused(searchFocused)
     .selectAllOnFocus()
-    .textSelectionColor(new Color(0f, 0.4f, 0.85f, 0.25f))
+    .onSubmit(value => Search(value))
+    .onEditingChanged(isEditing => Debug.Log(isEditing));`) },
+              { title: "Caret and selection", body: code(`
+TextField("Name", text: name)
     .caretColor(accent)
     .caretWidth(2)
-    .caretBlinkRate(0.85f)
-    .onSubmit(value => Debug.Log(value));`)
-              },
-              {
-                title: "Reuse TextField chrome",
-                body: `
-                  <p>Use <code>TextFieldStyles.Chrome(...)</code> to keep background, focus color, margins, corner radius, caret, and selection styling consistent.</p>
-                  ${code(`
+    .caretBlinkRate(0.8f)
+    .textSelectionColor(new Color(0f, 0.45f, 1f, 0.25f));`) }
+            ],
+            related: ["styles", "state", "modifier-parameters"]
+          }
+        ]
+      },
+      {
+        title: "Advanced",
+        pages: [
+          {
+            id: "modifiers",
+            title: "Modifier Design",
+            kind: "Guide",
+            summary: "Understand modifier order, backgrounds, overlays, rounded corners, clipping, and interaction state.",
+            keywords: "modifier order background overlay border shadow cornerRadius clipped clipShape opacity tint disabled",
+            sections: [
+              { title: "Order matters", body: `
+                <p>Modifiers apply in order. If <code>background</code> comes after <code>padding</code>, the background includes that padding.</p>
+                ${code(`
+Text("Badge")
+    .padding(Edge.Horizontal, 12)
+    .padding(Edge.Vertical, 6)
+    .background(Capsule(new Color(1f, 0.88f, 0.35f)))
+    .foregroundColor(new Color(0.2f, 0.12f, 0f));`)}
+              ` },
+              { title: "Background and overlay", body: code(`
+Text("Inbox")
+    .padding(12)
+    .background(RoundedRectangle(10, Color.white))
+    .overlay(
+        Circle(Color.red).frame(width: 8, height: 8),
+        ZStackAlignment.TopTrailing);`) },
+              { title: "Clipping", body: code(`
+Image(avatar)
+    .resizable()
+    .scaledToFill()
+    .frame(width: 64, height: 64)
+    .clipShape(UniftUIClipShape.Circle);`) },
+              { title: "Interaction state", body: code(`
+Button("Submit", Submit)
+    .disabled(isSubmitting)
+    .allowsHitTesting(canTap)
+    .opacity(isSubmitting.Value ? 0.6f : 1f);`) }
+            ],
+            related: ["modifier-parameters", "styles", "animation"]
+          },
+          {
+            id: "styles",
+            title: "Styles and Reuse",
+            kind: "Guide",
+            summary: "Use ButtonStyles, TextFieldStyles, and shared theme values to keep screens consistent.",
+            keywords: "ButtonStyles TextFieldStyles style reuse theme tint foregroundColor",
+            sections: [
+              { title: "ButtonStyles", body: code(`
+Button("Continue", Continue)
+    .buttonStyle(ButtonStyles.Filled(
+        backgroundColor: accent,
+        foregroundColor: Color.white,
+        cornerRadius: 10));
+
+Button("Cancel", Cancel)
+    .buttonStyle(ButtonStyles.Plain(accent));`) },
+              { title: "TextFieldStyles", body: code(`
 var fieldStyle = TextFieldStyles.Chrome(
     backgroundColor: Color.white,
     focusedBackgroundColor: new Color(0.94f, 0.97f, 1f),
@@ -1560,191 +1376,148 @@ var fieldStyle = TextFieldStyles.Chrome(
     cornerRadius: 8);
 
 TextField("First name", text: firstName).textFieldStyle(fieldStyle);
-TextField("Last name", text: lastName).textFieldStyle(fieldStyle);`)}
-                `
-              }
-            ],
-            related: ["state", "text", "api-index"]
-          },
-          {
-            id: "image-shape",
-            title: "Images and Shapes",
-            kind: "Basics",
-            summary: "Display sprites, simple shapes, labels, and dividers.",
-            keywords: "Image resizable scaledToFit scaledToFill renderingMode Label Divider Rectangle Circle Capsule RoundedRectangle clipped clipShape",
-            sections: [
-              {
-                title: "Image",
-                body: code(`
-Image(icon)
-    .resizable()
-    .scaledToFit()
-    .renderingMode(ImageRenderingMode.Template)
-    .tint(Color.white)
-    .frame(width: 32, height: 32);`)
-              },
-              {
-                title: "Shapes",
-                body: code(`
-RoundedRectangle(12, new Color(0.93f, 0.96f, 1f))
-    .frame(width: 180, height: 44);
+TextField("Last name", text: lastName).textFieldStyle(fieldStyle);`) },
+              { title: "Theme values", body: code(`
+private readonly Color accent = new Color(0.16f, 0.38f, 0.9f);
+private readonly Color panel = new Color(0.96f, 0.97f, 0.99f);
 
-Circle(Color.red)
-    .frame(width: 24, height: 24);`)
-              },
-              {
-                title: "Label and Divider",
-                body: code(`
-Label("Status", Circle(Color.green).frame(width: 10, height: 10));
-
-Divider(new Color(0.82f, 0.84f, 0.88f), thickness: 1);`)
-              }
+VStack(() =>
+{
+    Text("Settings").bold();
+    Toggle("Sound", soundEnabled).tint(accent);
+})
+.padding(16)
+.background(panel)
+.cornerRadius(12);`) }
             ],
-            related: ["modifiers", "api-index"]
-          }
-        ]
-      },
-      {
-        title: "Polish",
-        pages: [
-          {
-            id: "modifiers",
-            title: "Visual Modifiers",
-            kind: "Basics",
-            summary: "Change spacing, backgrounds, colors, rounded corners, shadows, overlays, and interaction.",
-            keywords: "modifier frame padding background overlay foregroundColor tint opacity cornerRadius border shadow clipped clipShape aspectRatio fixedSize layoutPriority disabled hidden allowsHitTesting",
-            sections: [
-              {
-                title: "Order matters",
-                body: `
-                  <p>Modifiers apply in order. For example, putting <code>background</code> after <code>padding</code> includes the padding in the background.</p>
-                  ${code(`
-Text("Card")
-    .padding(16)
-    .background(Color.white)
-    .cornerRadius(10)
-    .shadow(new Color(0, 0, 0, 0.18f), radius: 4, x: 0, y: -2);`)}
-                `
-              },
-              {
-                title: "Use a view as a background",
-                body: `
-                  <p>Use <code>.background(Color)</code> for a flat fill. Pass a view when you want a shape.</p>
-                  ${code(`
-Text("Premium")
-    .bold()
-    .padding(Edge.Horizontal, 12)
-    .padding(Edge.Vertical, 6)
-    .background(Capsule(new Color(1f, 0.9f, 0.45f)))
-    .foregroundColor(new Color(0.2f, 0.14f, 0.02f));`)}
-                `
-              },
-              {
-                title: "Layers",
-                body: code(`
-Text("Inbox")
-    .padding(12)
-    .background(RoundedRectangle(10, Color.white))
-    .overlay(
-        Circle(Color.red).frame(width: 8, height: 8),
-        ZStackAlignment.TopTrailing);`)
-              },
-              {
-                title: "Visibility and interaction",
-                body: code(`
-Button("Submit", Submit)
-    .disabled(isSubmitting)
-    .allowsHitTesting(canTap)
-    .hidden(shouldHide);`)
-              }
-            ],
-            related: ["layout", "modifier-parameters", "recipes", "animation", "api-index"]
+            related: ["controls", "text-input", "recipes"]
           },
           {
             id: "animation",
             title: "Animation",
-            kind: "Basics",
-            summary: "Animate size, color, corner radius, opacity, movement, rotation, and scale from State changes.",
-            keywords: "Animation WithAnimation animation easeInOut spring bouncy delay speed repeatCount repeatForever offset position rotationEffect scaleEffect onAppear onChange update",
+            kind: "Guide",
+            summary: "Animate State-driven size, color, corner radius, opacity, movement, rotation, and scale.",
+            keywords: "Animation WithAnimation animation spring easeInOut opacity offset scaleEffect rotationEffect cornerRadius",
             sections: [
-              {
-                title: "WithAnimation",
-                body: code(`
+              { title: "WithAnimation", body: code(`
 WithAnimation(Animation.easeInOut(0.25f), () =>
 {
     expanded.Value = !expanded.Value;
-});`)
-              },
-              {
-                title: "Animate one State",
-                body: code(`
-RoundedRectangle(radius.Value)
-    .frame(width: width, height: height)
-    .animation(Animation.easeInOut(0.25f), radius);`)
-              },
-              {
-                title: "Common animations",
-                body: code(`
+});`) },
+              { title: "Bind animation to one State", body: code(`
+Text("Tap")
+    .scaleEffect(isPressed.Value ? 0.96f : 1f)
+    .animation(Animation.easeOut(0.12f), isPressed);`) },
+              { title: "Common animations", body: code(`
 Animation.linear(0.2f)
 Animation.easeIn(0.2f)
 Animation.easeOut(0.2f)
 Animation.easeInOut(0.25f)
 Animation.spring()
 Animation.bouncy(0.5f)
-Animation.easeInOut(0.25f).delay(0.1f).repeatCount(2)`)
-              }
+Animation.easeInOut(0.25f).delay(0.1f).repeatCount(2)`) },
+              { title: "Good animation targets", body: referenceTable("en", [
+                ["opacity", "Alpha", "Fade in and out"],
+                ["offset / position", "Movement", "Open/close, notices, drag-like motion"],
+                ["frame", "Size", "Expand and collapse"],
+                ["cornerRadius", "Corners", "Card to pill transitions"],
+                ["foregroundColor / background", "Color", "State feedback"],
+                ["rotationEffect / scaleEffect", "Transform", "Tap feedback and emphasis"]
+              ]) }
             ],
-            related: ["state", "modifiers", "api-index"]
+            related: ["state", "modifiers", "recipes"]
           },
           {
             id: "scroll-tabs",
             title: "ScrollView and TabView",
-            kind: "Basics",
-            summary: "Create scrollable content and tab-based screens.",
-            keywords: "ScrollView scrollIndicators scrollBounce scrollSensitivity scrollMovementType scrollPositionX scrollPositionY TabView Tab",
+            kind: "Guide",
+            summary: "Handle long content, horizontal/vertical scrolling, scroll position binding, and tab switching.",
+            keywords: "ScrollView TabView scrollIndicators scrollPositionX scrollPositionY Tab LazyVStack",
             sections: [
-              {
-                title: "ScrollView",
-                body: code(`
+              { title: "Vertical scrolling", body: code(`
 ScrollView(() =>
 {
     LazyVStack(() =>
     {
-        ForEach(0, 50, i => Text($"Row {i}"));
+        ForEach(0, 50, i => Text($"Row {i}").padding(10));
     });
+}, horizontal: false, vertical: true)
+.scrollIndicators(ScrollIndicatorVisibility.Visible, UniftUIScrollAxis.Vertical);`) },
+              { title: "Bind scroll position", body: code(`
+private readonly State<float> scrollY = new State<float>(1f);
+
+ScrollView(() =>
+{
+    LazyVStack(() => { /* rows */ });
 })
-.scrollIndicators(ScrollIndicatorVisibility.Visible, UniftUIScrollAxis.Vertical)
-.scrollBounce(true)
-.scrollPositionY(scrollY, twoWay: true);`)
-              },
-              {
-                title: "TabView",
-                body: code(`
+.scrollPositionY(scrollY, twoWay: true);`) },
+              { title: "Tabs", body: code(`
+private readonly State<int> selectedTab = new State<int>(0);
+
 TabView(() =>
 {
-    Tab("Home", () => Text("Home"));
-    Tab("Settings", () => Text("Settings"));
-}, selectedTab);`)
-              }
+    Tab("Home", () => HomePage());
+    Tab("Settings", () => SettingsPage());
+}, selectedTab)
+.frame(infiniteWidth: true, infiniteHeight: true);`) }
             ],
-            related: ["layout", "api-index"]
+            related: ["layout", "state", "api-index"]
           },
+          {
+            id: "performance",
+            title: "Implementation and Performance",
+            kind: "Advanced",
+            summary: "Think about State granularity, rebuild scope, lazy stacks, and Unity Canvas costs.",
+            keywords: "performance advanced rebuild LazyVStack State granularity Unity Canvas layout",
+            sections: [
+              { title: "Keep State focused", body: `
+                <p>Prefer several focused State values over one large screen state. It makes dependencies and updates easier to reason about.</p>
+                ${code(`
+private readonly State<int> hp = new State<int>(100);
+private readonly State<int> gold = new State<int>(0);
+private readonly State<bool> menuOpen = new State<bool>(false);`)}
+              ` },
+              { title: "Use lazy stacks for lists", body: code(`
+ScrollView(() =>
+{
+    LazyVStack(() =>
+    {
+        ForEach(0, items.Count, i => ItemRow(items[i]));
+    });
+});`) },
+              { title: "Separate responsibilities", body: code(`
+Button("Buy", Buy)
+    .frame(infiniteWidth: true, height: 44)   // layout
+    .buttonStyle(primaryButtonStyle)          // appearance
+    .disabled(!canBuy.Value);                 // behavior`) },
+              { title: "Unity UI notes", body: `
+                <ul>
+                  <li>Large Canvas layout changes still have Unity-side cost.</li>
+                  <li>Make fast-changing values dependencies only where needed.</li>
+                  <li>Use <code>update</code> sparingly for per-frame work.</li>
+                  <li>Pair <code>scaledToFill</code> with <code>clipped</code> or <code>clipShape</code> for image crops.</li>
+                </ul>
+              ` }
+            ],
+            related: ["state", "layout", "api-index"]
+          }
+        ]
+      },
+      {
+        title: "Recipes",
+        pages: [
           {
             id: "recipes",
             title: "Common UI Patterns",
             kind: "Recipes",
-            summary: "Copyable patterns for cards, forms, toolbars, and empty states.",
-            keywords: "recipes card form toolbar empty state settings row validation badge",
+            summary: "Copyable patterns for cards, forms, settings rows, empty states, and HUDs.",
+            keywords: "recipes card form settings row empty state hud badge",
             sections: [
-              {
-                title: "Card",
-                body: code(`
+              { title: "Card", body: code(`
 VStack(() =>
 {
     Text("Storage").bold().fontSize(18);
-    Text("42 GB used")
-        .fontSize(13)
-        .foregroundColor(Color.gray);
+    Text("42 GB used").fontSize(13).foregroundColor(Color.gray);
 
     ProgressView(storageUsed, total: 1)
         .tint(accent)
@@ -1753,16 +1526,11 @@ VStack(() =>
 .padding(16)
 .background(Color.white)
 .cornerRadius(12)
-.shadow(new Color(0, 0, 0, 0.12f), radius: 4, x: 0, y: -2);`)
-              },
-              {
-                title: "Form",
-                body: code(`
+.shadow(new Color(0, 0, 0, 0.12f), radius: 4, x: 0, y: -2);`) },
+              { title: "Login form", body: code(`
 VStack(() =>
 {
     TextField("Email", text: email, prompt: Text("email@example.com"))
-        .textContentType(TMP_InputField.ContentType.EmailAddress)
-        .keyboardType(TouchScreenKeyboardType.EmailAddress)
         .textFieldStyle(fieldStyle);
 
     SecureField("Password", text: password, prompt: Text("Password"))
@@ -1771,31 +1539,23 @@ VStack(() =>
     Button("Sign in", SignIn)
         .frame(infiniteWidth: true, height: 44)
         .buttonStyle(ButtonStyles.Filled(accent, Color.white, 10));
-}, spacing: 12f, alignment: VStackAlignment.Leading);`)
-              },
-              {
-                title: "Toolbar",
-                body: code(`
+}, spacing: 12f, alignment: VStackAlignment.Leading);`) },
+              { title: "Settings row", body: code(`
 HStack(() =>
 {
-    Button("Cancel", Cancel)
-        .buttonStyle(ButtonStyles.Plain(accent));
+    VStack(() =>
+    {
+        Text("Notifications").bold();
+        Text("Receive updates").fontSize(12).foregroundColor(Color.gray);
+    }, spacing: 2f, alignment: VStackAlignment.Leading);
 
     Spacer();
-
-    Text("Edit Profile").bold();
-
-    Spacer();
-
-    Button("Done", Save)
-        .buttonStyle(ButtonStyles.Filled(accent, Color.white, 8));
-}, spacing: 8f, alignment: HStackAlignment.Center)
+    Toggle("On", notifications);
+})
 .padding(12)
-.background(Color.white);`)
-              },
-              {
-                title: "Empty state",
-                body: code(`
+.background(Color.white)
+.cornerRadius(10);`) },
+              { title: "Empty state", body: code(`
 VStack(() =>
 {
     Image(emptyIcon)
@@ -1813,10 +1573,20 @@ VStack(() =>
     Button("Create", CreateItem)
         .buttonStyle(ButtonStyles.Filled(accent, Color.white, 10));
 }, spacing: 12f)
-.frame(infiniteWidth: true, infiniteHeight: true);`)
-              }
+.frame(infiniteWidth: true, infiniteHeight: true);`) },
+              { title: "HUD", body: code(`
+HStack(() =>
+{
+    Text(() => $"HP {hp.Value}", new State[] { hp }).bold();
+    Spacer();
+    Text(() => $"{gold.Value} G", new State[] { gold }).bold();
+})
+.padding(12)
+.background(new Color(0f, 0f, 0f, 0.55f))
+.foregroundColor(Color.white)
+.cornerRadius(10);`) }
             ],
-            related: ["layout", "controls", "text-input", "modifiers"]
+            related: ["layout", "controls", "styles", "animation"]
           }
         ]
       },
@@ -1827,70 +1597,62 @@ VStack(() =>
             id: "modifier-parameters",
             title: "Modifier Parameters",
             kind: "Reference",
-            summary: "A detailed guide to modifier parameter types and what each value means.",
-            keywords: "modifier parameter frame padding background overlay foregroundColor tint opacity cornerRadius border shadow clipped clipShape font fontSize lineLimit multilineTextAlignment offset position rotationEffect scaleEffect disabled hidden allowsHitTesting onAppear onChange update animation focused contentMargins caretColor textSelectionColor keyboardType scrollIndicators",
+            summary: "Parameter types and practical guidance for the modifiers you use most often.",
+            keywords: "modifier parameters frame padding background overlay tint opacity cornerRadius border shadow input scroll",
             sections: [
-              {
-                title: "Size and layout",
-                body: `
-                  <p><code>frame</code> controls size. <code>padding</code> adds inner spacing. Use <code>frame(infiniteWidth: true)</code> for full-width controls.</p>
-                  ${modifierParamTable("en", modifierParamsEn.layout)}
-                  ${code(`
-Text("Primary action")
-    .padding(Edge.Horizontal, 16)
-    .padding(Edge.Vertical, 10)
-    .frame(infiniteWidth: true)
-    .background(Color.white);`)}
-                `
-              },
-              {
-                title: "Appearance and layers",
-                body: `
-                  <p><code>background</code> and <code>overlay</code> can receive colors or views. Modifier order changes the result.</p>
-                  ${modifierParamTable("en", modifierParamsEn.visual)}
-                `
-              },
-              {
-                title: "Text",
-                body: modifierParamTable("en", modifierParamsEn.text)
-              },
-              {
-                title: "Movement, rotation, and scale",
-                body: `
-                  <p><code>offset</code> moves the rendered view without changing layout. <code>position</code> places the RectTransform directly.</p>
-                  ${modifierParamTable("en", modifierParamsEn.transform)}
-                `
-              },
-              {
-                title: "Interaction, lifecycle, and animation",
-                body: modifierParamTable("en", modifierParamsEn.behavior)
-              },
-              {
-                title: "TextField",
-                body: `
-                  <p>For text fields, separate visual chrome from input behavior. Use <code>textFieldStyle</code> and <code>contentMargins</code> for appearance, and <code>textContentType</code> or <code>keyboardType</code> for input rules.</p>
-                  ${modifierParamTable("en", modifierParamsEn.input)}
-                `
-              },
-              {
-                title: "Image / Picker / ScrollView",
-                body: modifierParamTable("en", modifierParamsEn.mediaScroll)
-              }
+              { title: "Layout", body: referenceTable("en", [
+                ["frame(width:height:)", "Fixed preferred size", "Buttons, icons, cards"],
+                ["frame(infiniteWidth:infiniteHeight:)", "Use available parent space", "Full-width or full-screen layout"],
+                ["frame(minWidth:maxWidth:minHeight:maxHeight:)", "Size limits", "Flexible UI with bounds"],
+                ["padding", "Inner spacing", "Cards, rows, buttons"],
+                ["fixedSize", "Prefer intrinsic size", "Labels that should not stretch"],
+                ["layoutPriority", "Space priority", "Sibling layout conflicts"],
+                ["aspectRatio", "Preserve ratio", "Images and thumbnails"]
+              ]) },
+              { title: "Appearance", body: referenceTable("en", [
+                ["background", "Color or background view", "Cards, pills, panels"],
+                ["overlay", "Foreground layer", "Badges and custom borders"],
+                ["foregroundColor", "Foreground color", "Text and supported views"],
+                ["tint", "Accent color", "Controls, template images, text fields"],
+                ["opacity", "Alpha", "Visibility and animation"],
+                ["cornerRadius", "Rounded corners", "Cards and input fields"],
+                ["border / shadow", "Outline and depth", "Decoration and hierarchy"],
+                ["clipped / clipShape", "Masking", "Images and avatars"]
+              ]) },
+              { title: "Text and input", body: referenceTable("en", [
+                ["font / fontSize", "Font and size", "Headings and labels"],
+                ["bold / italic / underline / strikethrough", "Text style", "Emphasis and link-like UI"],
+                ["lineLimit", "Line limit", "Descriptions and input fields"],
+                ["multilineTextAlignment", "Multiline alignment", "Descriptions and TextField"],
+                ["focused", "Focus State", "Form control"],
+                ["contentMargins", "TextField inset", "Input chrome"],
+                ["caretColor / textSelectionColor", "Editing colors", "Brand polish"],
+                ["textContentType / keyboardType", "Input type", "Email, password, mobile"]
+              ]) },
+              { title: "Motion and behavior", body: referenceTable("en", [
+                ["offset", "Visual movement", "Badges and animation"],
+                ["position", "Explicit placement", "Free layout"],
+                ["rotationEffect / scaleEffect", "Transform", "Tap feedback"],
+                ["disabled", "Disable interaction", "Loading and invalid forms"],
+                ["hidden", "Hide", "Temporary visibility"],
+                ["allowsHitTesting", "Pointer input", "Overlays"],
+                ["onAppear / onChange / update", "Lifecycle", "Setup, observation, per-frame work"],
+                ["animation", "Animate State changes", "UI feedback"]
+              ]) }
             ],
-            related: ["modifiers", "text-input", "api-index"]
+            related: ["api-index", "modifiers", "text-input"]
           },
           {
             id: "api-index",
             title: "API Index",
             kind: "Reference",
-            summary: "A compact list of factories, modifiers, styles, and types you use when building UI.",
-            keywords: "Text Button Image Rectangle Circle Capsule RoundedRectangle Color Divider ProgressView Stepper Picker Label VStack HStack LazyVStack LazyHStack ZStack Grid GridRow GeometryReader Spacer Slider ScrollView Toggle TextField TextEditor SecureField TabView Tab ForEach Build frame background foregroundColor tint padding fixedSize bold italic underline strikethrough lineLimit multilineTextAlignment opacity fontSize font cornerRadius shadow border overlay offset aspectRatio clipped clipShape disabled hidden layoutPriority allowsHitTesting onChange onAppear update animation rotationEffect scaleEffect position buttonStyle textFieldStyle focused onEditingChanged onSubmit selectAllOnFocus textSelectionColor contentMargins textContentType textInputLimit caretColor caretWidth caretBlinkRate keyboardType resizable scaledToFit scaledToFill renderingMode pickerStyle scrollBounce scrollSensitivity scrollMovementType scrollPositionY scrollPositionX scrollIndicators State Animation Axis Edge RectCorner",
+            summary: "A compact index of factories, modifiers, input helpers, and types.",
+            keywords: "API index Text Button Image VStack HStack State Animation modifier reference",
             sections: [
-              { title: "Factories", body: localizedApiTable("en", apiRows.factories) },
-              { title: "Modifiers", body: localizedApiTable("en", apiRows.modifiers) },
-              { title: "TextField modifiers", body: localizedApiTable("en", apiRows.input) },
-              { title: "Image / Picker / Scroll", body: localizedApiTable("en", apiRows.imageScroll) },
-              { title: "Types", body: localizedApiTable("en", apiRows.types) }
+              { title: "Factories", body: referenceTable("en", sharedReference.factories) },
+              { title: "Modifiers", body: referenceTable("en", sharedReference.modifiers) },
+              { title: "TextField modifiers", body: referenceTable("en", sharedReference.input) },
+              { title: "Types", body: referenceTable("en", sharedReference.types) }
             ],
             related: ["modifier-parameters", "overview", "setup"]
           }
@@ -1901,6 +1663,9 @@ Text("Primary action")
 };
 
 const aliases = {
+  home: "overview",
+  start: "overview",
+  install: "setup",
   textfield: "text-input",
   securefield: "text-input",
   texteditor: "text-input",
@@ -1911,13 +1676,15 @@ const aliases = {
   zstack: "layout",
   grid: "layout",
   button: "controls",
+  toggle: "controls",
+  slider: "controls",
   picker: "controls",
-  image: "image-shape",
-  shapes: "image-shape",
+  image: "modifiers",
   scrollview: "scroll-tabs",
   tabview: "scroll-tabs",
   withanimation: "animation",
-  modifiers: "modifiers"
+  modifiers: "modifiers",
+  reference: "api-index"
 };
 
 const symbolList = document.getElementById("symbol-list");
@@ -1993,9 +1760,9 @@ function matchesQuery(page, query) {
     page.kind,
     page.summary,
     page.keywords || "",
-    ...(page.sections || []).map(section => section.title)
+    ...(page.sections || []).map(section => `${section.title} ${stripHtml(section.body)}`)
   ].join(" ").toLowerCase();
-  return stripHtml(haystack).includes(query);
+  return haystack.includes(query);
 }
 
 function renderSidebar() {
@@ -2095,7 +1862,7 @@ function renderToc(page) {
 }
 
 function slug(value) {
-  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "section";
+  return String(value).toLowerCase().replace(/[^a-z0-9\u3040-\u30ff\u3400-\u9fff]+/g, "-").replace(/^-|-$/g, "") || "section";
 }
 
 function renderArticle() {
